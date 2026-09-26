@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Escribanía General de Gobierno — Sistema interno</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root{--navy:#1B2F5E;--navy-d:#0F1C3A;--cel:#A8C8E8;--cel-s:#E8F0F9;--gold:#C9A84C;--bone:#EEF2F5;
+ --line:#D8E0EA;--muted:#65748C;--ok:#1F6B3C;--ok-bg:#E6F3EB;--warn:#8A6A12;--warn-bg:#FBF3DC}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Montserrat,system-ui,sans-serif;background:var(--bone);color:#1E2634;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+header{background:var(--navy);color:#fff;padding:30px 0}
+.wrap{max-width:1080px;margin:0 auto;padding:0 22px}
+.eyebrow{margin:0 0 8px;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:600}
+h1{margin:0;font-size:28px;font-weight:700}
+header p{margin:9px 0 0;color:#D5E1F0;font-size:14px;max-width:76ch}
+main{padding:26px 0 60px}
+.seccion{margin-bottom:32px}
+.seccion h2{font-size:13px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
+ font-weight:700;margin:0 0 4px;padding-bottom:8px;border-bottom:2px solid var(--line)}
+.seccion .sub{font-size:13px;color:var(--muted);margin:0 0 16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:13px}
+.tarjeta{display:block;text-decoration:none;color:inherit;background:#fff;border:1.5px solid var(--line);
+ border-radius:11px;padding:17px 19px;transition:border-color .12s,transform .12s}
+.tarjeta:hover{border-color:var(--navy);transform:translateY(-1px)}
+.tarjeta .n{font-weight:700;color:var(--navy);font-size:15.5px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.tarjeta .d{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.5}
+.entrada{background:var(--navy);border-color:var(--navy)}
+.entrada .n{color:#fff;font-size:19px}
+.entrada .d{color:#C6D6EA}
+.entrada:hover{transform:translateY(-1px);border-color:var(--gold)}
+.chip{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
+ padding:3px 8px;border-radius:999px;white-space:nowrap}
+.chip.demo{background:var(--cel-s);color:#2E5385}
+.chip.uso{background:var(--ok-bg);color:var(--ok)}
+.nota{border-left:3px solid var(--cel);background:var(--cel-s);color:#2E5385;padding:13px 16px;
+ border-radius:0 8px 8px 0;font-size:13px;margin:0 0 26px}
+.arbol{background:#fff;border:1.5px solid var(--line);border-radius:11px;padding:16px 19px;
+ font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12.5px;line-height:1.75;
+ color:#41506B;overflow-x:auto;white-space:pre}
+footer{background:var(--navy-d);color:#93A6C4;font-size:12px;padding:22px 0;text-align:center}
+</style>
+</head>
+<body>
+<header><div class="wrap">
+  <p class="eyebrow">Provincia de Córdoba</p>
+  <h1>Escribanía General de Gobierno</h1>
+  <p>Sistema interno de trabajo. Todo se abre con doble clic, sin instalar nada y sin servidor.</p>
+</div></header>
+
+<main><div class="wrap">
+
+  <div class="nota">Esta página es solo la puerta del repositorio. El sistema es
+    <b>SIGEC</b>, y adentro de SIGEC está dicho cuál herramienta está en uso, cuál es un
+    prototipo y cuál todavía se está preparando. Acá no se repite esa lista, justamente
+    para que no queden dos listas diciendo cosas distintas.</div>
+
+  <div class="seccion">
+    <h2>El sistema</h2>
+    <p class="sub">Es lo que está en <code>R:\ESCRIBANIA DE GOBIERNO\APPS</code>, donde se llama SIGEC.html.</p>
+    <div class="grid">
+      <a class="tarjeta entrada" href="sigec/index.html">
+        <div class="n">Abrir SIGEC <span class="chip uso">En uso</span></div>
+        <div class="d">Las siete herramientas, cada una con su estado a la vista.</div>
+      </a>
+    </div>
+  </div>
+
+  <div class="seccion">
+    <h2>Cómo está ordenado</h2>
+    <p class="sub">Un producto, una carpeta. Cada carpeta se puede tocar sin mirar ninguna otra.</p>
+    <div class="arbol">sigec/
+  index.html                  el menú (en el disco R se llama SIGEC.html)
+  productos/
+    ddjj/                     escritura de la declaración jurada
+    recibo-ddjj/              constancia de recepción
+    primer-testimonio/
+    rogador/
+    escrituras-sociales/      barrio, lotes y minutas (base e individuales)
+    expropiaciones/
+    modelos/                  todavía sin herramienta
+
+demos/                        modelos para mostrar, no para producir</div>
+  </div>
+
+  <div class="seccion">
+    <h2>Modelos para mostrar</h2>
+    <p class="sub">No producen documentos: sirven para explicar el sistema. No están dentro de SIGEC.</p>
+    <div class="grid">
+      <a class="tarjeta" href="demos/calendario.html">
+        <div class="n">Calendario <span class="chip demo">Demo</span></div>
+        <div class="d">Vencimientos por días hábiles, plazos fatales y ordenatorios.</div>
+      </a>
+      <a class="tarjeta" href="demos/armador-solicitud.html">
+        <div class="n">Armador de solicitud <span class="chip demo">Demo</span></div>
+        <div class="d">Solicitud de copias y testimonios para el ciudadano, con costos y adjuntos.</div>
+      </a>
+      <a class="tarjeta" href="demos/barra-tareas.html">
+        <div class="n">Barra de tareas <span class="chip demo">Demo</span></div>
+        <div class="d">Todas las tareas de todos los módulos en una sola lista, ordenadas por urgencia.</div>
+      </a>
+    </div>
+  </div>
+
+</div></main>
+
+<footer><div class="wrap">Escribanía General de Gobierno de la Provincia de Córdoba</div></footer>
+</body>
+</html>

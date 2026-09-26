@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Barra de tareas — SIIGENO (modelo interactivo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root{--navy:#1B2F5E;--navy-d:#0F1C3A;--cel:#A8C8E8;--cel-s:#E8F0F9;--gold:#C9A84C;--bone:#EEF2F5;
+ --line:#D8E0EA;--muted:#65748C;--ok:#1F6B3C;--ok-bg:#E6F3EB;--warn:#8A6A12;--warn-bg:#FBF3DC;
+ --red:#A3271F;--red-bg:#FBEAE8}
+*{box-sizing:border-box}html,body{margin:0}
+body{font-family:Montserrat,system-ui,sans-serif;background:var(--bone);color:#1E2634;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.flag{background:var(--navy-d);color:var(--cel);font-size:11.5px;letter-spacing:.14em;text-transform:uppercase;text-align:center;padding:6px 14px;font-weight:600}
+header{background:var(--navy);color:#fff;padding:22px 0}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+.eyebrow{margin:0 0 7px;font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:600}
+h1{margin:0;font-size:26px;font-weight:700}
+header p{margin:8px 0 0;color:#D5E1F0;font-size:14px;max-width:72ch}
+.rolebar{display:flex;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap}
+.rolebar select{background:rgba(255,255,255,.12);border:1px solid rgba(168,200,232,.5);color:#fff;
+  font-family:inherit;font-size:13.5px;font-weight:600;padding:8px 13px;border-radius:8px}
+.rolebar select option{color:#1E2634}
+.rolebar .info{font-size:12.5px;color:#A9BFDA}
+
+.wrap.main{padding:22px 20px 60px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:700px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:14px 16px}
+.kpi .n{font-size:25px;font-weight:700;color:var(--navy);line-height:1.1}
+.kpi .l{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:4px}
+.kpi.bad .n{color:var(--red)}.kpi.warn .n{color:var(--warn)}
+
+.card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:18px 20px;margin-bottom:16px}
+.hint{margin:0 0 14px;color:var(--muted);font-size:13px}
+.tabs2{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs2 button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 15px;
+  font-family:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
+.tabs2 button[aria-pressed=true]{border-color:var(--navy);background:var(--cel-s);color:var(--navy)}
+.viewtoggle{display:flex;gap:6px;margin-bottom:16px}
+.viewtoggle button{flex:1;border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:10px;
+  font-family:inherit;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer}
+.viewtoggle button[aria-pressed=true]{border-color:var(--navy);background:var(--navy);color:#fff}
+
+.grp{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700;
+  margin:18px 0 8px;padding-bottom:6px;border-bottom:2px solid var(--line);display:flex;align-items:center;gap:8px}
+.grp:first-child{margin-top:0}
+.grp .c{margin-left:auto;font-weight:600;color:#98A4B8}
+
+.task{display:flex;gap:12px;align-items:center;padding:12px 13px;border:1px solid var(--line);border-radius:9px;
+  margin-bottom:8px;cursor:pointer;background:#fff}
+.task:hover{border-color:var(--cel);background:#FBFCFE}
+.dot{width:10px;height:10px;border-radius:50%;flex:0 0 auto}
+.d-red{background:var(--red)}.d-amber{background:var(--gold)}.d-blue{background:#5B7BA8}.d-green{background:var(--ok)}
+.task .tt{font-weight:600;font-size:14px}
+.task .td{font-size:12.5px;color:var(--muted);margin-top:2px}
+.tag{font-size:10px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:5px;
+  white-space:nowrap;color:#fff}
+.tag.social{background:#2E7D8F}.tag.expro{background:#7A4B2A}
+.chip2{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;padding:3px 9px;
+  border-radius:999px;white-space:nowrap;margin-left:auto}
+.c-fatal{background:var(--red-bg);color:var(--red)}
+.c-ord{background:var(--cel-s);color:#2E5385}
+
+.empty{color:var(--muted);font-size:13.5px;text-align:center;padding:22px 8px}
+
+.overlay{position:fixed;inset:0;background:rgba(15,28,58,.5);display:none;align-items:center;justify-content:center;z-index:50;padding:20px}
+.overlay.on{display:flex}
+.modal{background:#fff;border-radius:12px;max-width:460px;width:100%;overflow:hidden;box-shadow:0 24px 60px rgba(15,28,58,.3)}
+.modal .mh{background:var(--navy);color:#fff;padding:16px 20px}
+.modal .mh .k{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.modal .mh .t{font-weight:700;font-size:17px;margin-top:3px}
+.modal .mb{padding:18px 20px 20px;font-size:13.5px}
+.modal .mb p{margin:0 0 10px;color:var(--muted)}
+.modal .row{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--line);font-size:13px}
+.modal .row b{color:var(--navy)}
+.modal button{width:100%;padding:11px;border:0;border-radius:7px;background:var(--navy);color:#fff;
+  font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;margin-top:14px}
+.modal .x{background:none;border:1px solid var(--line);color:var(--muted);margin-top:8px}
+footer.foot{background:var(--navy-d);color:#93A6C4;font-size:12px;padding:20px 0;text-align:center}
+</style>
+</head>
+<body>
+<div class="flag">Modelo interactivo · datos de ejemplo</div>
+<header><div class="wrap">
+  <p class="eyebrow">SIIGENO</p>
+  <h1>Barra de tareas</h1>
+  <p>Una sola tabla, escrita por todos los módulos. Cada módulo aporta sus tareas con su tipo; la barra solo las junta, ordena y filtra.</p>
+  <div class="rolebar">
+    <select id="selRol"></select>
+    <span class="info" id="rolInfo"></span>
+  </div>
+</div></header>
+
+<div class="wrap main">
+  <div class="kpis" id="kpis"></div>
+
+  <div class="card">
+    <h2 style="margin:0 0 3px;font-size:17px;color:var(--navy)">Vista</h2>
+    <p class="hint">La bandeja de entrada de Escrituras Sociales es esta misma tabla, filtrada por tipo y agrupada por expediente.</p>
+    <div class="viewtoggle">
+      <button data-v="mio" aria-pressed="true">Lo mío, hoy</button>
+      <button data-v="exp" aria-pressed="false">Por expediente</button>
+    </div>
+    <div class="tabs2" id="tabsTipo"></div>
+    <div id="lista"></div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay">
+  <div class="modal">
+    <div class="mh"><div class="k" id="mMod">Módulo</div><div class="t" id="mTit">—</div></div>
+    <div class="mb">
+      <p id="mDesc"></p>
+      <div class="row"><span>Expediente</span><b id="mExp"></b></div>
+      <div class="row"><span>Responsable</span><b id="mResp"></b></div>
+      <div class="row"><span>Plazo</span><b id="mPlazo"></b></div>
+      <button id="mAbrir">Abrir en su módulo</button>
+      <button class="x" id="mCerrar">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<footer class="foot"><div class="wrap">Modelo de demostración de la Barra de Tareas · Escribanía General de Gobierno de la Provincia de Córdoba</div></footer>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const HOY=new Date("2026-09-07");
+function dias(f){ return Math.round((new Date(f)-HOY)/86400000); }
+function fmtRel(f){ const d=dias(f);
+ if(d<0) return `vencido hace ${-d} día${-d===1?"":"s"}`;
+ if(d===0) return "vence hoy"; if(d===1) return "vence mañana";
+ return `en ${d} días`;
+}
+
+const ROLES=[
+ {id:"aux1",n:"Ferreyra, M.",rol:"aux",info:"Ve lo que tiene designado en cualquier módulo"},
+ {id:"aux2",n:"Ávila, R.",rol:"aux",info:"Ve lo que tiene designado en cualquier módulo"},
+ {id:"esc",n:"Escribana General",rol:"esc",info:"Ve todo, de todos los módulos"}
+];
+$("#selRol").innerHTML=ROLES.map(r=>`<option value="${r.id}">${r.n} — ${r.rol==="esc"?"Escribana":"Auxiliar"}</option>`).join("");
+let USR=ROLES[0];
+$("#selRol").addEventListener("change",e=>{USR=ROLES.find(r=>r.id===e.target.value);pintarTodo();});
+
+/* ---- tareas de ejemplo, aportadas por dos módulos distintos ---- */
+const TAREAS=[
+ {tipo:"social",mod:"Escrituras Sociales",exp:"0716-015690/2020",item:"Lote uno · Manzana once · Colonia Tirolesa",
+  persona:"aux1",estado:"En confección",plazoTipo:"ord",plazo:"2026-09-10",desc:"Falta cargar el certificado notarial y la resolución individual."},
+ {tipo:"social",mod:"Escrituras Sociales",exp:"0423-019240/2025",item:"3 lotes · Embalse",
+  persona:"aux2",estado:"Revisión propia pendiente",plazoTipo:"ord",plazo:"2026-09-08",desc:"Tres escrituras confeccionadas, falta la revisión antes de mandarlas a la escribana."},
+ {tipo:"social",mod:"Escrituras Sociales",exp:"0423-019388/2025",item:"Lote cuatro · Boedo",
+  persona:"esc",estado:"Revisión de la escribana",plazoTipo:"fatal",plazo:"2026-09-07",desc:"El auxiliar ya la revisó. Falta la segunda instancia antes de aprobar."},
+ {tipo:"social",mod:"Escrituras Sociales",exp:"0423-019512/2026",item:"Lote dos · Villa Retiro",
+  persona:"aux1",estado:"Para llevar al Registro",plazoTipo:"ord",plazo:"2026-09-09",desc:"Carpeta armada con testimonio y rogación. Falta la presentación física."},
+ {tipo:"expro",mod:"Expropiaciones",exp:"0045-021894/2026",item:"Circunvalación — tramo sur, Lote 7",
+  persona:"aux2",estado:"Avalúo pendiente de notificar",plazoTipo:"fatal",plazo:"2026-09-08",desc:"El avalúo llegó de Tribunal de Tasaciones. Falta correr traslado al titular registral."},
+ {tipo:"expro",mod:"Expropiaciones",exp:"0045-021330/2025",item:"Ruta E-53, km 12",
+  persona:"aux1",estado:"Certificado registral por vencer",plazoTipo:"fatal",plazo:"2026-09-11",desc:"El certificado vence antes de la fecha prevista de firma. Hay que pedirlo de nuevo."},
+ {tipo:"expro",mod:"Expropiaciones",exp:"0045-022014/2026",item:"Acceso Norte, Lote 3",
+  persona:"esc",estado:"Para aprobar y firmar",plazoTipo:"ord",plazo:"2026-09-12",desc:"Avenimiento aceptado y escritura confeccionada. Falta la firma del titular."},
+ {tipo:"expro",mod:"Expropiaciones",exp:"0045-021894/2026",item:"Circunvalación — tramo sur, Lote 9",
+  persona:"aux2",estado:"En confección",plazoTipo:"ord",plazo:"2026-09-15",desc:"Antecedentes completos. Falta redactar sobre el modelo de avenimiento."}
+];
+
+function estadoColor(t){
+ const d=dias(t.plazo);
+ if(t.plazoTipo==="fatal"&&d<0) return "d-red";
+ if(d<=1) return "d-amber";
+ return "d-blue";
+}
+function estadoChip(t){
+ return t.plazoTipo==="fatal" ? `<span class="chip2 c-fatal">Plazo fatal · ${fmtRel(t.plazo)}</span>`
+                               : `<span class="chip2 c-ord">Ordenatorio · ${fmtRel(t.plazo)}</span>`;
+}
+function verTodo(){ return USR.rol==="esc"; }
+
+let VISTA="mio", TIPO="todos";
+
+function pintarKPIs(){
+ const mias=TAREAS.filter(t=>verTodo()||t.persona===USR.id);
+ const vencidas=mias.filter(t=>t.plazoTipo==="fatal"&&dias(t.plazo)<0).length;
+ const hoy=mias.filter(t=>dias(t.plazo)<=0).length;
+ const social=mias.filter(t=>t.tipo==="social").length;
+ const expro=mias.filter(t=>t.tipo==="expro").length;
+ $("#kpis").innerHTML=`
+  <div class="kpi ${vencidas?"bad":""}"><div class="n">${vencidas}</div><div class="l">Plazos fatales vencidos</div></div>
+  <div class="kpi ${hoy?"warn":""}"><div class="n">${hoy}</div><div class="l">Vencen hoy</div></div>
+  <div class="kpi"><div class="n">${social}</div><div class="l">Escrituras sociales</div></div>
+  <div class="kpi"><div class="n">${expro}</div><div class="l">Expropiaciones</div></div>`;
+}
+
+function pintarTabsTipo(){
+ $("#tabsTipo").innerHTML=[["todos","Todos los módulos"],["social","Escrituras Sociales"],["expro","Expropiaciones"]]
+  .map(t=>`<button data-t="${t[0]}" aria-pressed="${t[0]===TIPO}">${t[1]}</button>`).join("");
+ $$("#tabsTipo button").forEach(b=>b.addEventListener("click",()=>{TIPO=b.dataset.t;pintarLista();
+  $$("#tabsTipo button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.t===TIPO));}));
+}
+
+function itemHTML(t){
+ return `<div class="task" data-exp="${t.exp}" data-item="${t.item}">
+   <div class="dot ${estadoColor(t)}"></div>
+   <div style="flex:1;min-width:0">
+    <div class="tt">${t.item}</div>
+    <div class="td"><span class="tag ${t.tipo}">${t.mod}</span> &nbsp;${t.estado}${verTodo()?` · ${ROLES.find(r=>r.id===t.persona).n}`:""}</div>
+   </div>
+   ${estadoChip(t)}
+  </div>`;
+}
+
+function pintarLista(){
+ const base=TAREAS.filter(t=>(verTodo()||t.persona===USR.id)&&(TIPO==="todos"||t.tipo===TIPO));
+ const box=$("#lista");
+ if(!base.length){ box.innerHTML=`<div class="empty">No hay tareas con este filtro.</div>`; return; }
+
+ if(VISTA==="mio"){
+  const orden=base.slice().sort((a,b)=>{
+   const fa=a.plazoTipo==="fatal", fb=b.plazoTipo==="fatal";
+   if(fa!==fb) return fa?-1:1;
+   return dias(a.plazo)-dias(b.plazo);
+  });
+  const venc=orden.filter(t=>dias(t.plazo)<0);
+  const hoy=orden.filter(t=>dias(t.plazo)>=0&&dias(t.plazo)<=1);
+  const resto=orden.filter(t=>dias(t.plazo)>1);
+  let html="";
+  if(venc.length) html+=`<div class="grp">Vencidas<span class="c">${venc.length}</span></div>`+venc.map(itemHTML).join("");
+  if(hoy.length) html+=`<div class="grp">Hoy y mañana<span class="c">${hoy.length}</span></div>`+hoy.map(itemHTML).join("");
+  if(resto.length) html+=`<div class="grp">Más adelante<span class="c">${resto.length}</span></div>`+resto.map(itemHTML).join("");
+  box.innerHTML=html;
+ } else {
+  const porExp={};
+  base.forEach(t=>{ (porExp[t.exp]=porExp[t.exp]||[]).push(t); });
+  let html="";
+  Object.keys(porExp).forEach(exp=>{
+   const g=porExp[exp];
+   html+=`<div class="grp">${exp}<span class="c">${g.length} tarea${g.length===1?"":"s"}</span></div>`+g.map(itemHTML).join("");
+  });
+  box.innerHTML=html;
+ }
+ $$(".task").forEach(el=>el.addEventListener("click",()=>{
+  const t=TAREAS.find(x=>x.exp===el.dataset.exp&&x.item===el.dataset.item);
+  abrirModal(t);
+ }));
+}
+
+function abrirModal(t){
+ $("#mMod").textContent=t.mod;
+ $("#mTit").textContent=t.item;
+ $("#mDesc").textContent=t.desc;
+ $("#mExp").textContent=t.exp;
+ $("#mResp").textContent=ROLES.find(r=>r.id===t.persona).n;
+ $("#mPlazo").textContent=(t.plazoTipo==="fatal"?"Fatal · ":"Ordenatorio · ")+fmtRel(t.plazo);
+ $("#overlay").classList.add("on");
+ $("#mAbrir").onclick=()=>{
+  $("#overlay").classList.remove("on");
+  alert(`En el sistema real, esto abre "${t.item}" dentro de ${t.mod}, en la pantalla exacta donde falta actuar.\\n\\nLa barra de tareas no reemplaza al módulo: es la puerta de entrada a él.`);
+ };
+}
+$("#mCerrar").addEventListener("click",()=>$("#overlay").classList.remove("on"));
+$("#overlay").addEventListener("click",e=>{ if(e.target.id==="overlay") $("#overlay").classList.remove("on"); });
+
+$$(".viewtoggle button").forEach(b=>b.addEventListener("click",()=>{
+ VISTA=b.dataset.v;
+ $$(".viewtoggle button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.v===VISTA));
+ pintarLista();
+}));
+
+function pintarTodo(){
+ $("#rolInfo").textContent=USR.info;
+ pintarKPIs(); pintarLista();
+}
+pintarTabsTipo();
+pintarTodo();
+</script>
+</body>
+</html>

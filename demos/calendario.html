@@ -1,0 +1,1323 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Calendario de la Escribanía — SIIGENO (modelo interactivo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root{
+  --navy:#1B2F5E; --navy-d:#0F1C3A; --cel:#A8C8E8; --cel-s:#E8F0F9;
+  --gold:#C9A84C; --bone:#EEF2F5; --line:#D8E0EA; --muted:#65748C;
+  --ok:#1F6B3C; --ok-bg:#E6F3EB; --warn:#8A6A12; --warn-bg:#FBF3DC;
+  --red:#A3271F; --red-bg:#FBEAE8; --radius:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Montserrat,system-ui,sans-serif;background:var(--bone);color:#1E2634;font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.demo-flag{background:var(--navy-d);color:var(--cel);font-size:12px;letter-spacing:.14em;text-transform:uppercase;text-align:center;padding:7px 14px;font-weight:600}
+header.top{background:var(--navy);color:#fff;padding:28px 0 0}
+.wrap{max-width:1240px;margin:0 auto;padding:0 26px}
+.eyebrow{margin:0 0 9px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:600}
+header.top h1{margin:0;font-size:30px;font-weight:700;line-height:1.2}
+header.top p.sub{margin:11px 0 0;max-width:64ch;color:#D5E1F0;font-size:14.5px}
+.roles{display:flex;align-items:center;gap:11px;margin-top:16px;flex-wrap:wrap}
+.roles .rl{font-size:11px;letter-spacing:.13em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.roles select{background:rgba(255,255,255,.12);border:1px solid rgba(168,200,232,.5);color:#fff;
+  font-family:inherit;font-size:14px;font-weight:600;padding:8px 13px;border-radius:8px;width:auto}
+.roles select option{color:#1E2634}
+.roles .rd{font-size:12.5px;color:#A9BFDA}
+.asigbar{display:flex;gap:11px;align-items:flex-end;flex-wrap:wrap;background:var(--cel-s);
+  border-radius:9px;padding:14px 16px;margin:12px 0 4px}
+.asigbar .fw{flex:1;min-width:150px}
+.asigbar label.f{margin-bottom:4px}
+.nuevo{font-size:10px;letter-spacing:.09em;text-transform:uppercase;font-weight:700;
+  background:var(--gold);color:#fff;border-radius:5px;padding:3px 8px}
+.vtabs{display:flex;gap:4px;margin-top:22px;flex-wrap:wrap}
+.vtabs button{border:0;background:rgba(255,255,255,.09);color:#CFDDEE;font-family:inherit;font-size:14px;font-weight:600;
+  padding:12px 20px;border-radius:9px 9px 0 0;cursor:pointer}
+.vtabs button[aria-selected=true]{background:var(--bone);color:var(--navy)}
+.today{float:right;font-size:12.5px;color:#9DB4D2;padding-top:6px}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 366px;gap:24px;align-items:start;padding:24px 0 60px}
+@media(max-width:980px){.layout{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;margin-bottom:18px}
+.card h2{margin:0 0 3px;font-size:18px;font-weight:700;color:var(--navy)}
+.hint{margin:0 0 16px;color:var(--muted);font-size:13.5px}
+.view{display:none}.view.on{display:block}
+
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:760px){.kpis{grid-template-columns:1fr 1fr}}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px 18px}
+.kpi .n{font-size:28px;font-weight:700;color:var(--navy);line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .l{font-size:11px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-top:4px}
+.kpi.bad .n{color:var(--red)} .kpi.warn .n{color:var(--warn)} .kpi.good .n{color:var(--ok)}
+
+.daygroup{margin-bottom:22px}
+.dayhd{display:flex;align-items:baseline;gap:10px;padding-bottom:8px;border-bottom:2px solid var(--line);margin-bottom:4px}
+.dayhd .d{font-weight:700;color:var(--navy);font-size:15px}
+.dayhd .r{font-size:12px;color:var(--muted);margin-left:auto}
+.item{display:flex;gap:13px;align-items:flex-start;padding:13px 12px;border-radius:8px;cursor:pointer;border:1px solid transparent}
+.item:hover{background:#FAFCFE;border-color:var(--line)}
+.item.sel{background:var(--cel-s);border-color:var(--navy)}
+.dot{flex:0 0 auto;width:10px;height:10px;border-radius:50%;margin-top:7px}
+.dot.venc{background:var(--red)} .dot.crit{background:var(--gold)} .dot.plazo{background:#5B7BA8} .dot.ok{background:var(--ok)}
+.item .nm{font-weight:600;font-size:14.5px}
+.item .mt{font-size:12.5px;color:var(--muted)}
+.chip{font-size:10.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:999px;white-space:nowrap;margin-left:auto}
+.chip.venc{background:var(--red-bg);color:var(--red)}
+.chip.crit{background:var(--warn-bg);color:var(--warn)}
+.chip.plazo{background:var(--cel-s);color:#3A5B8A}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}
+
+.mnav{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.mnav b{font-size:17px;color:var(--navy)}
+.mnav button{border:1.5px solid var(--line);background:#fff;border-radius:7px;width:34px;height:34px;
+  font-family:inherit;font-size:16px;color:var(--navy);cursor:pointer;line-height:1}
+.mnav button:hover{border-color:var(--navy)}
+.grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.dowl{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700;text-align:center;padding-bottom:4px}
+.cell{min-height:88px;border:1px solid var(--line);border-radius:8px;padding:6px 7px;background:#fff}
+.cell.out{background:#F7F9FB;opacity:.5}
+.cell.fer{background:#FBF7EC;border-style:dashed}
+.cell.hoy{border-color:var(--navy);box-shadow:0 0 0 1.5px var(--navy) inset}
+.cell.elegido{background:var(--cel-s);border-color:var(--navy)}
+.cell .dn{font-size:12px;font-weight:700;color:var(--muted)}
+.cell.hoy .dn{color:var(--navy)}
+.cell .fl{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--gold);font-weight:700}
+.ev{display:flex;gap:5px;align-items:center;font-size:10.5px;line-height:1.3;margin-top:3px;cursor:pointer;
+  border-radius:4px;padding:2px 3px}
+.ev:hover{background:var(--cel-s)}
+.ev .d2{width:6px;height:6px;border-radius:50%;flex:0 0 auto}
+.ev span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.filters button{border:1.5px solid var(--line);background:#fff;border-radius:999px;padding:7px 15px;
+  font-family:inherit;font-size:12.5px;font-weight:600;color:var(--muted);cursor:pointer}
+.filters button[aria-pressed=true]{border-color:var(--navy);background:var(--cel-s);color:var(--navy)}
+
+.exp{display:flex;gap:12px;align-items:center;padding:13px 14px;border:1.5px solid var(--line);border-radius:9px;
+  margin-bottom:9px;cursor:pointer;background:#fff}
+.exp:hover{border-color:var(--cel)}
+.exp.sel{border-color:var(--navy);background:var(--cel-s)}
+.exp .n{font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+.exp .t{font-size:13px;color:var(--muted)}
+.line{position:relative;padding-left:26px;margin-top:18px}
+.line::before{content:"";position:absolute;left:7px;top:6px;bottom:6px;width:2px;background:var(--line)}
+.node{position:relative;padding:0 0 20px}
+.node::before{content:"";position:absolute;left:-24px;top:6px;width:12px;height:12px;border-radius:50%;background:#fff;border:2.5px solid var(--line)}
+.node.venc::before{border-color:var(--red)} .node.crit::before{border-color:var(--gold)}
+.node.ok::before{border-color:var(--ok);background:var(--ok)} .node.plazo::before{border-color:#5B7BA8}
+.node .nn{font-weight:600;font-size:14.5px}
+.node .nd{font-size:12.5px;color:var(--muted)}
+.node .nb{font-size:11.5px;color:#7A8AA3;margin-top:3px;font-style:italic}
+
+table.par{width:100%;border-collapse:collapse;font-size:13px}
+table.par th{text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);
+  border-bottom:2px solid var(--line);padding:8px 10px}
+table.par td{border-bottom:1px solid var(--line);padding:10px}
+table.par td.v{font-weight:600;color:var(--navy);white-space:nowrap;font-variant-numeric:tabular-nums}
+.ferlist{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}
+.ferlist span{background:#FBF7EC;border:1px solid #EBDCB4;border-radius:999px;padding:5px 12px;font-size:12px;color:#7A6420}
+
+aside{position:sticky;top:20px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.panel .ph{background:var(--navy);color:#fff;padding:15px 20px}
+.panel .ph .k{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.panel .ph .n{font-weight:700;font-size:16.5px;margin-top:2px;line-height:1.3}
+.pb{padding:20px}
+.empty{color:var(--muted);font-size:13.5px;text-align:center;padding:30px 10px}
+.meta{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:16px}
+.meta .lb{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.meta .vl{font-weight:600;font-size:13.5px}
+.basis{background:var(--cel-s);border-radius:8px;padding:13px 15px;font-size:12.5px;color:#3A4C6B;margin-bottom:16px}
+.basis b{color:var(--navy)}
+.calc{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;color:#4A5C7A;background:#F7F9FB;
+  border:1px solid var(--line);border-radius:7px;padding:11px 13px;margin-bottom:16px;line-height:1.7}
+button.go{width:100%;padding:12px;border:0;border-radius:7px;background:var(--navy);color:#fff;font-family:inherit;
+  font-size:14.5px;font-weight:600;cursor:pointer}
+button.go:hover{background:var(--navy-d)}
+button.go:disabled{background:#B4BFCE;cursor:not-allowed}
+.mini{width:100%;margin-top:9px;padding:10px;border:1.5px solid var(--line);border-radius:7px;background:#fff;
+  font-family:inherit;font-size:13px;font-weight:600;color:var(--navy);cursor:pointer}
+.mini:hover{border-color:var(--navy)}
+.done{display:flex;gap:10px;align-items:center;background:var(--ok-bg);color:var(--ok);border-radius:8px;
+  padding:12px 15px;font-weight:600;font-size:13.5px;margin-bottom:14px}
+.late{background:var(--warn-bg);color:var(--warn)}
+.legend{font-size:11.5px;color:var(--muted);margin:10px 0 0}
+input[type=file]{display:none}
+footer.foot{background:var(--navy-d);color:#93A6C4;font-size:12.5px;padding:24px 0;text-align:center}
+
+.fbtn{border:1.5px solid var(--line);background:#fff;border-radius:8px;padding:9px 15px;font-family:inherit;
+  font-size:13px;font-weight:600;color:var(--navy);cursor:pointer}
+.fbtn:hover{border-color:var(--navy)}
+.badge{font-size:10px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;padding:3px 9px;border-radius:5px;white-space:nowrap}
+.badge.ee{background:var(--cel-s);color:#2E5385}
+.badge.man{background:#F2EFE6;color:#7A6420}
+.badge.dig{background:var(--ok-bg);color:var(--ok)}
+.badge.pap{background:#F4EEEA;color:#82563C}
+.badge.mix{background:#EEEBF5;color:#4E4180}
+.madre{border:1.5px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:11px;cursor:pointer;background:#fff}
+.madre:hover{border-color:var(--cel)}
+.madre.sel{border-color:var(--navy);background:#FBFCFE}
+.madre .hd{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:3px}
+.madre .nb{font-weight:700;color:var(--navy);font-size:16px}
+.madre .nr{font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{display:flex;height:9px;border-radius:5px;overflow:hidden;background:var(--line);margin-top:11px}
+.bar i{display:block;height:100%}
+.barleg{display:flex;gap:14px;flex-wrap:wrap;margin-top:9px;font-size:11.5px;color:var(--muted)}
+.barleg b{display:inline-block;width:9px;height:9px;border-radius:2px;margin-right:5px;vertical-align:-1px}
+.subhd{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:700;
+  margin:22px 0 10px;padding-bottom:6px;border-bottom:2px solid var(--line)}
+table.ind{width:100%;border-collapse:collapse;font-size:13px}
+table.ind th{text-align:left;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding:8px 10px;border-bottom:1px solid var(--line)}
+table.ind td{padding:9px 10px;border-bottom:1px solid var(--line)}
+table.ind tr:hover td{background:#FAFCFE}
+table.ind td.n{font-variant-numeric:tabular-nums;color:var(--muted);white-space:nowrap}
+.obj{border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:11px;background:#fff}
+.obj .t{font-weight:700;color:var(--navy)}
+.obj .s{font-size:12.5px;color:var(--muted)}
+.obj .pb2{height:10px;border-radius:5px;background:var(--line);overflow:hidden;margin:11px 0 7px}
+.obj .pb2 i{display:block;height:100%;background:var(--navy)}
+.obj .nums{display:flex;justify-content:space-between;font-size:12.5px;color:var(--muted)}
+.obj .nums b{color:var(--navy);font-variant-numeric:tabular-nums}
+.form2{border:1px dashed var(--line);border-radius:10px;padding:20px 22px;margin-top:16px;background:#FBFCFE}
+.form2 h4{margin:0 0 3px;font-size:15px;color:var(--navy)}
+.form2 p.w{margin:0 0 16px;font-size:12.5px;color:var(--muted)}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px}
+@media(max-width:620px){.g2{grid-template-columns:1fr}}
+.g2 .fl{grid-column:1/-1}
+label.f{display:block;font-size:11px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:5px}
+input[type=text],input[type=number],select,textarea{width:100%;padding:9px 11px;border:1.5px solid var(--line);
+  border-radius:7px;font-family:inherit;font-size:14px;background:#fff;color:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,47,94,.1)}
+.warnbox{border-left:3px solid var(--gold);background:var(--warn-bg);color:var(--warn);padding:12px 16px;
+  border-radius:0 7px 7px 0;font-size:13px;margin:14px 0}
+.warnbox b{color:#6B520A}
+.sec-wrap{margin-bottom:6px}
+.movil-only{display:none}
+@media(max-width:640px){.movil-only{display:block}}
+.sectorhd{display:flex;align-items:center;gap:10px;border:0;border-left:4px solid var(--navy);
+  padding:9px 4px 9px 12px;margin:16px 0 10px;flex-wrap:wrap;width:100%;background:none;
+  font-family:inherit;text-align:left;cursor:pointer;border-radius:0 7px 7px 0}
+.sectorhd:hover{background:#F7F9FC}
+.chev{color:var(--muted);font-size:11px;width:12px}
+.sectorhd .sn{font-weight:700;color:var(--navy);font-size:15px}
+.sectorhd .sd{font-size:12px;color:var(--muted)}
+.sectorhd .sc{margin-left:auto;font-size:12px;font-weight:700;color:var(--muted);background:var(--bone);
+  border-radius:999px;padding:2px 11px}
+.tanda{border:1px solid var(--line);border-radius:10px;padding:6px 10px 10px;margin-bottom:12px;background:#FCFDFE}
+.tanda .th{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 4px 8px;border:0;background:none;
+  width:100%;font-family:inherit;text-align:left;cursor:pointer;border-bottom:1px solid var(--line);margin-bottom:4px}
+.tanda .th:hover{background:#F7F9FC}
+.tanda .ti{font-size:11px;font-weight:700;letter-spacing:.08em;color:#fff;background:var(--navy);border-radius:5px;padding:3px 9px}
+.tanda .tt{font-size:12.5px;color:var(--muted)}
+.tanda .chip{margin-left:auto}
+
+/* ================= celular ================= */
+@media(max-width:760px){
+  .kpis{grid-template-columns:1fr 1fr;gap:9px}
+  .kpi{padding:13px 14px}
+  .kpi .n{font-size:23px}
+  .kpi .l{font-size:10px}
+}
+@media(max-width:640px){
+  body{font-size:14.5px}
+  .wrap{padding:0 14px}
+  .demo-flag{font-size:10.5px;letter-spacing:.1em;padding:6px 12px}
+  header.top{padding:22px 0 0}
+  header.top h1{font-size:23px}
+  header.top p.sub{font-size:13.5px}
+  .eyebrow{font-size:10.5px;letter-spacing:.12em}
+  .today{float:none;display:block;width:100%;padding:0 0 10px;font-size:12px}
+  .roles{margin-top:13px;gap:8px}
+  .roles select{font-size:13.5px;padding:7px 11px;flex:1;min-width:0}
+  .roles .rd{display:none}
+  /* pestañas: una sola fila deslizable */
+  .vtabs{flex-wrap:nowrap;overflow-x:auto;margin-top:16px;gap:3px;
+    scrollbar-width:none;-webkit-overflow-scrolling:touch}
+  .vtabs::-webkit-scrollbar{display:none}
+  .vtabs button{flex:0 0 auto;font-size:13px;padding:11px 14px;white-space:nowrap}
+  .layout{padding:16px 0 40px;gap:16px}
+  .card{padding:17px 15px;margin-bottom:14px;border-radius:9px}
+  .card h2{font-size:17px}
+  aside{position:static !important}
+  .pb{padding:16px}
+  .meta{grid-template-columns:1fr 1fr;gap:10px}
+  .calc{font-size:10.5px;padding:10px 11px;overflow-x:auto}
+  /* calendario del mes: solo puntos */
+  .grid{gap:3px}
+  .cell{min-height:52px;padding:4px 3px;border-radius:6px}
+  .cell.tiene{cursor:pointer}
+  .cell .dn{font-size:11px}
+  .cell .fl{display:none}
+  .ev span{display:none}
+  .ev{justify-content:center;margin-top:4px;padding:0}
+  .ev .d2{width:7px;height:7px}
+  .dowl{font-size:9.5px}
+  .mnav b{font-size:15px}
+  /* tandas y secciones */
+  .sectorhd{margin:13px 0 8px;padding:8px 3px 8px 10px}
+  .sectorhd .sn{font-size:14px}
+  .sectorhd .sd{display:none}
+  .tanda{padding:5px 7px 8px}
+  .tanda .tt{font-size:11.5px}
+  .tanda .chip{margin-left:0}
+  .item{padding:11px 8px;gap:10px}
+  .item .nm{font-size:14px}
+  .chip{margin-left:0}
+  .madre{padding:14px 14px}
+  .madre .nb{font-size:15px}
+  .barleg{font-size:11px}
+  .asigbar{flex-direction:column;align-items:stretch;padding:13px 14px}
+  .asigbar .fw{max-width:none !important;width:100%}
+  .asigbar .fbtn{width:100%;padding:11px}
+  .form2{padding:16px 15px}
+  .g2{grid-template-columns:1fr}
+  /* tablas: se recortan columnas secundarias */
+  table.ind,table.par{font-size:12.5px}
+  table.ind th,table.ind td,table.par th,table.par td{padding:8px 6px}
+  table.ind.adj th:nth-child(2),table.ind.adj td:nth-child(2),
+  table.ind.adj th:nth-child(6),table.ind.adj td:nth-child(6){display:none}
+  table.ind.carga th:nth-child(2),table.ind.carga td:nth-child(2),
+  table.ind.carga th:nth-child(3),table.ind.carga td:nth-child(3),
+  table.ind.carga th:nth-child(4),table.ind.carga td:nth-child(4),
+  table.ind.carga th:nth-child(5),table.ind.carga td:nth-child(5){display:none}
+  table.par th:nth-child(3),table.par td:nth-child(3){display:none}
+  .obj{padding:14px 15px}
+  .ferlist span{font-size:11px;padding:4px 10px}
+}
+@media(max-width:400px){
+  header.top h1{font-size:20px}
+  .card{padding:15px 12px}
+  .cell{min-height:46px}
+}
+
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="demo-flag">Modelo interactivo · datos de ejemplo · no genera trámites reales</div>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">Escribanía General de Gobierno · Provincia de Córdoba</p>
+    <h1>Calendario de la Escribanía</h1>
+    <p class="sub">Los vencimientos no se cargan a mano: se calculan a partir de lo que pasa en el sistema, contando días hábiles.</p>
+    <div class="roles">
+      <span class="rl">Ver como</span>
+      <select id="selRol"></select>
+      <span class="rd" id="rolDesc"></span>
+    </div>
+    <div class="vtabs" role="tablist">
+      <button role="tab" aria-selected="true" data-v="v1">Mi barra de tareas</button>
+      <button role="tab" aria-selected="false" data-v="v2">Tablero de la Escribanía</button>
+      <button role="tab" aria-selected="false" data-v="v3">Expedientes</button>
+      <button role="tab" aria-selected="false" data-v="v6">Bandeja de la escribana</button>
+      <button role="tab" aria-selected="false" data-v="v5">Acciones y objetivos</button>
+      <button role="tab" aria-selected="false" data-v="v4">Parámetros</button>
+      <span class="today" id="hoyTxt"></span>
+    </div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <main>
+    <div class="view on" id="v1">
+      <div class="kpis" id="kpis"></div>
+      <div class="card">
+        <h2 id="t1">Escrituras asignadas a mí</h2>
+        <p class="hint" id="h1">Cada ítem con su plazo <b>ordenatorio</b>: es de gestión interna, no es fatal.</p>
+        <div id="tareas"></div>
+      </div>
+      <div class="card">
+        <h2>Vencimientos</h2>
+        <p class="hint">Plazos legales y obligaciones del organismo. Estos sí son fatales. Tocá cualquiera para ver el detalle y registrar la presentación.</p>
+        <div id="agenda"></div>
+      </div>
+    </div>
+
+    <div class="view" id="v2">
+      <div class="card">
+        <h2>Todo lo que vence</h2>
+        <p class="hint">Vista de mes, por área. Los días en beige son inhábiles y no cuentan para los plazos.</p>
+        <div class="filters" id="filtros"></div>
+        <div class="mnav">
+          <button id="prev" aria-label="Mes anterior">‹</button>
+          <b id="mesLbl"></b>
+          <button id="next" aria-label="Mes siguiente">›</button>
+        </div>
+        <div class="grid" id="dows"></div>
+        <div class="grid" id="cal" style="margin-top:6px"></div>
+        <p class="legend movil-only">En celular cada punto es un vencimiento. Tocá un día para ver el detalle acá abajo.</p>
+        <div id="dialista"></div>
+      </div>
+    </div>
+
+    <div class="view" id="v3">
+      <div class="card">
+        <div style="display:flex;align-items:flex-start;gap:14px;flex-wrap:wrap">
+          <div style="flex:1;min-width:240px">
+            <h2>Expedientes</h2>
+            <p class="hint">Los que llegan por Expediente Electrónico se sincronizan solos. Los de papel se cargan a mano, con la carga mínima indispensable.</p>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="fbtn" id="btnSync">Sincronizar con Expediente Electrónico</button>
+            <button class="fbtn" id="btnManual">Cargar expediente de papel</button>
+          </div>
+        </div>
+        <div class="filters" id="fexp"></div>
+        <div id="exps"></div>
+        <div id="ficha"></div>
+      </div>
+    </div>
+
+    <div class="view" id="v6">
+      <div class="card">
+        <h2>Requiere decisión de la escribana</h2>
+        <p class="hint">Lo que se trabó y no puede resolver quien lo tiene asignado. Llega acá en el momento en que se informa, no en la reunión de la semana que viene.</p>
+        <div id="trabas"></div>
+      </div>
+      <div class="card">
+        <h2>Listas para firmar</h2>
+        <p class="hint">Escrituras informadas como terminadas por el asignado, esperando la escribana.</p>
+        <div id="parafirmar"></div>
+      </div>
+      <div class="card">
+        <h2>Carga por persona</h2>
+        <p class="hint">Cuántas escrituras tiene cada uno y cómo viene el plazo ordenatorio.</p>
+        <div id="carga"></div>
+      </div>
+    </div>
+
+    <div class="view" id="v5">
+      <div class="card">
+        <h2>Objetivos del período</h2>
+        <p class="hint">Metas de gestión con avance real. El avance no se informa: sale del estado de los expedientes.</p>
+        <div id="objs"></div>
+      </div>
+      <div class="card">
+        <h2>Acciones</h2>
+        <p class="hint">Lo que hay que hacer para mover los objetivos, con responsable y fecha. Distinto de los vencimientos: acá la fecha la ponemos nosotros.</p>
+        <div id="accs"></div>
+      </div>
+    </div>
+
+    <div class="view" id="v4">
+      <div class="card">
+        <h2>Plazos configurables</h2>
+        <p class="hint">Los plazos viven acá, como dato con vigencia. Cuando cambia una norma se edita un registro; no se toca el código.</p>
+        <table class="par"><thead><tr><th>Plazo</th><th>Valor</th><th>Cuenta</th><th>Origen</th></tr></thead>
+        <tbody id="tpar"></tbody></table>
+      </div>
+      <div class="card">
+        <h2>Calendario de días inhábiles</h2>
+        <p class="hint">Feriados, asuetos y ferias. Es la mitad del trabajo real: un calendario que cuenta días corridos miente justo en los casos ajustados.</p>
+        <div class="ferlist" id="fers"></div>
+        <p class="legend">En el sistema real se carga por año y se distingue feriado nacional, provincial y asueto administrativo. Los de esta demo son de ejemplo y hay que verificarlos contra el calendario oficial.</p>
+      </div>
+    </div>
+  </main>
+
+  <aside>
+    <div class="panel">
+      <div class="ph"><div class="k" id="pk">Detalle</div><div class="n" id="pn">Ningún vencimiento seleccionado</div></div>
+      <div class="pb" id="pb"><div class="empty">Elegí un vencimiento para ver de dónde sale la fecha, quién es el responsable y registrar el cumplimiento.</div></div>
+    </div>
+  </aside>
+</div>
+
+<footer class="foot"><div class="wrap">Modelo de demostración del Calendario · Escribanía General de Gobierno de la Provincia de Córdoba</div></footer>
+
+<script>
+"use strict";
+
+/* ================= parámetros configurables ================= */
+const HOY = new Date(2026,7,24);           // 24 de agosto de 2026
+const FERIADOS = ["2026-01-01","2026-02-16","2026-02-17","2026-03-24","2026-04-02","2026-05-01","2026-05-25",
+  "2026-06-20","2026-07-09","2026-08-17","2026-10-12","2026-11-20","2026-12-08","2026-12-25"];
+
+const PARAMS = [
+  ["Inscripción conservando prioridad","45 días","corridos desde el otorgamiento","Ley 17.801, art. 5"],
+  ["Vigencia del certificado registral","15 / 25 / 30 días","según domicilio del escribano","Ley 17.801, art. 24"],
+  ["Subsanación de observación registral","180 días","de inscripción provisional","Ley 17.801, art. 9 inc. b"],
+  ["Presentación del índice mensual","5.º día hábil","del mes siguiente","Reglamentación interna"],
+  ["Declaración jurada mensual","10.º día hábil","del mes siguiente","Reglamentación interna"],
+  ["Obligaciones tributarias","15 de cada mes","o hábil siguiente","Calendario fiscal"],
+  ["Actualización de valores","Enero","anual, Ley Impositiva","Ley Impositiva Anual"],
+  ["Retiro de trámite terminado","30 días hábiles","desde la notificación","Reglamentación interna"],
+  ["Visualización de antecedentes","3 horas","desde que se acepta","Reglamentación SIIGENO"]
+];
+
+/* ================= utilidades de fecha ================= */
+const iso = d => d.toISOString().slice(0,10);
+const esFer = d => FERIADOS.includes(iso(d));
+const esHabil = d => d.getDay()!==0 && d.getDay()!==6 && !esFer(d);
+function sumaHabiles(desde,n){ const d=new Date(desde); let c=0;
+  while(c<n){ d.setDate(d.getDate()+1); if(esHabil(d)) c++; } return d; }
+function sumaCorridos(desde,n){ const d=new Date(desde); d.setDate(d.getDate()+n);
+  while(!esHabil(d)) d.setDate(d.getDate()+1); return d; }
+function habilesEntre(a,b){ const d=new Date(a); let c=0, s=b>=a?1:-1;
+  while(iso(d)!==iso(b)){ d.setDate(d.getDate()+s); if(esHabil(d)) c+=s; } return c; }
+function habilDelMes(y,m,n){ const d=new Date(y,m-1,0); let c=0;
+  while(c<n){ d.setDate(d.getDate()+1); if(esHabil(d)) c++; } return d; }
+const MES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+const DOW=["dom","lun","mar","mié","jue","vie","sáb"];
+const fmt = d => `${d.getDate()} de ${MES[d.getMonth()]}`;
+const fmtL = d => `${DOW[d.getDay()]} ${d.getDate()} de ${MES[d.getMonth()]} de ${d.getFullYear()}`;
+
+/* ================= datos de ejemplo ================= */
+const AREAS = ["Protocolo","Tributario","Registral","Requirente"];
+const YO = "Ferreyra, M.";
+
+const RECURRENTES = [
+  {id:"idx", nom:"Presentación del índice mensual", area:"Protocolo", resp:YO,
+   base:"5.º día hábil del mes siguiente", param:"Reglamentación interna", regla:(y,m)=>habilDelMes(y,m,5),
+   det:"Índice de escrituras autorizadas en el mes anterior."},
+  {id:"ddjj", nom:"Declaración jurada mensual", area:"Tributario", resp:"Ávila, R.",
+   base:"10.º día hábil del mes siguiente", param:"Reglamentación interna", regla:(y,m)=>habilDelMes(y,m,10),
+   det:"Declaración jurada de actos con incidencia tributaria."},
+  {id:"trib", nom:"Obligaciones tributarias", area:"Tributario", resp:YO,
+   base:"15 de cada mes, o hábil siguiente", param:"Calendario fiscal",
+   regla:(y,m)=>{const d=new Date(y,m-1,15); while(!esHabil(d)) d.setDate(d.getDate()+1); return d;},
+   det:"Liquidación y pago de las obligaciones del período."},
+  {id:"acervo", nom:"Cierre de tomo y remisión al archivo", area:"Protocolo", resp:"Ledesma, S.",
+   base:"último día hábil del mes", param:"Reglamentación interna",
+   regla:(y,m)=>{const d=new Date(y,m,0); while(!esHabil(d)) d.setDate(d.getDate()-1); return d;},
+   det:"Cierre del tomo del período y remisión al archivo de protocolo."}
+];
+
+const SECTORES = [
+  {k:"social", n:"Escrituras sociales", d:"Ley 9811 — regularización dominial de barrios", c:"#1B2F5E",
+   etapas:[["recibido","Recibido","#8FA3BE"],["antec","Antecedentes dominiales","#5B7BA8"],
+           ["minuta","Minuta y rogación","#3E6291"],["citacion","Citación a adjudicatarios","#C9A84C"],
+           ["otorgada","Escritura otorgada","#2E7D4F"],["inscripta","Inscripta","#1F6B3C"],
+           ["entregada","Testimonio entregado","#14532A"]],
+   reportes:{
+     recibido:[["Antecedentes pedidos","Se pidieron los informes de dominio",null],
+               ["Antecedentes completos","Están todos los antecedentes dominiales","antec"]],
+     antec:[["Certificados pedidos","Se solicitaron los certificados registrales",null],
+            ["Certificados recibidos","Llegaron los certificados",null],
+            ["Minuta lista","La minuta y la rogación están armadas","minuta"]],
+     minuta:[["Citación enviada","Se citó al adjudicatario a firmar","citacion"]],
+     citacion:[["Adjudicatario confirmó","Confirmó día y hora",null],
+               ["Lista para firmar","Queda a la espera de la escribana",null],
+               ["Escritura otorgada","Se firmó la escritura","otorgada"]],
+     otorgada:[["Presentada en el Registro","Ingresó a inscripción",null],
+               ["Inscripta","Volvió inscripta del Registro","inscripta"]],
+     inscripta:[["Testimonio entregado","Se le entregó al adjudicatario","entregada"]],
+     entregada:[]},
+   trabas:["Falta documentación del adjudicatario","El adjudicatario no responde a la citación",
+     "Adjudicatario fallecido — hay que abrir sucesión","Dominio con embargo o inhibición",
+     "Discrepancia catastral con el plano","Diferencia entre el expediente y el registro","Otro motivo"],
+   fin:"entregada", rotulo:"Adjudicatario"},
+
+  {k:"expro", n:"Expropiaciones", d:"Bienes afectados a utilidad pública", c:"#7A4B2A",
+   etapas:[["recibido","Recibido","#C0A08A"],["antec","Antecedentes dominiales","#A8815F"],
+           ["avaluo","Avalúo","#8B5E3C"],["acuerdo","Avenimiento","#C9A84C"],
+           ["otorgada","Escritura otorgada","#2E7D4F"],["inscripta","Inscripta","#1F6B3C"]],
+   reportes:{
+     recibido:[["Antecedentes pedidos","Se pidieron los informes de dominio",null],
+               ["Antecedentes completos","Están los antecedentes del inmueble","antec"]],
+     antec:[["Avalúo solicitado","Se pidió la valuación",null],
+            ["Avalúo recibido","Llegó la valuación","avaluo"]],
+     avaluo:[["Notificado al expropiado","Se corrió traslado de la oferta",null],
+             ["Avenimiento aceptado","El expropiado aceptó","acuerdo"]],
+     acuerdo:[["Lista para firmar","Queda a la espera de la escribana",null],
+              ["Escritura otorgada","Se firmó la escritura traslativa","otorgada"]],
+     otorgada:[["Presentada en el Registro","Ingresó a inscripción",null],
+               ["Inscripta","Volvió inscripta del Registro","inscripta"]],
+     inscripta:[]},
+   trabas:["No se ubica al titular registral","Titular fallecido — sin sucesión iniciada",
+     "Discrepancia entre el plano de mensura y el dominio","Rechazo del avenimiento — va a juicio",
+     "Falta la afectación firme","Diferencia de superficie con catastro","Otro motivo"],
+   fin:"inscripta", rotulo:"Titular / inmueble"},
+
+  {k:"ddjj", n:"Declaraciones juradas", d:"DDJJ de funcionarios — escritura y protocolización", c:"#3E6291",
+   etapas:[["recibida","DDJJ recibida","#9FB4CE"],["datos","Datos extraídos","#7A9AC0"],
+           ["redactada","Escritura redactada","#5B7BA8"],["revision","En revisión","#C9A84C"],
+           ["firma","Firmada por el funcionario","#2E7D4F"],["protocolizada","Protocolizada","#1F6B3C"]],
+   reportes:{
+     recibida:[["Turno coordinado","Se acordó día y hora con el funcionario",null],
+               ["Datos extraídos","Se procesó la DDJJ con el Amanuense","datos"]],
+     datos:[["Datos verificados","Se controló la extracción contra el original",null],
+            ["Escritura redactada","Se generó el texto de la escritura","redactada"]],
+     redactada:[["Enviada a revisión","La revisa la escribana","revision"]],
+     revision:[["Revisión conforme","Queda lista para la firma",null],
+               ["Firmada por el funcionario","Compareció y firmó","firma"]],
+     firma:[["Protocolizada","Ingresó al protocolo con su número","protocolizada"]],
+     protocolizada:[]},
+   trabas:["La DDJJ vino escaneada ilegible","Faltan datos en la DDJJ presentada",
+     "Diferencia con la declaración anterior","El funcionario no confirma el turno",
+     "Falta la firma del obligado","Otro motivo"],
+   fin:"protocolizada", rotulo:"Funcionario declarante"},
+
+  {k:"otros", n:"Otros trámites", d:"Oficios, certificaciones, informes y contratos", c:"#5C5470",
+   etapas:[["recibido","Recibido","#B3AEC2"],["analisis","En análisis","#8A82A3"],
+           ["proyecto","Proyecto redactado","#6B6188"],["revision","En revisión","#C9A84C"],
+           ["despachado","Despachado","#1F6B3C"]],
+   reportes:{
+     recibido:[["Tomado para análisis","Se está estudiando el pedido","analisis"]],
+     analisis:[["Se pidió información complementaria","Falta un dato del área requirente",null],
+               ["Proyecto redactado","Está el borrador del instrumento","proyecto"]],
+     proyecto:[["Enviado a revisión","Lo revisa la escribana","revision"]],
+     revision:[["Revisión conforme","Listo para despachar",null],
+               ["Despachado","Se remitió al área requirente","despachado"]],
+     despachado:[]},
+   trabas:["Falta documentación del área requirente","El pedido no corresponde a la Escribanía",
+     "Requiere dictamen previo de Fiscalía","Datos insuficientes para instrumentar","Otro motivo"],
+   fin:"despachado", rotulo:"Trámite / requirente"}
+];
+const sec = k => SECTORES.find(x=>x.k===k);
+const etapaDe = (sk,k) => { const e=(sec(sk).etapas.find(x=>x[0]===k))||sec(sk).etapas[0];
+  return {k:e[0],n:e[1],c:e[2]}; };
+
+const PERSONAS=[YO,"Ledesma, S.","Ávila, R.","Quiroga, P."];
+
+const NOMS=["Gómez, Ana M.","Ledesma, Carlos A.","Ríos, Marta E.","Vega, Hugo R.","Peralta, Silvia N.",
+  "Ferreyra, Julio C.","Moyano, Rosa I.","Bustos, Néstor D.","Aguirre, Lucía P.","Sosa, Ramón E.",
+  "Cabrera, Elsa M.","Ávila, Jorge L.","Luna, Nélida S.","Ponce, Mario A.","Ochoa, Delia R.",
+  "Herrera, Ariel F.","Molina, Zulema B.","Quiroga, Raúl H.","Villagra, Nora A.","Cáceres, Omar J."];
+const INMUEBLES=["Ruta E-53 km 12 — Pcia. de Córdoba","Av. Circunvalación — tramo sur",
+  "Camino a La Calera km 7","Ensanche Ruta 9 — Jesús María","Acceso Norte — Colonia Caroya",
+  "Ruta 36 km 41 — Alta Gracia","Traza ferroviaria — Villa María","Canal Los Molinos — tramo 3"];
+const DECLARANTES=["Gómez, Ana M. — Directora de Rentas","Ledesma, Carlos A. — Subsecretario de Obras",
+  "Ríos, Marta E. — Jefa de Despacho","Vega, Hugo R. — Director de Personal",
+  "Peralta, Silvia N. — Secretaria de Gobierno","Ferreyra, Julio C. — Director de Catastro",
+  "Moyano, Rosa I. — Contadora General","Bustos, Néstor D. — Asesor Legal"];
+const OTROS=["Oficio judicial — Juzgado Civil 12","Certificación de firmas — Ministerio de Salud",
+  "Informe de dominio — Secretaría de Obras","Comodato — Agencia Córdoba Deportes",
+  "Acta de constatación — Vialidad","Convenio marco — Municipalidad de Alta Gracia"];
+
+function armarInd(sk, pref, pesos){
+  const S_=sec(sk), out=[]; let idx=0;
+  const nombres = sk==="expro"?INMUEBLES : sk==="ddjj"?DECLARANTES : sk==="otros"?OTROS : NOMS;
+  pesos.forEach((cant,i)=>{
+    for(let j=0;j<cant;j++){
+      const et=S_.etapas[i][0];
+      out.push({nro:`${pref}/${String(idx+1).padStart(3,"0")}`,
+        adj:nombres[idx%nombres.length], etapa:et, sector:sk,
+        otorgada: (et==="otorgada"||et==="inscripta"||et==="entregada") ? new Date(2026,6+((idx%2)),4+((idx*3)%20)) : null,
+        asig:null, plazoOrd:null, reportes:[], traba:null, tanda:null});
+      idx++;
+    }
+  });
+  return out;
+}
+
+const MADRES = [
+  {sector:"social", nro:"0423-018742/2025", barrio:"Barrio Los Álamos", loc:"Córdoba Capital",
+   origen:"ee", soporte:"digital", recepcion:new Date(2026,2,11), resp:YO,
+   ind:armarInd("social","018742",[0,0,4,9,14,8,7])},
+  {sector:"social", nro:"0423-019115/2025", barrio:"Barrio San Jorge", loc:"Río Cuarto",
+   origen:"ee", soporte:"mixto", recepcion:new Date(2026,4,6), resp:YO,
+   ind:armarInd("social","019115",[3,7,11,6,4,1,0])},
+  {sector:"social", nro:"0423-017980/2024", barrio:"Barrio Villa Esperanza", loc:"Deán Funes",
+   origen:"man", soporte:"papel", recepcion:new Date(2025,9,2), resp:"Ledesma, S.",
+   ind:armarInd("social","017980",[0,0,0,2,6,9,15])},
+  {sector:"social", nro:"0423-019460/2026", barrio:"Barrio El Ceibo", loc:"Villa María",
+   origen:"man", soporte:"papel", recepcion:new Date(2026,6,29), resp:"Ávila, R.",
+   ind:armarInd("social","019460",[12,5,0,0,0,0,0])},
+
+  {sector:"expro", nro:"0045-021330/2025", barrio:"Ensanche Ruta E-53", loc:"Sierras Chicas",
+   origen:"ee", soporte:"digital", recepcion:new Date(2026,3,22), resp:"Quiroga, P.",
+   ind:armarInd("expro","021330",[2,3,4,3,2,1])},
+  {sector:"expro", nro:"0045-021894/2026", barrio:"Circunvalación — tramo sur", loc:"Córdoba Capital",
+   origen:"man", soporte:"mixto", recepcion:new Date(2026,5,14), resp:YO,
+   ind:armarInd("expro","021894",[5,4,2,1,0,0])},
+
+  {sector:"ddjj", nro:"DDJJ-2026-07", barrio:"Declaraciones juradas — julio 2026", loc:"Período mensual",
+   origen:"ee", soporte:"digital", recepcion:new Date(2026,7,3), resp:"Ávila, R.",
+   ind:armarInd("ddjj","DJ0726",[2,3,4,3,5,9])},
+  {sector:"ddjj", nro:"DDJJ-2026-08", barrio:"Declaraciones juradas — agosto 2026", loc:"Período mensual",
+   origen:"ee", soporte:"digital", recepcion:new Date(2026,8,1), resp:"Ávila, R.",
+   ind:armarInd("ddjj","DJ0826",[9,4,3,1,0,0])},
+
+  {sector:"otros", nro:"VAR-2026-08", barrio:"Trámites varios — agosto 2026", loc:"Mesa de entradas",
+   origen:"ee", soporte:"digital", recepcion:new Date(2026,7,1), resp:"Ledesma, S.",
+   ind:armarInd("otros","VAR0826",[5,4,3,2,4])}
+];
+
+/* ---- tandas: un lote de escrituras asignado a una persona con un plazo ordenatorio ---- */
+let TANDAS=[], tandaSeq=100;
+function crearTandaLibre(sector, titulo, items, quien, dias){
+  const t={id:"T-"+(++tandaSeq), sector, exp:"—", titulo,
+    persona:quien, creada:new Date(HOY), plazoOrd:sumaHabiles(HOY,dias), n:items.length};
+  TANDAS.push(t);
+  items.forEach(i=>{ i.asig=quien; i.plazoOrd=t.plazoOrd; i.tanda=t.id; });
+  return t;
+}
+function crearTanda(m, items, quien, dias){
+  const t={id:"T-"+(++tandaSeq), sector:m.sector, exp:m.nro, titulo:m.barrio,
+    persona:quien, creada:new Date(HOY), plazoOrd:sumaHabiles(HOY,dias), n:items.length};
+  TANDAS.push(t);
+  items.forEach(i=>{ i.asig=quien; i.plazoOrd=t.plazoOrd; i.tanda=t.id; });
+  return t;
+}
+
+/* asignaciones de ejemplo, en tandas de 5 */
+(function(){
+  let n=0;
+  const SIN_ASIGNAR=["0423-019460/2026","VAR-2026-08","DDJJ-2026-08"];   // recién llegados
+  MADRES.forEach(m=>{
+    if(SIN_ASIGNAR.includes(m.nro)) return;
+    const S_=sec(m.sector);
+    const pend=m.ind.filter(i=>i.etapa!==S_.fin);
+    for(let k=0;k<pend.length;k+=5){
+      const lote=pend.slice(k,k+5); if(!lote.length) continue;
+      n++;
+      const quien=PERSONAS[n%PERSONAS.length];
+      const t={id:"T-"+(++tandaSeq), sector:m.sector, exp:m.nro, titulo:m.barrio,
+        persona:quien, creada:new Date(2026,7,2+(n%10)),
+        plazoOrd:sumaHabiles(new Date(2026,7,2+(n%10)), 10+(n%14)), n:lote.length};
+      TANDAS.push(t);
+      lote.forEach(i=>{ i.asig=quien; i.plazoOrd=t.plazoOrd; i.tanda=t.id; });
+      if(n%7===0){ const x=lote[0];
+        x.traba={motivo:S_.trabas[n%S_.trabas.length], fecha:new Date(2026,7,11+(n%10)),
+          nota:"Informado desde la barra de tareas."}; }
+      if(n%5===0){ const x=lote[lote.length-1];
+        if((S_.reportes[x.etapa]||[]).some(r=>r[0]==="Lista para firmar"))
+          x.reportes.push({a:"Lista para firmar",f:new Date(2026,7,16+(n%6))});
+      }
+    }
+  });
+})();
+
+/* expedientes sueltos del requirente (no barriales) */
+const EXPEDIENTES = [
+  {nro:"EXP-2026-1201", tipo:"Segundo testimonio — compraventa", req:"Ledesma, Carlos A.",
+   otorgada:new Date(2026,7,5), certificado:null, certVig:0, resp:YO, area:"Requirente",
+   notificado:new Date(2026,7,12)},
+  {nro:"EXP-2026-1103", tipo:"Copia certificada — sucesión", req:"Vega, Hugo R.",
+   otorgada:null, certificado:null, certVig:0, resp:"Ávila, R.", area:"Requirente",
+   notificado:new Date(2026,6,28)}
+];
+
+const OBJETIVOS = [
+  {t:"Escrituras sociales otorgadas", s:"Meta anual 2026 · Ley 9811", meta:180,
+   campo:m=>m.sector!=="social"?0:m.ind.filter(i=>["otorgada","inscripta","entregada"].includes(i.etapa)).length},
+  {t:"Testimonios entregados a adjudicatarios", s:"Meta anual 2026 · Ley 9811", meta:120,
+   campo:m=>m.sector!=="social"?0:m.ind.filter(i=>i.etapa==="entregada").length},
+  {t:"Expropiaciones inscriptas", s:"Meta del semestre", meta:12,
+   campo:m=>m.sector!=="expro"?0:m.ind.filter(i=>i.etapa==="inscripta").length},
+  {t:"Declaraciones juradas protocolizadas", s:"Meta mensual", meta:30,
+   campo:m=>m.sector!=="ddjj"?0:m.ind.filter(i=>i.etapa==="protocolizada").length},
+  {t:"Otros trámites despachados", s:"Meta mensual", meta:20,
+   campo:m=>m.sector!=="otros"?0:m.ind.filter(i=>i.etapa==="despachado").length}
+];
+
+const ACCIONES = [
+  {n:"Digitalizar la nómina de El Ceibo", resp:"Ávila, R.", f:new Date(2026,7,28), obj:"Escrituras sociales otorgadas"},
+  {n:"Pedir informes de dominio — San Jorge (11 lotes)", resp:YO, f:new Date(2026,8,4), obj:"Escrituras sociales otorgadas"},
+  {n:"Organizar jornada de firmas en Los Álamos", resp:YO, f:new Date(2026,8,11), obj:"Escrituras sociales otorgadas"},
+  {n:"Coordinar entrega de testimonios — Villa Esperanza", resp:"Ledesma, S.", f:new Date(2026,7,26), obj:"Testimonios entregados a adjudicatarios"},
+  {n:"Reunión por avalúos pendientes — Ruta E-53", resp:"Quiroga, P.", f:new Date(2026,8,2), obj:"Expropiaciones inscriptas"},
+  {n:"Cierre de las DDJJ de julio", resp:"Ávila, R.", f:new Date(2026,7,27), obj:"Declaraciones juradas protocolizadas"}
+];
+
+/* ================= generación de vencimientos ================= */
+let EVENTOS=[];
+function generar(){
+  EVENTOS=[];
+  for(let off=-2; off<=3; off++){
+    const base=new Date(HOY.getFullYear(), HOY.getMonth()+off, 1);
+    RECURRENTES.forEach(r=>{
+      const f=r.regla(base.getFullYear(), base.getMonth()+1);
+      EVENTOS.push({key:r.id+"-"+iso(f), nom:r.nom, area:r.area, resp:r.resp, fecha:f,
+        base:r.base, param:r.param, det:r.det, tipo:"Obligación recurrente",
+        origen:`Regla del calendario institucional · período ${MES[base.getMonth()]} ${base.getFullYear()}`,
+        calc:`Período ${MES[base.getMonth()]} ${base.getFullYear()}\n→ ${r.base}\n→ ${fmtL(f)}`});
+    });
+  }
+  EXPEDIENTES.forEach(e=>{
+    if(e.otorgada){
+      const f=sumaCorridos(e.otorgada,45);
+      EVENTOS.push({key:e.nro+"-insc", nom:"Inscribir conservando prioridad", area:"Registral", resp:e.resp, fecha:f,
+        base:"45 días corridos desde el otorgamiento", param:"Ley 17.801, art. 5", exp:e.nro,
+        det:`${e.tipo} — ${e.req}`, tipo:"Plazo de expediente",
+        origen:`Escritura otorgada el ${fmtL(e.otorgada)}`,
+        calc:`Otorgamiento ${iso(e.otorgada)}\n+ 45 días corridos\n→ ${iso(f)} (${DOW[f.getDay()]})`});
+    }
+    if(e.certificado){
+      const f=sumaCorridos(e.certificado,e.certVig);
+      EVENTOS.push({key:e.nro+"-cert", nom:"Vence el certificado registral", area:"Registral", resp:e.resp, fecha:f,
+        base:`${e.certVig} días de vigencia`, param:"Ley 17.801, art. 24", exp:e.nro,
+        det:`${e.tipo} — ${e.req}`, tipo:"Plazo de expediente",
+        origen:`Certificado solicitado el ${fmtL(e.certificado)}`,
+        calc:`Solicitud ${iso(e.certificado)}\n+ ${e.certVig} días\n→ ${iso(f)}`});
+    }
+    if(e.notificado){
+      const f=sumaHabiles(e.notificado,30);
+      EVENTOS.push({key:e.nro+"-ret", nom:"Retiro pendiente del requirente", area:"Requirente", resp:e.resp, fecha:f,
+        base:"30 días hábiles desde la notificación", param:"Reglamentación interna", exp:e.nro,
+        det:`${e.tipo} — ${e.req}`, tipo:"Plazo de expediente",
+        origen:`Requirente notificado el ${fmtL(e.notificado)}`,
+        calc:`Notificación ${iso(e.notificado)}\n+ 30 días hábiles\n→ ${iso(f)}`});
+    }
+  });
+  MADRES.forEach(m=>{
+    if(m.sector==="ddjj") return;
+    m.ind.filter(i=>i.etapa==="otorgada" && i.otorgada).forEach(i=>{
+      const f=sumaCorridos(i.otorgada,45);
+      EVENTOS.push({key:i.nro+"-insc", nom:"Inscribir conservando prioridad", area:"Registral",
+        resp:m.resp, fecha:f, base:"45 días corridos desde el otorgamiento", param:"Ley 17.801, art. 5",
+        exp:i.nro, madre:m.nro, det:`${m.barrio} — ${i.adj}`, tipo:"Plazo de expediente", sector:m.sector,
+        origen:`Escritura individual otorgada el ${fmtL(i.otorgada)}`,
+        calc:`Otorgamiento ${iso(i.otorgada)}\n+ 45 días corridos\n→ ${iso(f)} (${DOW[f.getDay()]})`});
+    });
+  });
+
+  // historial: lo ya vencido se muestra cumplido, con algunos fuera de término
+  let i=0;
+  EVENTOS.forEach(ev=>{
+    if(ev.fecha < HOY && iso(ev.fecha)!==iso(HOY)){
+      i++;
+      ev.cumplido = (i%4===0) ? sumaHabiles(ev.fecha,2) : ev.fecha;
+      ev.comp="constancia_presentacion.pdf";
+    }
+  });
+  EVENTOS.sort((a,b)=>a.fecha-b.fecha);
+}
+generar();
+
+function estado(ev){
+  if(ev.cumplido) return "ok";
+  const dh=habilesEntre(HOY,ev.fecha);
+  if(ev.fecha<HOY && iso(ev.fecha)!==iso(HOY)) return "venc";
+  if(dh<=3) return "crit";
+  return "plazo";
+}
+const ETIQ={venc:"Vencido",crit:"Urgente",plazo:"En plazo",ok:"Cumplido"};
+
+/* ================= vistas ================= */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+$("#hoyTxt").textContent="Hoy: "+fmtL(HOY);
+
+$$(".vtabs button").forEach(b=>b.addEventListener("click",()=>{
+  $$(".vtabs button").forEach(x=>x.setAttribute("aria-selected","false"));
+  b.setAttribute("aria-selected","true");
+  $$(".view").forEach(v=>v.classList.remove("on"));
+  $("#"+b.dataset.v).classList.add("on");
+}));
+
+/* --- KPIs --- */
+function kpis(){
+  const act=EVENTOS.filter(e=>!e.cumplido);
+  const venc=act.filter(e=>estado(e)==="venc").length;
+  const crit=act.filter(e=>estado(e)==="crit").length;
+  const mes=EVENTOS.filter(e=>e.fecha.getMonth()===HOY.getMonth()&&e.fecha.getFullYear()===HOY.getFullYear());
+  const cump=mes.filter(e=>e.cumplido).length;
+  const pct=mes.length?Math.round(cump/mes.length*100):0;
+  $("#kpis").innerHTML=`
+    <div class="kpi ${venc?"bad":""}"><div class="n">${venc}</div><div class="l">Vencidos</div></div>
+    <div class="kpi ${crit?"warn":""}"><div class="n">${crit}</div><div class="l">Vencen esta semana</div></div>
+    <div class="kpi good"><div class="n">${cump}</div><div class="l">Cumplidos este mes</div></div>
+    <div class="kpi"><div class="n">${pct}%</div><div class="l">Cumplimiento del mes</div></div>`;
+}
+
+/* --- agenda --- */
+let SEL=null;
+function agenda(){
+  const mios=EVENTOS.filter(e=>e.resp===YO && !e.cumplido).slice(0,14);
+  if(!mios.length){ $("#agenda").innerHTML=`<div class="empty">No tenés vencimientos pendientes.</div>`; return; }
+  const grupos={};
+  mios.forEach(e=>{ const k=iso(e.fecha); (grupos[k]=grupos[k]||[]).push(e); });
+  $("#agenda").innerHTML=Object.keys(grupos).sort().map(k=>{
+    const d=new Date(k+"T12:00:00"), evs=grupos[k];
+    const dh=habilesEntre(HOY,d);
+    const rel = iso(d)===iso(HOY) ? "hoy"
+      : d<HOY ? `hace ${Math.abs(dh)} días hábiles` : `en ${dh} días hábiles`;
+    return `<div class="daygroup"><div class="dayhd"><span class="d">${fmtL(d)}</span><span class="r">${rel}</span></div>
+      ${evs.map(e=>item(e)).join("")}</div>`;
+  }).join("");
+  bindItems();
+}
+function item(e){
+  const st=estado(e);
+  return `<div class="item${SEL&&SEL.key===e.key?" sel":""}" data-k="${e.key}">
+    <div class="dot ${st}"></div>
+    <div style="min-width:0"><div class="nm">${e.nom}</div>
+      <div class="mt">${e.exp?e.exp+" · ":""}${e.det}</div></div>
+    <span class="chip ${st}">${ETIQ[st]}</span></div>`;
+}
+function bindItems(){
+  $$("[data-k]").forEach(el=>el.addEventListener("click",()=>{
+    SEL=EVENTOS.find(x=>x.key===el.dataset.k); detalle(); agenda(); calendario();
+  }));
+}
+
+/* --- calendario --- */
+let CUR=new Date(HOY.getFullYear(),HOY.getMonth(),1), DIA=null;
+let FILTRO="todas";
+$("#dows").innerHTML=["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"].map(d=>`<div class="dowl">${d}</div>`).join("");
+$("#filtros").innerHTML=["todas",...AREAS].map(a=>
+  `<button data-a="${a}" aria-pressed="${a==="todas"}">${a==="todas"?"Todas las áreas":a}</button>`).join("");
+$("#filtros").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  FILTRO=b.dataset.a;
+  $$("#filtros button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.a===FILTRO));
+  calendario();
+});
+$("#prev").addEventListener("click",()=>{CUR=new Date(CUR.getFullYear(),CUR.getMonth()-1,1);calendario();});
+$("#next").addEventListener("click",()=>{CUR=new Date(CUR.getFullYear(),CUR.getMonth()+1,1);calendario();});
+
+function diaLista(){
+  const box=$("#dialista"); if(!box) return;
+  if(!DIA){ box.innerHTML=""; return; }
+  const d=new Date(DIA+"T12:00:00");
+  const evs=EVENTOS.filter(e=>iso(e.fecha)===DIA&&(FILTRO==="todas"||e.area===FILTRO));
+  box.innerHTML=`<div class="subhd" style="margin-top:16px">${fmtL(d)}${esHabil(d)?"":" · día inhábil"}</div>`
+    + (evs.length ? evs.map(e=>item(e)).join("") : `<div class="empty">No hay vencimientos este día.</div>`);
+  bindItems();
+}
+
+function calendario(){
+  $("#mesLbl").textContent=MES[CUR.getMonth()][0].toUpperCase()+MES[CUR.getMonth()].slice(1)+" "+CUR.getFullYear();
+  const first=new Date(CUR), start=new Date(CUR);
+  const shift=(first.getDay()+6)%7; start.setDate(start.getDate()-shift);
+  let html="";
+  for(let i=0;i<42;i++){
+    const d=new Date(start); d.setDate(start.getDate()+i);
+    const out=d.getMonth()!==CUR.getMonth();
+    const fer=!esHabil(d);
+    const hoy=iso(d)===iso(HOY);
+    const evs=EVENTOS.filter(e=>iso(e.fecha)===iso(d)&&(FILTRO==="todas"||e.area===FILTRO));
+    html+=`<div class="cell${out?" out":""}${fer?" fer":""}${hoy?" hoy":""}${evs.length?" tiene":""}" data-day="${iso(d)}">
+      <div class="dn">${d.getDate()}${fer&&!out?` <span class="fl">${esFer(d)?"feriado":""}</span>`:""}</div>
+      ${evs.slice(0,3).map(e=>`<div class="ev" data-k="${e.key}"><div class="d2" style="background:${
+        {venc:"#A3271F",crit:"#C9A84C",plazo:"#5B7BA8",ok:"#1F6B3C"}[estado(e)]}"></div><span>${e.nom}</span></div>`).join("")}
+      ${evs.length>3?`<div class="ev"><span style="color:var(--muted)">+${evs.length-3} más</span></div>`:""}</div>`;
+  }
+  $("#cal").innerHTML=html; bindItems();
+  $$("#cal .cell").forEach(c=>c.addEventListener("click",e=>{
+    if(e.target.closest(".ev")) return;
+    DIA = DIA===c.dataset.day ? null : c.dataset.day;
+    diaLista(); calendario();
+  }));
+  $$("#cal .cell").forEach(c=>{ if(c.dataset.day===DIA) c.classList.add("elegido"); });
+}
+
+/* --- rol activo --- */
+let USR={n:YO, rol:"encargado"};
+const ROLES=[{n:YO,rol:"encargado",d:"Recibe los expedientes, los designa y sigue todo"},
+             {n:"Ledesma, S.",rol:"personal",d:"Ve solo lo que le designaron"},
+             {n:"Ávila, R.",rol:"personal",d:"Ve solo lo que le designaron"},
+             {n:"Quiroga, P.",rol:"personal",d:"Ve solo lo que le designaron"}];
+$("#selRol").innerHTML=ROLES.map((r,k)=>`<option value="${k}">${r.n} — ${r.rol==="encargado"?"Encargado":"Personal"}</option>`).join("");
+$("#selRol").addEventListener("change",e=>{
+  USR={n:ROLES[+e.target.value].n, rol:ROLES[+e.target.value].rol};
+  $("#rolDesc").textContent=ROLES[+e.target.value].d;
+  CERRADAS.clear(); refrescar();
+});
+setTimeout(()=>{ $("#rolDesc").textContent=ROLES[0].d; },0);
+
+/* --- secciones plegables --- */
+const CERRADAS=new Set();
+function seccion(id, color, titulo, sub, cuenta, cuerpo){
+  const ab=!CERRADAS.has(id);
+  return `<div class="sec-wrap">
+    <button class="sectorhd" data-tog="${id}" aria-expanded="${ab}" style="border-left-color:${color}">
+      <span class="chev">${ab?"▾":"▸"}</span>
+      <span class="sn">${titulo}</span>${sub?`<span class="sd">${sub}</span>`:""}
+      <span class="sc">${cuenta}</span></button>
+    <div class="sec-body" ${ab?"":'style="display:none"'}>${cuerpo}</div></div>`;
+}
+function bindToggles(){
+  $$("[data-tog]").forEach(b=>b.addEventListener("click",ev=>{
+    ev.stopPropagation();
+    const id=b.dataset.tog;
+    CERRADAS.has(id)?CERRADAS.delete(id):CERRADAS.add(id);
+    tareas(); bandeja(); listaExp(); if(EXPSEL) ficha();
+  }));
+}
+
+/* --- barra de tareas --- */
+function todasInd(){ const r=[]; MADRES.forEach(m=>m.ind.forEach(i=>r.push({i,m}))); return r; }
+
+function estadoOrd(i){
+  if(i.traba) return "venc";
+  if(!i.plazoOrd) return "plazo";
+  const dh=habilesEntre(HOY,i.plazoOrd);
+  if(i.plazoOrd<HOY && iso(i.plazoOrd)!==iso(HOY)) return "atras";
+  if(dh<=3) return "crit";
+  return "plazo";
+}
+const ETIQ_ORD={atras:"Atrasada",crit:"Vence pronto",plazo:"En término",venc:"Trabada"};
+
+function tarjetaTarea(i,m,conPersona){
+  const st=estadoOrd(i);
+  const dh=i.plazoOrd?habilesEntre(HOY,i.plazoOrd):null;
+  const rep=i.reportes.length?i.reportes[i.reportes.length-1].a:null;
+  return `<div class="item" style="cursor:default;align-items:flex-start">
+    <div class="dot ${st==="atras"?"crit":st}"></div>
+    <div style="min-width:0;flex:1">
+      <div class="nm">${i.adj} <span style="font-weight:500;color:var(--muted)">· ${i.nro}</span></div>
+      <div class="mt">${m.barrio} · <span class="badge" style="background:${etapaDe(i.sector,i.etapa).c};color:#fff">${etapaDe(i.sector,i.etapa).n}</span>
+        ${i.tanda?` · tanda ${i.tanda}`:""}${conPersona?" · "+i.asig:""}</div>
+      ${i.plazoOrd?`<div class="mt">Plazo ordenatorio: ${fmt(i.plazoOrd)} · ${dh<0?Math.abs(dh)+" días hábiles de atraso":dh+" días hábiles"} <span style="color:#98A4B8">(no fatal)</span></div>`:""}
+      ${rep?`<div class="mt" style="color:var(--ok)">Último informe: ${rep}</div>`:""}
+      ${i.traba?`<div class="warnbox" style="margin:9px 0 4px"><b>Trabada:</b> ${i.traba.motivo}<br>
+        <span style="font-size:12px">Informado el ${fmt(i.traba.fecha)} · esperando a la escribana</span></div>`:""}
+      ${(!conPersona && (USR.rol!=="encargado") && i.asig===USR.n)?acciones(i,m):""}
+    </div>
+    <span class="chip ${st==="atras"?"crit":st}">${ETIQ_ORD[st]}</span></div>`;
+}
+
+function acciones(i,m){
+  if(i.traba) return `<div style="margin-top:9px"><button class="fbtn" style="padding:6px 12px;font-size:12px" data-destrabar="${i.nro}">Marcar como destrabada</button></div>`;
+  const ops=(sec(i.sector).reportes[i.etapa])||[];
+  if(!ops.length) return "";
+  return `<div style="margin-top:10px;display:flex;gap:7px;flex-wrap:wrap">
+    ${ops.map((o,k)=>`<button class="fbtn" style="padding:6px 12px;font-size:12px" data-rep="${i.nro}" data-k="${k}" title="${o[1]}">${o[0]}</button>`).join("")}
+    <button class="fbtn" style="padding:6px 12px;font-size:12px;border-color:#E0C9A0;color:var(--warn)" data-traba="${i.nro}">No se puede avanzar</button>
+  </div>`;
+}
+
+function bloqueTandas(lista, editable){
+  const tandas=[...new Set(lista.map(x=>x.i.tanda))];
+  return tandas.map(tid=>{
+    const t=TANDAS.find(z=>z.id===tid);
+    const items=lista.filter(x=>x.i.tanda===tid);
+    const dh=t?habilesEntre(HOY,t.plazoOrd):0;
+    const st=!t?"plazo":(t.plazoOrd<HOY&&iso(t.plazoOrd)!==iso(HOY))?"atras":dh<=3?"crit":"plazo";
+    const ab=!CERRADAS.has("t"+tid);
+    return `<div class="tanda">
+      <button class="th" data-tog="t${tid}" aria-expanded="${ab}">
+        <span class="chev">${ab?"▾":"▸"}</span><span class="ti">${tid}</span>
+        <span class="tt">${t?t.titulo:""} · ${items.length} ${items.length===1?"ítem":"ítems"}${t&&!editable?" · designada a "+t.persona:""}</span>
+        <span class="chip ${st==="atras"?"crit":st}">${t?fmt(t.plazoOrd):""} · ${ETIQ_ORD[st]}</span></button>
+      ${ab?items.map(x=>tarjetaTarea(x.i,x.m,!editable)).join(""):""}</div>`;
+  }).join("");
+}
+
+function tareas(){
+  const todo=todasInd().filter(x=>x.i.etapa!==sec(x.i.sector).fin);
+  let html="";
+
+  if(USR.rol==="encargado"){
+    const sinAsig=todo.filter(x=>!x.i.asig);
+    html+=`<p class="legend" style="margin:0 0 14px">Como encargado ves todo: lo que llegó y todavía no designaste, y lo que ya está en manos de alguien.</p>`;
+    SECTORES.forEach(S_=>{
+      const g=sinAsig.filter(x=>x.i.sector===S_.k); if(!g.length) return;
+      const cuerpo=`<div class="asigbar">
+          <div class="fw"><label class="f">Designar a</label>
+            <select id="qa-${S_.k}">${PERSONAS.map(pn=>`<option>${pn}</option>`).join("")}</select></div>
+          <div class="fw" style="max-width:180px"><label class="f">Plazo ordenatorio</label>
+            <select id="qd-${S_.k}"><option value="10">10 días hábiles</option>
+              <option value="15" selected>15 días hábiles</option>
+              <option value="20">20 días hábiles</option><option value="30">30 días hábiles</option></select></div>
+          <button class="fbtn" data-asig="${S_.k}" style="padding:10px 18px">Designar las tildadas</button>
+        </div>` +
+        g.map(x=>`<div class="item" style="cursor:default;align-items:flex-start">
+          <input type="checkbox" data-na="${x.i.nro}" style="width:17px;height:17px;accent-color:var(--navy);margin-top:6px">
+          <div style="min-width:0;flex:1"><div class="nm">${x.i.adj} <span style="font-weight:500;color:var(--muted)">· ${x.i.nro}</span></div>
+            <div class="mt">${x.m.barrio} · <span class="badge" style="background:${etapaDe(x.i.sector,x.i.etapa).c};color:#fff">${etapaDe(x.i.sector,x.i.etapa).n}</span></div></div>
+          <span class="nuevo">Sin designar</span></div>`).join("");
+      html+=seccion("n"+S_.k, S_.c, S_.n+" — sin designar", S_.d, g.length, cuerpo);
+    });
+    if(!sinAsig.length) html+=`<div class="done" style="margin-bottom:18px">No quedó nada sin designar.</div>`;
+
+    html+=`<div class="subhd" style="margin-top:26px">Designado — seguimiento</div>`;
+    SECTORES.forEach(S_=>{
+      const g=todo.filter(x=>x.i.sector===S_.k && x.i.asig); if(!g.length) return;
+      const porP=[...new Set(g.map(x=>x.i.asig))].map(pn=>{
+        const suyas=g.filter(x=>x.i.asig===pn);
+        const ab=!CERRADAS.has("p"+S_.k+pn);
+        return `<div class="tanda" style="background:#fff">
+          <button class="th" data-tog="p${S_.k}${pn}" aria-expanded="${ab}">
+            <span class="chev">${ab?"▾":"▸"}</span>
+            <span class="tt" style="font-weight:600;color:var(--navy)">${pn}</span>
+            <span class="chip plazo">${suyas.length} ${suyas.length===1?"ítem":"ítems"}</span></button>
+          ${ab?bloqueTandas(suyas,false):""}</div>`;
+      }).join("");
+      html+=seccion("s"+S_.k, S_.c, S_.n, S_.d, g.length, porP);
+    });
+  } else {
+    const mias=todo.filter(x=>x.i.asig===USR.n);
+    if(!mias.length){ $("#tareas").innerHTML=`<div class="empty">No tenés nada designado.</div>`; return; }
+    html+=`<p class="legend" style="margin:0 0 14px">Tenés ${mias.length} ítems designados en ${new Set(mias.map(x=>x.i.tanda)).size} tandas. Tocá el título de un sector para plegarlo.</p>`;
+    SECTORES.forEach(S_=>{
+      const g=mias.filter(x=>x.i.sector===S_.k); if(!g.length) return;
+      html+=seccion("s"+S_.k, S_.c, S_.n, S_.d, g.length, bloqueTandas(g,true));
+    });
+  }
+  $("#tareas").innerHTML=html;
+  $("#t1").textContent = USR.rol==="encargado" ? "Expedientes que llegaron" : "Lo que tengo designado";
+  $("#h1").innerHTML = USR.rol==="encargado"
+    ? "Lo que entró al organismo cae acá. Designalo y seguís viéndolo, ahora con el nombre de quien lo tiene. El plazo <b>ordenatorio</b> es de gestión: no es fatal."
+    : "Cada ítem con su plazo <b>ordenatorio</b>: es de gestión interna, no es fatal. Informá desde acá en qué quedó cada uno.";
+  bindAcciones(); bindToggles();
+  $$("[data-asig]").forEach(b=>b.addEventListener("click",()=>{
+    const sk=b.dataset.asig;
+    const nros=[...document.querySelectorAll("[data-na]")].filter(c=>c.checked).map(c=>c.dataset.na);
+    const items=todasInd().filter(x=>nros.includes(x.i.nro)&&x.i.sector===sk).map(x=>x.i);
+    if(!items.length){ alert("Tildá al menos un ítem de este sector."); return; }
+    const quien=$("#qa-"+sk).value, dias=+$("#qd-"+sk).value;
+    const t=crearTandaLibre(sk, sec(sk).n, items, quien, dias);
+    refrescar();
+    alert(`Tanda ${t.id}: ${items.length} ${items.length===1?"ítem designado":"ítems designados"} a ${quien}.\n\nSector: ${sec(sk).n}\nPlazo ordenatorio: ${fmt(t.plazoOrd)} (no fatal)\n\nYa le aparecen en su barra de tareas. Vos los seguís viendo acá, en Designado.`);
+  }));
+}
+
+function bindAcciones(){
+  $$("[data-rep]").forEach(b=>b.addEventListener("click",()=>{
+    const x=todasInd().find(y=>y.i.nro===b.dataset.rep); if(!x) return;
+    const o=((sec(x.i.sector).reportes[x.i.etapa])||[])[+b.dataset.k]; if(!o) return;
+    x.i.reportes.push({a:o[0],f:new Date(HOY)});
+    if(o[2]){ x.i.etapa=o[2]; if(o[2]==="otorgada"&&!x.i.otorgada) x.i.otorgada=new Date(HOY); }
+    refrescar();
+  }));
+  $$("[data-traba]").forEach(b=>b.addEventListener("click",()=>{
+    const x=todasInd().find(y=>y.i.nro===b.dataset.traba); if(!x) return;
+    const TR=sec(x.i.sector).trabas;
+    const mot=prompt("¿Por qué no se puede avanzar?\n\n"+TR.map((m,k)=>(k+1)+". "+m).join("\n")+"\n\nEscribí el número:");
+    const n=parseInt(mot,10);
+    if(!n||n<1||n>TR.length) return;
+    x.i.traba={motivo:TR[n-1],fecha:new Date(HOY),nota:"Informado desde la barra de tareas."};
+    refrescar();
+    alert("Listo. La escribana lo ve ahora mismo en su bandeja.");
+  }));
+  $$("[data-destrabar]").forEach(b=>b.addEventListener("click",()=>{
+    const x=todasInd().find(y=>y.i.nro===b.dataset.destrabar); if(!x) return;
+    x.i.traba=null; refrescar();
+  }));
+}
+
+function porSector(lista, pref){
+  let html="";
+  SECTORES.forEach(S_=>{
+    const g=lista.filter(x=>x.i.sector===S_.k); if(!g.length) return;
+    html+=seccion(pref+S_.k, S_.c, S_.n, "", g.length, g.map(x=>tarjetaTarea(x.i,x.m,true)).join(""));
+  });
+  return html;
+}
+
+function bandeja(){
+  const trab=todasInd().filter(x=>x.i.traba);
+  $("#trabas").innerHTML = trab.length ? porSector(trab,"tr") : `<div class="empty">No hay nada trabado.</div>`;
+  const firmar=todasInd().filter(x=>x.i.reportes.some(r=>r.a==="Lista para firmar")
+     && ["citacion","acuerdo","revision"].includes(x.i.etapa));
+  $("#parafirmar").innerHTML = firmar.length ? porSector(firmar,"pf")
+    : `<div class="empty">Ninguna escritura informada como lista para firmar.</div>`;
+  $("#carga").innerHTML=`<table class="ind carga">
+    <thead><tr><th>Persona</th>${SECTORES.map(S_=>`<th style="text-align:right">${S_.n.split(" ")[0]}</th>`).join("")}
+      <th style="text-align:right">Total</th><th style="text-align:right">Atrasadas</th><th style="text-align:right">Trabadas</th></tr></thead>
+    <tbody>${PERSONAS.map(pn=>{
+      const suyas=todasInd().filter(x=>x.i.asig===pn && x.i.etapa!==sec(x.i.sector).fin);
+      const atr=suyas.filter(x=>estadoOrd(x.i)==="atras").length;
+      const tr=suyas.filter(x=>x.i.traba).length;
+      return `<tr><td>${pn}</td>${SECTORES.map(S_=>`<td class="n" style="text-align:right">${suyas.filter(x=>x.i.sector===S_.k).length}</td>`).join("")}
+        <td class="n" style="text-align:right;font-weight:700;color:var(--navy)">${suyas.length}</td>
+        <td class="n" style="text-align:right;color:${atr?"var(--warn)":"inherit"}">${atr}</td>
+        <td class="n" style="text-align:right;color:${tr?"var(--red)":"inherit"}">${tr}</td></tr>`;
+    }).join("")}</tbody></table>
+    <p class="legend">El plazo ordenatorio sirve para ordenar el trabajo y ver dónde se acumula, no para sancionar. Por eso no se muestra en rojo como un plazo legal.</p>`;
+  bindAcciones(); bindToggles();
+}
+
+function refrescar(){ generar(); tareas(); bandeja(); kpis(); agenda(); calendario(); listaExp(); if(EXPSEL) ficha(); objetivos(); }
+
+/* --- expedientes --- */
+let EXPSEL=null, FEXP="todos", MOSTRAR_FORM=false;
+
+$("#fexp").innerHTML=[["todos","Todos"],["social","Escrituras sociales"],["expro","Expropiaciones"],
+  ["ddjj","Declaraciones juradas"],["otros","Otros trámites"],["ee","Sincronizados"],["papel","En papel"]]
+  .map(f=>`<button data-f="${f[0]}" aria-pressed="${f[0]==="todos"}">${f[1]}</button>`).join("");
+$("#fexp").addEventListener("click",e=>{
+  const b=e.target.closest("button"); if(!b) return;
+  FEXP=b.dataset.f;
+  $$("#fexp button").forEach(x=>x.setAttribute("aria-pressed",x.dataset.f===FEXP));
+  listaExp();
+});
+
+const LBL={ee:"Expediente Electrónico",man:"Carga manual",digital:"Digital",papel:"Papel",mixto:"Mixto"};
+
+function listaExp(){
+  const vis=MADRES.filter(m=>FEXP==="todos"||m.sector===FEXP||m.origen===FEXP||m.soporte===FEXP);
+  if(!vis.length){ $("#exps").innerHTML=`<div class="empty">No hay expedientes con ese filtro.</div>`; return; }
+  let html="";
+  SECTORES.forEach(S_=>{
+    const g=vis.filter(m=>m.sector===S_.k); if(!g.length) return;
+    const cuerpo=g.map(m=>{
+      const tot=m.ind.length;
+      const dist=S_.etapas.map(e=>m.ind.filter(i=>i.etapa===e[0]).length);
+      const bar=S_.etapas.map((e,i)=>dist[i]?`<i style="width:${dist[i]/tot*100}%;background:${e[2]}"></i>`:"").join("");
+      const listo=m.ind.filter(i=>i.etapa===S_.fin).length;
+      const rot=m.sector==="ddjj"?"declaraciones":m.sector==="expro"?"inmuebles":m.sector==="otros"?"trámites":"adjudicatarios";
+      const fin=m.sector==="ddjj"?"protocolizadas":m.sector==="expro"?"inscriptas":m.sector==="otros"?"despachados":"con testimonio entregado";
+      return `<div class="madre${EXPSEL===m.nro?" sel":""}" data-m="${m.nro}">
+        <div class="hd"><span class="nb">${m.barrio}</span>
+          <span class="badge ${m.origen}">${LBL[m.origen]}</span>
+          <span class="badge ${m.soporte==="digital"?"dig":m.soporte==="papel"?"pap":"mix"}">${LBL[m.soporte]}</span></div>
+        <div class="nr">Expediente ${m.nro} · ${m.loc} · ${tot} ${rot} · recibido ${fmt(m.recepcion)}</div>
+        <div class="bar">${bar}</div>
+        <div class="barleg"><span>${listo} de ${tot} ${fin}</span>
+          <span style="margin-left:auto">Responsable: ${m.resp}</span></div></div>`;
+    }).join("");
+    html+=seccion("e"+S_.k, S_.c, S_.n, S_.d, g.length, cuerpo);
+  });
+  $("#exps").innerHTML=html;
+  $$("[data-m]").forEach(el=>el.addEventListener("click",()=>{
+    EXPSEL = EXPSEL===el.dataset.m ? null : el.dataset.m; MOSTRAR_FORM=false; listaExp(); ficha();
+  }));
+  bindToggles();
+  if(MOSTRAR_FORM) formManual();
+}
+
+function ficha(){
+  if(!EXPSEL || MOSTRAR_FORM){ if(!MOSTRAR_FORM) $("#ficha").innerHTML=""; return; }
+  const m=MADRES.find(x=>x.nro===EXPSEL);
+  const S_=sec(m.sector);
+  const tot=m.ind.length;
+  const dist=S_.etapas.map(e=>({e:{k:e[0],n:e[1],c:e[2]},n:m.ind.filter(i=>i.etapa===e[0]).length}));
+  const plazos=EVENTOS.filter(x=>x.madre===m.nro);
+
+  $("#ficha").innerHTML=`
+    <div class="subhd">Avance por etapa — ${m.barrio} <span style="color:${S_.c}">· ${S_.n}</span></div>
+    <table class="ind"><tbody>
+      ${dist.map(d=>`<tr><td style="width:22px"><span class="badge" style="background:${d.e.c};color:#fff">&nbsp;</span></td>
+        <td>${d.e.n}</td><td class="n" style="text-align:right;width:90px">${d.n} de ${tot}</td></tr>`).join("")}
+    </tbody></table>
+
+    ${m.soporte!=="digital"?`<div class="warnbox"><b>Expediente en papel.</b> Las etapas de estas individuales se actualizan a mano. Conviene cargar solo el cambio de etapa y la fecha, no volver a tipear los datos del adjudicatario.</div>`:""}
+
+    <div class="subhd">Asignar escrituras</div>
+    <div class="form2" style="margin-top:0">
+      <p class="w" style="margin-bottom:14px">Tildá las que querés asignar, elegí a quién y con qué plazo ordenatorio. Se crea una <b>tanda</b> y le aparece en su barra de tareas, dentro del sector ${S_.n}.</p>
+      <div class="g2">
+        <div><label class="f">Asignar a</label><select id="asigP">${PERSONAS.map(pn=>`<option>${pn}</option>`).join("")}</select></div>
+        <div><label class="f">Plazo ordenatorio</label><select id="asigD">
+          <option value="10">10 días hábiles</option><option value="15" selected>15 días hábiles</option>
+          <option value="20">20 días hábiles</option><option value="30">30 días hábiles</option></select></div>
+      </div>
+      <button class="fbtn" style="width:100%;padding:10px;margin-top:13px" id="btnAsig">Asignar las tildadas</button>
+      <p class="legend">El plazo ordenatorio es de gestión: ordena el trabajo y muestra dónde se acumula. No es fatal y no invalida nada si se pasa.</p>
+    </div>
+
+    <div class="subhd">${S_.rotulo}</div>
+    <table class="ind adj">
+      <thead><tr><th style="width:26px"></th><th>Individual</th><th>${S_.rotulo}</th><th>Etapa</th><th>Asignada a</th><th style="text-align:right">Plazo ord.</th></tr></thead>
+      <tbody>${m.ind.slice(0,12).map((i,k)=>`<tr>
+        <td>${i.etapa===S_.fin?"":`<input type="checkbox" data-sel="${k}" style="width:16px;height:16px;accent-color:var(--navy)">`}</td>
+        <td class="n">${i.nro}</td><td>${i.adj}</td>
+        <td><span class="badge" style="background:${etapaDe(m.sector,i.etapa).c};color:#fff">${etapaDe(m.sector,i.etapa).n}</span></td>
+        <td style="font-size:12.5px">${i.asig||'<span style="color:var(--muted)">sin asignar</span>'}
+          ${i.traba?'<br><span style="color:var(--red);font-size:11.5px;font-weight:600">trabada</span>':""}</td>
+        <td class="n" style="text-align:right">${i.plazoOrd?fmt(i.plazoOrd):"—"}</td>
+      </tr>`).join("")}</tbody></table>
+    ${tot>12?`<p class="legend">Se muestran 12 de ${tot}. En el sistema real, con paginado y búsqueda por adjudicatario.</p>`:""}
+
+    ${plazos.length?`<div class="subhd">Plazos activos de este expediente</div>
+      ${plazos.map(x=>item(x)).join("")}`:""}
+    <p class="legend">Los plazos no se cargan: nacen del otorgamiento de cada escritura individual.</p>`;
+
+  const bA=$("#btnAsig");
+  if(bA) bA.addEventListener("click",ev=>{
+    ev.stopPropagation();
+    const sel=[...document.querySelectorAll("[data-sel]")].filter(c=>c.checked).map(c=>+c.dataset.sel);
+    if(!sel.length){ alert("Tildá al menos una escritura."); return; }
+    const quien=$("#asigP").value, dias=+$("#asigD").value;
+    const t=crearTanda(m, sel.map(k=>m.ind[k]), quien, dias);
+    refrescar();
+    alert(`Tanda ${t.id} creada: ${sel.length} ${sel.length===1?"escritura":"escrituras"} para ${quien}.\n\nSector: ${sec(m.sector).n}\nPlazo ordenatorio: ${fmt(t.plazoOrd)} (no fatal)\n\nYa le aparece en su barra de tareas.`);
+  });
+  bindItems();
+}
+
+function formManual(){
+  $("#ficha").innerHTML=`<div class="form2">
+    <h4>Cargar un expediente de papel</h4>
+    <p class="w">Lo mínimo indispensable. Las individuales se generan a partir de la nómina; nadie las carga de a una.</p>
+    <div class="g2">
+      <div><label class="f">N° de expediente madre</label><input type="text" placeholder="0423-000000/2026"></div>
+      <div><label class="f">Barrio</label><input type="text" placeholder="Barrio ..."></div>
+      <div><label class="f">Localidad</label><input type="text" placeholder="Ej.: Deán Funes"></div>
+      <div><label class="f">Fecha de recepción</label><input type="text" placeholder="dd/mm/aaaa"></div>
+      <div><label class="f">Soporte</label><select><option>Papel</option><option>Mixto</option><option>Digital</option></select></div>
+      <div><label class="f">Responsable</label><select><option>${YO}</option><option>Ledesma, S.</option><option>Ávila, R.</option></select></div>
+      <div class="fl"><label class="f">Nómina de adjudicatarios</label>
+        <textarea rows="4" placeholder="Un apellido y nombre por línea. También se puede importar una planilla."></textarea></div>
+    </div>
+    <div class="warnbox"><b>Por qué se carga así.</b> Un expediente barrial puede tener cien adjudicatarios. Si hay que cargarlos de a uno con todos sus datos, no se hace nunca. Con la nómina alcanza para crear las individuales y después solo se mueve la etapa de cada una.</div>
+    <button class="fbtn" style="width:100%;padding:11px" onclick="alert('En el sistema real, acá se crean el expediente madre y una individual por cada línea de la nómina.')">Crear expediente y ${"" }nómina</button>
+  </div>`;
+}
+
+$("#btnManual").addEventListener("click",()=>{
+  MOSTRAR_FORM=!MOSTRAR_FORM; EXPSEL=null; listaExp();
+  if(MOSTRAR_FORM) formManual(); else $("#ficha").innerHTML="";
+});
+$("#btnSync").addEventListener("click",()=>{
+  const b=$("#btnSync"); b.textContent="Consultando Expediente Electrónico...";
+  setTimeout(()=>{
+    b.textContent="Sincronizar con Expediente Electrónico";
+    if(!MADRES.find(m=>m.nro==="0423-019702/2026")){
+      MADRES.unshift({nro:"0423-019702/2026", barrio:"Barrio La Merced", loc:"Cruz del Eje",
+        origen:"ee", soporte:"digital", recepcion:new Date(HOY), resp:YO,
+        ind:armarInd("019702",0,[9,4,0,0,0,0,0])});
+      MOSTRAR_FORM=false; listaExp();
+      refrescar();
+      alert("Llegó 1 expediente nuevo desde Expediente Electrónico: Barrio La Merced (13 adjudicatarios).\n\nSe sincronizan carátula, número, fecha de recepción y nómina: no hay que cargar nada a mano.\n\nEntra sin designar. Le aparece al encargado en la barra de tareas para que lo reparta.");
+    } else alert("No hay expedientes nuevos para sincronizar.");
+  },900);
+});
+
+/* --- objetivos y acciones --- */
+function objetivos(){
+  $("#objs").innerHTML=OBJETIVOS.map(o=>{
+    const actual=MADRES.reduce((a,m)=>a+o.campo(m),0);
+    const pct=Math.min(100,Math.round(actual/o.meta*100));
+    return `<div class="obj"><div class="t">${o.t}</div><div class="s">${o.s}</div>
+      <div class="pb2"><i style="width:${pct}%"></i></div>
+      <div class="nums"><span><b>${actual}</b> de ${o.meta}</span><span><b>${pct}%</b></span></div></div>`;
+  }).join("");
+  $("#accs").innerHTML=ACCIONES.slice().sort((a,b)=>a.f-b.f).map(a=>{
+    const dh=habilesEntre(HOY,a.f);
+    const st = a.f<HOY&&iso(a.f)!==iso(HOY) ? "venc" : dh<=3 ? "crit" : "plazo";
+    return `<div class="item" style="cursor:default"><div class="dot ${st}"></div>
+      <div style="min-width:0"><div class="nm">${a.n}</div>
+        <div class="mt">${a.resp} · ${fmtL(a.f)} · aporta a “${a.obj}”</div></div>
+      <span class="chip ${st}">${st==="venc"?"Atrasada":st==="crit"?"Esta semana":"Programada"}</span></div>`;
+  }).join("");
+}
+
+/* --- panel de detalle --- */
+function detalle(){
+  if(!SEL){ return; }
+  const st=estado(SEL);
+  const dh=habilesEntre(HOY,SEL.fecha);
+  $("#pk").textContent=SEL.tipo;
+  $("#pn").textContent=SEL.nom;
+  const tarde = SEL.cumplido && SEL.cumplido>SEL.fecha;
+  $("#pb").innerHTML=`
+    ${SEL.cumplido?`<div class="done${tarde?" late":""}">${tarde?"Presentado fuera de término":"Presentado a término"} · ${fmt(SEL.cumplido)}</div>`:""}
+    <div class="meta">
+      <div><div class="lb">Vence</div><div class="vl">${fmtL(SEL.fecha)}</div></div>
+      <div><div class="lb">${SEL.cumplido?"Estado":"Faltan"}</div><div class="vl">${SEL.cumplido?"Cumplido":(dh<0?Math.abs(dh)+" días hábiles vencido":dh+" días hábiles")}</div></div>
+      <div><div class="lb">Responsable</div><div class="vl">${SEL.resp}</div></div>
+      <div><div class="lb">Área</div><div class="vl">${SEL.area}</div></div>
+    </div>
+    <div class="basis"><b>${SEL.base}</b><br>${SEL.param}</div>
+    <div class="calc">${SEL.origen}<br><br>${SEL.calc.replace(/\n/g,"<br>")}</div>
+    ${SEL.cumplido
+      ? `<div class="basis" style="background:var(--ok-bg);color:var(--ok)">Constancia adjunta: <b>${SEL.comp}</b></div>
+         <button class="mini" onclick="alert('En el sistema real se descarga la constancia de presentación.')">Ver la constancia</button>`
+      : `<button class="go" onclick="document.getElementById('compFile').click()">Registrar la presentación</button>
+         <input type="file" id="compFile">
+         <p class="legend">Para dar por cumplido un vencimiento hay que adjuntar la constancia. Así el calendario también queda como archivo de cumplimiento.</p>`}`;
+  const inp=$("#compFile");
+  if(inp) inp.addEventListener("change",ev=>{
+    const f=ev.target.files[0]; if(!f) return;
+    SEL.cumplido=new Date(HOY); SEL.comp=f.name;
+    detalle(); kpis(); agenda(); calendario(); if(EXPSEL) ficha();
+  });
+}
+
+kpis(); agenda(); calendario(); listaExp(); objetivos(); tareas(); bandeja(); diaLista();
+$("#tpar").innerHTML=PARAMS.map(p=>`<tr><td>${p[0]}</td><td class="v">${p[1]}</td><td>${p[2]}</td><td style="color:var(--muted)">${p[3]}</td></tr>`).join("");
+$("#fers").innerHTML=FERIADOS.map(f=>{const d=new Date(f+"T12:00:00");return `<span>${d.getDate()} ${MES[d.getMonth()].slice(0,3)}</span>`;}).join("");
+</script>
+</body>
+</html>

@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Armador de Solicitud — SIIGENO REQUIRENTE (modelo interactivo)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<style>
+:root{
+  --navy:#1B2F5E; --navy-d:#0F1C3A; --cel:#A8C8E8; --cel-s:#E8F0F9;
+  --gold:#C9A84C; --bone:#EEF2F5; --line:#D8E0EA; --muted:#65748C;
+  --ok:#1F6B3C; --ok-bg:#E6F3EB; --warn:#8A6A12; --warn-bg:#FBF3DC;
+  --radius:10px;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Montserrat,system-ui,sans-serif;background:var(--bone);color:#1E2634;
+  font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.demo-flag{background:var(--navy-d);color:var(--cel);font-size:12px;letter-spacing:.14em;
+  text-transform:uppercase;text-align:center;padding:7px 14px;font-weight:600}
+header.top{background:var(--navy);color:#fff;padding:30px 0 34px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 26px}
+.eyebrow{margin:0 0 10px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);font-weight:600}
+header.top h1{margin:0;font-size:31px;font-weight:700;letter-spacing:-.01em;line-height:1.2}
+header.top p.sub{margin:12px 0 0;max-width:62ch;color:#D5E1F0;font-size:15px}
+.helpbar{margin-top:18px}
+.helplink{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.1);border:1px solid rgba(168,200,232,.45);
+  color:#fff;font-family:inherit;font-size:13.5px;font-weight:600;padding:9px 16px;border-radius:999px;cursor:pointer}
+.helplink:hover{background:rgba(255,255,255,.18)}
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 372px;gap:26px;align-items:start;padding:26px 0 60px}
+@media(max-width:940px){.layout{grid-template-columns:1fr}}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px 26px;margin-bottom:18px}
+.card.done{border-color:#C6DCC9;background:#FCFEFC}
+.card.off{opacity:.45;pointer-events:none}
+.step{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  color:var(--navy);background:var(--cel-s);border-radius:999px;padding:4px 12px;margin-bottom:12px}
+.card h2{margin:0 0 4px;font-size:19px;font-weight:700;color:var(--navy)}
+.hint{margin:0 0 18px;color:var(--muted);font-size:13.5px}
+.askline{margin:14px 0 0;font-size:13px;color:var(--muted)}
+.askline button{background:none;border:0;color:var(--navy);font-family:inherit;font-size:13px;font-weight:600;
+  text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:0}
+
+.opts{display:grid;gap:10px}
+.opt{display:block;position:relative;border:1.5px solid var(--line);border-radius:8px;padding:14px 46px 14px 16px;
+  cursor:pointer;background:#fff;transition:.14s}
+.opt:hover{border-color:var(--cel);background:#FBFDFF}
+.opt .t{font-weight:600;display:block}
+.opt .d{color:var(--muted);font-size:13px;display:block;margin-top:2px}
+.opt.sel{border-color:var(--navy);background:var(--cel-s);box-shadow:0 0 0 1px var(--navy) inset}
+.opt:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.opts.two{grid-template-columns:1fr 1fr}
+@media(max-width:600px){.opts.two{grid-template-columns:1fr}}
+.qm{position:absolute;top:12px;right:12px;width:23px;height:23px;border-radius:50%;border:1.5px solid var(--line);
+  background:#fff;color:var(--muted);font-family:inherit;font-size:12px;font-weight:700;cursor:pointer;line-height:1;padding:0}
+.qm:hover{border-color:var(--navy);color:var(--navy)}
+.tip{grid-column:1/-1;background:var(--cel-s);border-left:3px solid var(--cel);border-radius:0 7px 7px 0;
+  padding:12px 16px;font-size:13px;color:#3A4C6B;margin-top:-4px}
+.tip strong{color:var(--navy)}
+
+.identity{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;background:var(--cel-s);border-radius:8px;padding:16px 18px}
+@media(max-width:600px){.identity{grid-template-columns:1fr}}
+.identity .lb{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.identity .vl{font-weight:600}
+.cidi{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:600;color:var(--ok);
+  background:var(--ok-bg);border-radius:999px;padding:4px 11px;margin-bottom:12px}
+.cidi::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--ok)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.grid2{grid-template-columns:1fr}}
+label.f{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;margin-bottom:5px}
+input[type=text],input[type=number],select,textarea{width:100%;padding:10px 12px;border:1.5px solid var(--line);
+  border-radius:7px;font-family:inherit;font-size:14.5px;background:#fff;color:inherit}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--navy);box-shadow:0 0 0 3px rgba(27,47,94,.1)}
+.field{margin-bottom:14px}
+.subbox{border:1px dashed var(--line);border-radius:8px;padding:18px 20px;margin-top:16px;background:#FBFCFE}
+.subbox h4{margin:0 0 3px;font-size:14px;color:var(--navy)}
+.subbox p.w{margin:0 0 14px;font-size:12.5px;color:var(--muted)}
+
+.note{border-left:3px solid var(--gold);background:var(--warn-bg);color:var(--warn);
+  padding:12px 16px;border-radius:0 7px 7px 0;font-size:13.5px;margin:16px 0 0}
+.note strong{color:#6B520A}
+
+.docs{list-style:none;margin:0;padding:0}
+.docs li{padding:15px 0;border-bottom:1px solid var(--line)}
+.docs li:last-child{border-bottom:0}
+.docs .hd{display:flex;gap:10px;align-items:baseline}
+.docs .nm{font-weight:600;font-size:14.5px}
+.docs .wy{color:var(--muted);font-size:12.5px;margin:2px 0 10px}
+.tag{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;font-weight:700;padding:3px 8px;border-radius:999px;white-space:nowrap}
+.tag.p{background:var(--warn-bg);color:var(--warn)}
+.tag.o{background:var(--ok-bg);color:var(--ok)}
+.filerow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.fbtn{border:1.5px solid var(--line);background:#fff;border-radius:7px;padding:9px 14px;font-family:inherit;
+  font-size:13px;font-weight:600;color:var(--navy);cursor:pointer}
+.fbtn:hover{border-color:var(--navy)}
+.fname{font-size:12.5px;color:var(--ok);font-weight:600}
+.docs input[type=file]{display:none}
+
+aside{position:sticky;top:20px}
+.panel{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.panel .ph{background:var(--navy);color:#fff;padding:15px 20px}
+.panel .ph .k{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);font-weight:600}
+.panel .ph .n{font-weight:700;font-size:17px;margin-top:2px}
+.tabs{display:flex;border-bottom:1px solid var(--line);background:#FAFCFE}
+.tabs button{flex:1;border:0;background:none;font-family:inherit;font-size:12.5px;font-weight:600;
+  color:var(--muted);padding:12px 4px;cursor:pointer;border-bottom:3px solid transparent}
+.tabs button[aria-selected=true]{color:var(--navy);border-bottom-color:var(--gold);background:#fff}
+.pane{padding:20px;display:none}
+.pane.on{display:block}
+.empty{color:var(--muted);font-size:13.5px;text-align:center;padding:22px 8px}
+
+.cost{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--line);font-size:14px}
+.cost:last-of-type{border-bottom:0}
+.cost .v{font-weight:600;font-variant-numeric:tabular-nums}
+.total{display:flex;justify-content:space-between;align-items:baseline;margin-top:14px;padding-top:14px;border-top:2px solid var(--navy)}
+.total .l{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.total .v{font-size:25px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+
+.doc{background:#fff;border:1px solid var(--line);border-radius:6px;padding:20px 22px;
+  font-family:Georgia,"Times New Roman",serif;font-size:12.5px;line-height:1.75;max-height:400px;overflow:auto}
+.doc h3{font-family:Montserrat,sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;
+  text-align:center;margin:0 0 3px;color:var(--navy)}
+.doc .org{font-family:Montserrat,sans-serif;font-size:10px;text-align:center;color:var(--muted);margin:0 0 14px}
+.doc .sec{font-family:Montserrat,sans-serif;font-size:10px;letter-spacing:.09em;text-transform:uppercase;
+  color:var(--navy);font-weight:700;margin:14px 0 6px;border-bottom:1px solid var(--line);padding-bottom:3px}
+.doc .fill{background:#FFF8E1;box-shadow:0 0 0 1px #EBD9A0 inset;padding:0 3px}
+.doc .blank{color:#B9C2CF}
+.legend{font-size:11.5px;color:var(--muted);margin:10px 0 0}
+.sw{display:inline-block;width:10px;height:10px;background:#FFF8E1;border:1px solid #EBD9A0;vertical-align:-1px;margin-right:4px}
+
+.ready{display:flex;align-items:center;gap:10px;background:var(--ok-bg);color:var(--ok);
+  border-radius:8px;padding:12px 15px;font-weight:600;font-size:13.5px;margin-bottom:14px}
+.pending{background:var(--warn-bg);color:var(--warn)}
+button.go{width:100%;padding:13px;border:0;border-radius:7px;background:var(--navy);color:#fff;
+  font-family:inherit;font-size:15px;font-weight:600;cursor:pointer}
+button.go:hover{background:var(--navy-d)}
+button.go:disabled{background:#B4BFCE;cursor:not-allowed}
+.mini{width:100%;margin-top:9px;padding:11px;border:1.5px solid var(--line);border-radius:7px;background:#fff;
+  font-family:inherit;font-size:13.5px;font-weight:600;color:var(--navy);cursor:pointer}
+.mini:hover{border-color:var(--navy)}
+.eta{display:flex;gap:12px;align-items:center;background:var(--cel-s);border-radius:8px;padding:13px 16px;margin-top:16px}
+.eta .num{font-size:19px;font-weight:700;color:var(--navy);white-space:nowrap}
+.eta .tx{font-size:12.5px;color:var(--muted);line-height:1.45}
+
+dialog{border:0;border-radius:12px;padding:0;max-width:520px;width:calc(100% - 40px);box-shadow:0 24px 60px rgba(15,28,58,.3)}
+dialog::backdrop{background:rgba(15,28,58,.55)}
+dialog .dh{background:var(--navy);color:#fff;padding:20px 26px}
+dialog .dh .k{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);font-weight:600}
+dialog .dh h3{margin:3px 0 0;font-size:20px;font-weight:700}
+dialog .db{padding:22px 26px 26px;font-size:14px}
+dialog .db p{margin:0 0 14px}
+dialog .db ul{margin:0 0 16px;padding-left:20px;color:#3A4C6B}
+dialog .db li{margin-bottom:7px}
+dialog .close{width:100%;padding:12px;border:0;border-radius:7px;background:var(--navy);color:#fff;
+  font-family:inherit;font-size:14.5px;font-weight:600;cursor:pointer}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+
+/* ================= celular ================= */
+@media(max-width:640px){
+  body{font-size:14.5px}
+  .wrap{padding:0 15px}
+  .demo-flag{font-size:10.5px;letter-spacing:.1em;padding:6px 12px}
+  header.top{padding:22px 0 26px}
+  header.top h1{font-size:24px}
+  header.top p.sub{font-size:14px}
+  .eyebrow{font-size:10.5px;letter-spacing:.12em}
+  .helplink{font-size:13px;padding:9px 15px}
+  .layout{padding:16px 0 40px;gap:16px}
+  .card{padding:18px 16px;margin-bottom:14px;border-radius:9px}
+  .card h2{font-size:17px}
+  .opt{padding:13px 42px 13px 14px}
+  .subbox,.form2{padding:15px 16px}
+  aside{position:static !important}
+  .panel{border-radius:9px}
+  .pb,.pane{padding:16px}
+  .tabs button{font-size:12px;padding:11px 3px}
+  .total .v{font-size:22px}
+  .doc{padding:16px 15px;font-size:12px;max-height:340px}
+  .identity{padding:14px 15px}
+  dialog{border-radius:11px}
+  dialog .dh{padding:17px 19px}
+  dialog .dh h3{font-size:18px}
+  dialog .db{padding:19px 19px 22px;font-size:13.5px}
+  .filerow{gap:8px}
+  .fbtn{padding:10px 14px}
+}
+@media(max-width:400px){
+  header.top h1{font-size:21px}
+  .card{padding:16px 13px}
+  .doc{font-size:11.5px}
+}
+
+/* ---- impresión: sale solo el formulario ---- */
+@media print{
+  @page{margin:18mm}
+  .demo-flag, header.top, footer.foot, main, aside .ph, .tabs,
+  #p1, #p2, .legend, .mini, dialog{display:none !important}
+  html,body{background:#fff !important;margin:0}
+  .layout{display:block !important;padding:0 !important;max-width:none}
+  .wrap{max-width:none;padding:0}
+  aside{position:static !important}
+  .panel{border:0 !important;border-radius:0 !important;overflow:visible}
+  .pane{display:none !important;padding:0 !important}
+  .pane#p3{display:block !important}
+  .doc{border:0 !important;border-radius:0;max-height:none !important;overflow:visible !important;
+       padding:0 !important;font-size:13.5px;line-height:1.9}
+  .doc .fill{background:none !important;box-shadow:none !important;font-weight:600;padding:0}
+  .doc .blank{color:#8A94A5}
+  .doc .sec{page-break-after:avoid}
+}
+</style>
+</head>
+<body>
+
+<div class="demo-flag">Modelo interactivo · datos de ejemplo · no genera trámites reales</div>
+
+<header class="top">
+  <div class="wrap">
+    <p class="eyebrow">Escribanía General de Gobierno · Provincia de Córdoba</p>
+    <h1>Armador de Solicitud</h1>
+    <p class="sub">Contestá unas pocas preguntas y el sistema arma el formulario completo, te dice qué documentación te falta a vos y cuánto sale. Sin leer la guía de requisitos entera.</p>
+    <div class="helpbar"><button class="helplink" data-help="general">¿Necesitás ayuda con tu trámite?</button></div>
+  </div>
+</header>
+
+<div class="wrap layout">
+  <main>
+    <section class="card done">
+      <span class="cidi">Verificado con CIDI nivel 2</span>
+      <h2>Tus datos ya están cargados</h2>
+      <p class="hint">Vienen de tu cuenta. Si algo cambió, podés editarlo antes de enviar.</p>
+      <div class="identity">
+        <div><div class="lb">Apellido y nombre</div><div class="vl">Ferreyra, Martín</div></div>
+        <div><div class="lb">DNI</div><div class="vl">—</div></div>
+        <div><div class="lb">Domicilio</div><div class="vl">Deán Funes, Córdoba</div></div>
+      </div>
+    </section>
+
+    <section class="card" id="c1">
+      <span class="step">Paso 1</span>
+      <h2>¿Qué necesitás?</h2>
+      <p class="hint">Elegí con tus palabras. El sistema se ocupa de saber qué trámite es.</p>
+      <div class="opts" id="need"></div>
+      <div id="sub1"></div>
+      <p class="askline">¿No sabés cuál te corresponde? <button data-help="tramites">Ver la diferencia entre los trámites</button></p>
+    </section>
+
+    <section class="card off" id="c2">
+      <span class="step">Paso 2</span>
+      <h2>¿En qué carácter lo pedís?</h2>
+      <p class="hint">Según lo que elijas cambia la documentación que hay que acreditar. Tocá el signo de pregunta si alguna opción no te queda clara.</p>
+      <div class="opts" id="chars"></div>
+      <div id="acred"></div>
+      <div id="note2"></div>
+      <p class="askline">¿Tu caso no encaja en ninguno? <button data-help="caracter">Consultar con la Escribanía</button></p>
+    </section>
+
+    <section class="card off" id="c3">
+      <span class="step">Paso 3</span>
+      <h2>¿Sobre qué escritura?</h2>
+      <p class="hint">Con el número y el año, el sistema busca en los tomos digitalizados y completa el resto.</p>
+      <div class="grid2">
+        <div class="field"><label class="f" for="esc">Escritura / Acta N°</label><input type="text" id="esc" placeholder="Ej.: 142"></div>
+        <div class="field"><label class="f" for="anio">Año</label><input type="text" id="anio" placeholder="Ej.: 2014"></div>
+      </div>
+      <button class="mini" id="buscar" type="button">Buscar la escritura</button>
+      <div id="resEsc"></div>
+      <p class="askline">¿No sabés el número de tu escritura? <button data-help="numero">Cómo encontrarlo</button></p>
+    </section>
+
+    <section class="card off" id="c4">
+      <span class="step">Paso 4</span>
+      <h2>Datos del pedido</h2>
+      <p class="hint" id="hint4">Lo último que falta antes de armar el formulario.</p>
+      <div id="extra"></div>
+    </section>
+
+    <section class="card off" id="c5">
+      <span class="step">Paso 5</span>
+      <h2>Adjuntá la documentación</h2>
+      <p class="hint">Solo lo que corresponde a tu caso. Sin todos los adjuntos, la solicitud no se puede enviar.</p>
+      <ul class="docs" id="docs"></ul>
+      <div class="eta">
+        <div class="num" id="etaN">—</div>
+        <div class="tx" id="etaT">La estimación aparece cuando elijas el trámite. Es un rango habitual, no una fecha comprometida.</div>
+      </div>
+    </section>
+  </main>
+
+  <aside>
+    <div class="panel">
+      <div class="ph">
+        <div class="k">Carpeta del trámite</div>
+        <div class="n" id="pName">Todavía sin trámite</div>
+      </div>
+      <div class="tabs" role="tablist">
+        <button role="tab" aria-selected="true" data-p="p1">Qué falta</button>
+        <button role="tab" aria-selected="false" data-p="p2">Cuánto sale</button>
+        <button role="tab" aria-selected="false" data-p="p3">Tu formulario</button>
+      </div>
+      <div class="pane on" id="p1"><div id="stat"></div><div id="miss"></div></div>
+      <div class="pane" id="p2"><div id="costs"></div></div>
+      <div class="pane" id="p3"><div id="preview"></div></div>
+    </div>
+  </aside>
+</div>
+
+<dialog id="dlg">
+  <div class="dh"><div class="k" id="dlgK">Ayuda</div><h3 id="dlgT"></h3></div>
+  <div class="db"><div id="dlgB"></div><button class="close" id="dlgC">Entendido</button></div>
+</dialog>
+
+<footer class="foot" style="background:var(--navy-d);color:#93A6C4;font-size:12.5px;padding:26px 0;text-align:center">
+  <div class="wrap">Modelo de demostración del Armador de Solicitud · Escribanía General de Gobierno de la Provincia de Córdoba</div>
+</footer>
+
+<script>
+"use strict";
+
+const TRAMITES = {
+  copia:{nombre:"Copia de escritura", form:"SOLICITUD DE COPIAS Y COPIAS CERTIFICADAS",
+    eta:"3 a 5 días hábiles", precios:{simple_papel:2000,simple_digital:1000,cert_papel:3220,cert_digital:2000},
+    caracteres:["parte","sucesor_u","sucesor_s","apoderado","profesional","organismo","interes"]},
+  testimonio:{nombre:"Segundo o ulterior testimonio", form:"SOLICITUD DE SEGUNDOS O ULTERIORES TESTIMONIOS",
+    eta:"10 a 15 días hábiles", precios:{papel:70950,digital:40000},
+    caracteres:["parte","sucesor_u","interes"]},
+  antecedentes:{nombre:"Consulta de antecedentes", form:"SOLICITUD DE CONSULTA DE ANTECEDENTES",
+    eta:"5 a 8 días hábiles", precios:{}, caracteres:["escribano"]}
+};
+
+const CARACTERES = {
+  parte:{t:"Fui parte de la escritura", d:"Comprador, vendedor, donante, cedente, etc.",
+    ayuda:"Sos parte si tu nombre figura en la escritura como uno de los otorgantes: el que compró, el que vendió, el que donó, el que cedió. Si firmaste vos, sos parte. Tu identidad ya quedó acreditada con CIDI, así que no tenés que adjuntar nada.",
+    docs:[], campos:[]},
+  sucesor_u:{t:"Soy heredero o sucesor universal", d:"De alguien que fue parte de la escritura",
+    ayuda:"Sos heredero cuando recibís los derechos de una persona fallecida que sí fue parte de la escritura. Necesitás acreditar tres cosas: que falleció, que sos su pariente, y que un juez te declaró heredero.",
+    docs:[["Partida de defunción de la parte interviniente","Acredita que la parte falleció"],
+          ["Partida de nacimiento o libreta de familia","Acredita tu vínculo con la parte"],
+          ["Declaratoria de herederos","Acredita tu carácter de heredero declarado"]],
+    campos:[["Autos caratulados","Ej.: GÓMEZ, Ana María — Declaratoria de herederos"],
+            ["Juzgado y secretaría","Dónde tramitó la sucesión"],
+            ["Fecha de la declaratoria","Ej.: 12/04/2023"]]},
+  sucesor_s:{t:"Soy sucesor singular", d:"Adquirí el derecho por instrumento público",
+    ayuda:"Sos sucesor singular cuando recibiste un derecho puntual sobre el bien (no toda la herencia), y eso consta en un instrumento público: una cesión, una adquisición posterior. Hay que indicar dónde consta ese instrumento.",
+    docs:[["Constancias del instrumento público","Del que surge tu carácter de sucesor singular"]],
+    campos:[["Escritura N° del instrumento",""],["Escribano/a y registro notarial","Dónde se otorgó"],["Fecha del instrumento",""]]},
+  apoderado:{t:"Actúo como apoderado", d:"En representación de otra persona",
+    ayuda:"Necesitás un poder por escritura pública con facultades expresas para este trámite, o una autorización con firmas certificadas ante escribano, en la que el mismo escribano certifique el carácter que invoca quien te autoriza.",
+    docs:[["Poder o autorización con firmas certificadas","Con facultades expresas para este trámite"]],
+    campos:[["Escritura N° del poder",""],["Escribano/a y registro notarial","Dónde se otorgó el poder"],
+            ["Fecha del poder",""],["A quién representás","Apellido y nombre del poderdante"]]},
+  profesional:{t:"Soy profesional interviniente", d:"Abogado, escribano, contador, agrimensor, martillero, perito",
+    ayuda:"Tu cuenta CIDI tiene que estar habilitada para este trámite. Además de la autorización de tu representado, hay que fundamentar el interés legítimo: para qué necesitás la copia en el marco de tu intervención profesional.",
+    docs:[["Autorización de tu representado","Te habilita a pedir en su nombre"],
+          ["Acreditación del interés legítimo","Fundamentá para qué la necesitás"]],
+    campos:[["Profesión y matrícula",""],["A quién representás","Apellido y nombre"],
+            ["Carátula del expediente, si corresponde","Ej.: autos y juzgado donde intervenís"]]},
+  organismo:{t:"Soy juez u organismo público", d:"Lo requiero en ejercicio de mis funciones",
+    ayuda:"Corresponde cuando el pedido lo hace un juzgado o un organismo público en ejercicio de sus funciones, mediante oficio o requerimiento firmado.",
+    docs:[["Oficio o requerimiento","Firmado en ejercicio de funciones"]],
+    campos:[["Organismo o juzgado",""],["N° de oficio o expediente",""],["Autos caratulados, si corresponde",""]]},
+  interes:{t:"Tengo interés legítimo", d:"Acreedor con cautelar, banco que financia, orden judicial",
+    ayuda:"Es la vía para quien no fue parte ni es heredero, pero tiene un motivo jurídico concreto: un acreedor con medida cautelar sobre el inmueble, un banco que financia una hipoteca, un juez que lo ordena. Hay que acreditarlo con un instrumento, no alcanza con explicarlo.",
+    docs:[["Instrumento que acredite el interés","Medida cautelar, orden judicial, financiación u otro"]],
+    campos:[["Tipo de instrumento","Ej.: medida cautelar, orden judicial, mutuo hipotecario"],
+            ["Dónde consta","Juzgado, registro o entidad, y número"],["Fecha",""]]},
+  escribano:{t:"Soy escribano en ejercicio", d:"Único carácter habilitado para este trámite",
+    ayuda:"La consulta de antecedentes está reservada a escribanos en ejercicio de sus funciones, con cuenta CIDI nivel 2. El sistema valida la matrícula antes de habilitar el trámite.",
+    docs:[], campos:[["Matrícula profesional",""],["Registro notarial a cargo",""]]}
+};
+
+const NEEDS = [
+  ["copia","Necesito una copia de una escritura","Para tu archivo, para un trámite o para presentar ante un organismo",
+   "Una copia reproduce el contenido de la escritura. Si es <strong>simple</strong>, sirve para consulta o archivo. Si es <strong>certificada</strong>, lleva la firma y el sello de la Escribanía y sirve para presentar ante un organismo, un juzgado o un banco."],
+  ["testimonio","Perdí mi escritura y necesito otra","Extravío, robo, destrucción o nunca la retiraste",
+   "El testimonio es el documento con el que se acredita el derecho: es el que tenés que presentar en el Registro de la Propiedad o entregar al comprador. Si el que te dieron se perdió, se destruyó o nunca lo retiraste, se pide un segundo o ulterior testimonio. Es un trámite bastante más caro que una copia y requiere denuncia policial y firma certificada."],
+  ["antecedentes","Soy escribano y necesito hacer un estudio de títulos","Consulta de antecedentes sobre los protocolos",
+   "El estudio de títulos se hace sobre las escrituras matrices, en los protocolos notariales, para analizar los antecedentes jurídicos que legitiman el dominio. Está habilitado solo para escribanos en ejercicio y es sin costo, tanto digital como presencial."]
+];
+
+const HELP = {
+  general:{k:"Ayuda",t:"¿Necesitás ayuda con tu trámite?",b:`
+    <p>Este armador te guía para preparar la solicitud, pero no reemplaza el asesoramiento de la Escribanía.</p>
+    <p><strong>Acá te podemos ayudar:</strong></p>
+    <ul><li>Qué trámite corresponde a tu caso</li><li>Qué documentación tenés que reunir</li>
+    <li>Cuánto sale y cómo se retira</li><li>En qué estado está una solicitud ya enviada</li></ul>
+    <p><strong>Esto lo tenés que consultar con la Escribanía:</strong> si tenés dudas sobre si estás legitimado para pedir el trámite, o sobre si tu interés legítimo alcanza. Esa valoración es de la Escribanía y no se resuelve desde el sistema.</p>
+    <p>Escribinos por los medios de contacto indicados en SIIGENO REQUIRENTE.</p>`},
+  tramites:{k:"Ayuda",t:"Copia, testimonio o consulta",b:`
+    <p><strong>Copia simple.</strong> Reproduce la escritura. Para archivo o consulta. Se cobra por hoja.</p>
+    <p><strong>Copia certificada.</strong> Igual, pero con firma y sello de la Escribanía. Es la que sirve para presentar ante un organismo, un juzgado o un banco. También por hoja.</p>
+    <p><strong>Segundo o ulterior testimonio.</strong> Es el documento con el que se acredita el derecho, el que va al Registro de la Propiedad. Se pide cuando el original se perdió, lo robaron, se destruyó o nunca se retiró. Requiere denuncia policial y firma certificada ante escribano.</p>
+    <p><strong>Consulta de antecedentes.</strong> Estudio de títulos sobre los protocolos. Solo escribanos en ejercicio. Sin costo.</p>
+    <p>Si igual no te queda claro cuál pedir, consultanos antes de cargar la solicitud: cambiar de trámite después implica empezar de nuevo.</p>`},
+  caracter:{k:"Ayuda",t:"Si tu caso no encaja",b:`
+    <p>Los caracteres que aparecen son los previstos para este trámite. Si ninguno describe tu situación, no fuerces una opción: la solicitud va a rebotar y perdés el tiempo del ciclo completo.</p>
+    <p>Escribinos por los medios de contacto de SIIGENO REQUIRENTE describiendo tu caso, y te indicamos si corresponde y por qué vía.</p>
+    <p>Tené en cuenta que la valoración del interés legítimo la hace la Escribanía en cada caso concreto.</p>`},
+  numero:{k:"Ayuda",t:"Cómo encontrar el número de escritura",b:`
+    <p>El número de escritura y el año figuran en:</p>
+    <ul><li>La primera línea del testimonio, si tenés una copia a mano</li>
+    <li>El informe de dominio del Registro General de la Propiedad</li>
+    <li>La documentación del crédito o de la operación, si hubo banco o inmobiliaria de por medio</li></ul>
+    <p>Si no tenés ninguno de esos datos, podés cargar los que sí tengas: partes intervinientes, fecha aproximada e inmueble. Con eso la Escribanía puede ubicarla, aunque la búsqueda demora más.</p>`}
+};
+
+const OBJETOS = ["Archivo personal","Constancia para trámite impositivo","Trámite bancario o crediticio",
+  "Trámite sucesorio","Trámite judicial","Gestión ante organismo público","Otro"];
+const DESTINOS = ["Municipalidad","Registro General de la Propiedad","Juzgado","Banco o entidad financiera",
+  "Dirección General de Rentas","Otro organismo público","Otro"];
+
+const S = {tramite:null,modo:null,soporte:null,hojas:null,caracter:null,escritura:null,
+  objeto:"",objetoOtro:"",destino:"",destinoOtro:"",motivo:null,acred:{},archivos:{}};
+
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const pesos=n=>"$"+n.toLocaleString("es-AR");
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* ---- ayuda ---- */
+function abrirAyuda(key,custom){
+  const h = custom || HELP[key]; if(!h) return;
+  $("#dlgK").textContent=h.k||"Ayuda"; $("#dlgT").textContent=h.t; $("#dlgB").innerHTML=h.b;
+  $("#dlg").showModal();
+}
+$("#dlgC").addEventListener("click",()=>$("#dlg").close());
+document.addEventListener("click",e=>{
+  const b=e.target.closest("[data-help]"); if(b) abrirAyuda(b.dataset.help);
+});
+
+function optHTML(id,t,d,q){
+  return `<div class="opt" data-v="${id}" tabindex="0" role="button">
+    <span class="t">${t}</span>${d?`<span class="d">${d}</span>`:""}
+    ${q?`<button class="qm" data-q="${id}" title="Más información" aria-label="Más información">?</button>`:""}</div>`;
+}
+function abrir(id){$(id).classList.remove("off");}
+function cerrar(...ids){ids.forEach(i=>$(i).classList.add("off"));}
+function selGrupo(cont,valor){ $$(cont+" .opt").forEach(x=>x.classList.toggle("sel",x.dataset.v===valor)); }
+
+/* ---- paso 1 ---- */
+$("#need").innerHTML = NEEDS.map(n=>optHTML(n[0],n[1],n[2],true)).join("");
+$("#need").addEventListener("click",e=>{
+  const q=e.target.closest(".qm");
+  if(q){ const n=NEEDS.find(x=>x[0]===q.dataset.q);
+    abrirAyuda(null,{k:"Sobre este trámite",t:n[1],b:"<p>"+n[3]+"</p>"}); return; }
+  const o=e.target.closest(".opt"); if(!o) return;
+  selGrupo("#need",o.dataset.v);
+  S.tramite=o.dataset.v; S.modo=null; S.soporte=null; S.caracter=null; S.motivo=null; S.hojas=null; S.escritura=null;
+  S.acred={}; S.archivos={};
+  subPaso1(); pasoCaracter(); $("#acred").innerHTML=""; cerrar("#c3","#c4","#c5"); render();
+});
+
+function subPaso1(){
+  const box=$("#sub1");
+  if(S.tramite==="copia"){
+    box.innerHTML=`<div style="margin-top:20px">
+      <p class="hint" style="margin-bottom:10px"><strong>¿Para qué la necesitás?</strong></p>
+      <div class="opts two" id="modo">
+        ${optHTML("simple","Para mí","Archivo personal, consulta, constancia")}
+        ${optHTML("cert","Para presentar","Ante un organismo, un juzgado, un banco")}</div>
+      <p class="hint" style="margin:18px 0 10px"><strong>¿En qué soporte?</strong></p>
+      <div class="opts two" id="sop">
+        ${optHTML("digital","Digital","Lo descargás desde el sistema")}
+        ${optHTML("papel","Presencial","Lo retirás en papel, con turno")}</div>
+      <p class="legend" style="margin-top:16px">El costo de las copias se calcula por hoja. La cantidad de hojas la toma el sistema del protocolo cuando encuentre la escritura, en el paso 3.</p></div>`;
+    bindPar("modo","modo"); bindPar("sop","soporte");
+  } else if(S.tramite==="testimonio"){
+    box.innerHTML=`<div style="margin-top:20px">
+      <p class="hint" style="margin-bottom:10px"><strong>¿En qué soporte?</strong></p>
+      <div class="opts two" id="sop">
+        ${optHTML("digital","Digital","Lo descargás desde el sistema")}
+        ${optHTML("papel","Presencial","Lo retirás en papel, con turno")}</div></div>`;
+    bindPar("sop","soporte");
+  } else {
+    box.innerHTML=`<div style="margin-top:20px">
+      <p class="hint" style="margin-bottom:10px"><strong>¿Cómo querés consultarla?</strong></p>
+      <div class="opts two" id="sop">
+        ${optHTML("digital","Digital","Visualización en línea por 3 horas, con marca de agua y sin descarga")}
+        ${optHTML("papel","Presencial","En la Escribanía, con turno del Turnero Digital")}</div></div>`;
+    bindPar("sop","soporte");
+  }
+}
+function bindPar(id,campo){
+  $("#"+id).addEventListener("click",e=>{
+    const o=e.target.closest(".opt"); if(!o) return;
+    selGrupo("#"+id,o.dataset.v); S[campo]=o.dataset.v; render();
+  });
+}
+
+/* ---- paso 2 ---- */
+function pasoCaracter(){
+  const t=TRAMITES[S.tramite];
+  $("#chars").innerHTML=t.caracteres.map(c=>optHTML(c,CARACTERES[c].t,CARACTERES[c].d,true)).join("");
+  abrir("#c2");
+  $("#note2").innerHTML = S.tramite==="antecedentes"
+    ? `<div class="note"><strong>Trámite reservado.</strong> Solo escribanos en ejercicio, con cuenta CIDI nivel 2. El sistema valida la matrícula antes de continuar.</div>` : "";
+}
+$("#chars").addEventListener("click",e=>{
+  const q=e.target.closest(".qm");
+  if(q){ const c=CARACTERES[q.dataset.q];
+    abrirAyuda(null,{k:"Sobre este carácter",t:c.t,b:"<p>"+c.ayuda+"</p>"}); return; }
+  const o=e.target.closest(".opt"); if(!o) return;
+  selGrupo("#chars",o.dataset.v);
+  S.caracter=o.dataset.v; S.acred={}; S.archivos={};
+  acreditacion(); abrir("#c3");
+  if(S.tramite==="testimonio" && S.caracter==="sucesor_u"){
+    $("#note2").innerHTML=`<div class="note"><strong>Atención.</strong> El formulario debe estar suscripto por <strong>todos</strong> los herederos declarados, sin excepción. Si falta una firma, la solicitud no puede enviarse.</div>`;
+  } else if(S.tramite==="testimonio"){
+    $("#note2").innerHTML=`<div class="note"><strong>Requiere escribano.</strong> Tu firma en el formulario necesita certificación notarial. Es el único paso que no se resuelve dentro del sistema.</div>`;
+  }
+  render();
+});
+
+function acreditacion(){
+  const c=CARACTERES[S.caracter], box=$("#acred");
+  if(!c.campos.length){
+    box.innerHTML=`<div class="subbox"><h4>No hay nada más que acreditar</h4>
+      <p class="w" style="margin:0">Tu identidad ya quedó verificada con CIDI. Podés seguir al paso 3.</p></div>`;
+    return;
+  }
+  box.innerHTML=`<div class="subbox">
+    <h4>Datos de la acreditación</h4>
+    <p class="w">Indicá dónde consta el instrumento que acredita tu carácter. Los archivos se adjuntan al final, en el paso 5.</p>
+    <div class="grid2">${c.campos.map((f,i)=>`<div class="field">
+      <label class="f" for="ac${i}">${f[0]}</label>
+      <input type="text" id="ac${i}" data-k="${esc(f[0])}" placeholder="${esc(f[1]||"")}"></div>`).join("")}</div></div>`;
+  box.querySelectorAll("input").forEach(inp=>inp.addEventListener("input",e=>{
+    S.acred[e.target.dataset.k]=e.target.value; render();
+  }));
+}
+
+/* ---- paso 3 ---- */
+$("#buscar").addEventListener("click",()=>{
+  const n=$("#esc").value.trim(), a=$("#anio").value.trim();
+  if(!n){ $("#resEsc").innerHTML=`<div class="note">Cargá al menos el número de escritura para buscar.</div>`; return; }
+  const folios = ((parseInt(n.replace(/\D/g,""),10)||3)*7)%6 + 4;   // demo: sale del protocolo
+  S.escritura={n,a:a||"2014",fecha:`14 de marzo de ${a||"2014"}`,escribano:"Escribana General",
+    acto:"Compraventa",partes:"Gómez, Ana María y Ledesma, Carlos Alberto",
+    inmueble:"Matrícula 1.204.556 — Lote 5, Manzana 373", hojas:folios};
+  S.hojas = folios;
+  $("#resEsc").innerHTML=`
+    <div class="ready" style="margin-top:16px">Escritura encontrada en los tomos digitalizados</div>
+    <div class="identity">
+      <div><div class="lb">Fecha</div><div class="vl">${S.escritura.fecha}</div></div>
+      <div><div class="lb">Escribana autorizante</div><div class="vl">${S.escritura.escribano}</div></div>
+      <div><div class="lb">Acto</div><div class="vl">${S.escritura.acto}</div></div>
+      <div style="grid-column:1/-1"><div class="lb">Partes intervinientes</div><div class="vl">${S.escritura.partes}</div></div>
+      <div style="grid-column:1/-1"><div class="lb">Inmueble</div><div class="vl">${S.escritura.inmueble}</div></div>
+      <div style="grid-column:1/-1"><div class="lb">Extensión en el protocolo</div><div class="vl">${S.escritura.hojas} hojas — estimado</div></div></div>
+    <p class="legend">La cantidad de hojas la toma el sistema del protocolo. Es un estimado: el valor definitivo lo confirma la Escribanía al liquidar la Tasa Retributiva.</p>
+    <p class="legend">Si la escritura no aparece se carga a mano. El buscador la completa, no la condiciona.</p>`;
+  abrir("#c4"); pasoExtra(); render();
+});
+
+/* ---- paso 4 ---- */
+function pasoExtra(){
+  const box=$("#extra");
+  if(S.tramite==="copia"){
+    box.innerHTML=`
+      <div class="field"><label class="f" for="obj">Objeto del pedido</label>
+        <select id="obj"><option value="">Elegí una opción</option>
+        ${OBJETOS.map(o=>`<option>${o}</option>`).join("")}</select></div>
+      <div id="objOtro"></div>
+      ${S.modo==="cert"?`<div class="field"><label class="f" for="dst">Destino de la copia certificada</label>
+        <select id="dst"><option value="">Elegí una opción</option>
+        ${DESTINOS.map(o=>`<option>${o}</option>`).join("")}</select></div><div id="dstOtro"></div>`:""}`;
+    $("#obj").addEventListener("change",e=>{
+      S.objeto=e.target.value; S.objetoOtro="";
+      $("#objOtro").innerHTML = e.target.value==="Otro"
+        ? `<div class="field"><label class="f" for="objT">Detallá el objeto</label>
+           <input type="text" id="objT" placeholder="Ej.: presentación en una gestoría"></div>` : "";
+      if($("#objT")) $("#objT").addEventListener("input",ev=>{S.objetoOtro=ev.target.value;render();});
+      render();
+    });
+    if($("#dst")) $("#dst").addEventListener("change",e=>{
+      S.destino=e.target.value; S.destinoOtro="";
+      $("#dstOtro").innerHTML = e.target.value==="Otro"
+        ? `<div class="field"><label class="f" for="dstT">Detallá el destino</label>
+           <input type="text" id="dstT" placeholder="Ej.: consulado, colegio profesional"></div>` : "";
+      if($("#dstT")) $("#dstT").addEventListener("input",ev=>{S.destinoOtro=ev.target.value;render();});
+      render();
+    });
+  } else if(S.tramite==="testimonio"){
+    box.innerHTML=`<p class="hint" style="margin-bottom:10px"><strong>Declaración jurada — ¿qué pasó con el testimonio?</strong></p>
+      <div class="opts two" id="mot">
+        ${optHTML("Extraviado","Se extravió","")}${optHTML("Sustraído","Me lo robaron","")}
+        ${optHTML("Destruido","Se destruyó","")}${optHTML("Nunca retirado de la notaría","Nunca lo retiré","")}</div>`;
+    bindPar("mot","motivo");
+  } else {
+    box.innerHTML=`<p class="hint">Para la consulta de antecedentes no hace falta nada más. El trámite es sin costo.</p>`;
+  }
+  $("#hint4").textContent = S.tramite==="antecedentes"
+    ? "Este trámite no requiere datos adicionales." : "Lo último que falta antes de armar el formulario.";
+  abrir("#c5"); construirDocs();
+}
+
+/* ---- paso 5 ---- */
+function construirDocs(){
+  const lista=[...CARACTERES[S.caracter].docs];
+  if(S.tramite==="testimonio"){
+    lista.push(["Denuncia policial","Por robo, hurto o extravío, con la mayor cantidad de datos posibles"]);
+    lista.push(["Formulario con firma certificada","Certificación notarial de tu firma"]);
+  }
+  S.docsLista=lista;
+  const ul=$("#docs");
+  ul.innerHTML = !lista.length
+    ? `<li><div class="hd"><span class="nm">No tenés que adjuntar nada</span><span class="tag o">Listo</span></div>
+       <div class="wy">Tu identidad ya quedó acreditada con CIDI</div></li>`
+    : lista.map((d,i)=>`<li>
+        <div class="hd"><span class="nm">${d[0]}</span><span class="tag p" id="tg${i}">Falta</span></div>
+        <div class="wy">${d[1]}</div>
+        <div class="filerow">
+          <button class="fbtn" type="button" onclick="document.getElementById('fi${i}').click()">Elegir archivo</button>
+          <input type="file" id="fi${i}" data-i="${i}">
+          <span class="fname" id="fn${i}"></span></div></li>`).join("");
+  ul.querySelectorAll("input[type=file]").forEach(f=>f.addEventListener("change",e=>{
+    const i=e.target.dataset.i, file=e.target.files[0];
+    if(file){ S.archivos[i]=file.name;
+      $("#fn"+i).textContent=file.name;
+      const tg=$("#tg"+i); tg.textContent="Adjuntado"; tg.className="tag o"; }
+    render();
+  }));
+  const t=TRAMITES[S.tramite];
+  $("#etaN").textContent=t.eta;
+  $("#etaT").textContent="Es el tiempo habitual para este trámite. El sistema muestra un rango, nunca una fecha comprometida.";
+}
+
+/* ---- panel ---- */
+$$(".tabs button").forEach(b=>b.addEventListener("click",()=>{
+  $$(".tabs button").forEach(x=>x.setAttribute("aria-selected","false"));
+  b.setAttribute("aria-selected","true");
+  $$(".pane").forEach(p=>p.classList.remove("on"));
+  $("#"+b.dataset.p).classList.add("on");
+}));
+
+function pendientes(){
+  const out=[];
+  const lista=S.docsLista||[];
+  lista.forEach((d,i)=>{ if(!S.archivos[i]) out.push(["adj",d[0],d[1]]); });
+  const c=S.caracter?CARACTERES[S.caracter]:null;
+  if(c) c.campos.forEach(f=>{ if(!(S.acred[f[0]]||"").trim()) out.push(["dat",f[0],"Dato de la acreditación, paso 2"]); });
+  if(S.tramite==="copia"){
+    if(!S.objeto) out.push(["dat","Objeto del pedido","Paso 4"]);
+    if(S.objeto==="Otro" && !S.objetoOtro.trim()) out.push(["dat","Detalle del objeto","Paso 4"]);
+    if(S.modo==="cert"){
+      if(!S.destino) out.push(["dat","Destino de la copia","Paso 4"]);
+      if(S.destino==="Otro" && !S.destinoOtro.trim()) out.push(["dat","Detalle del destino","Paso 4"]);
+    }
+  }
+  if(S.tramite==="testimonio" && !S.motivo) out.push(["dat","Motivo del extravío","Paso 4"]);
+  if(!S.escritura) out.push(["dat","Datos de la escritura","Paso 3"]);
+  return out;
+}
+
+function render(){
+  const t=S.tramite?TRAMITES[S.tramite]:null;
+  $("#pName").textContent=t?t.nombre:"Todavía sin trámite";
+
+  if(!S.caracter){
+    $("#stat").innerHTML="";
+    $("#miss").innerHTML=`<div class="empty">Elegí el trámite y el carácter en que actuás. Acá va a aparecer solo lo que falta en tu caso.</div>`;
+  } else {
+    const p=pendientes();
+    $("#stat").innerHTML = p.length
+      ? `<div class="ready pending">Falta ${p.length} ${p.length===1?"cosa":"cosas"} para poder enviar</div>`
+      : `<div class="ready">Tenés todo lo necesario</div>`;
+    $("#miss").innerHTML =
+      (p.length ? `<ul class="docs">${p.map(x=>`<li><div class="hd"><span class="nm">${x[1]}</span>
+          <span class="tag p">${x[0]==="adj"?"Adjuntar":"Completar"}</span></div>
+          <div class="wy">${x[2]}</div></li>`).join("")}</ul>`
+        : `<p class="legend">Revisá el formulario en la pestaña siguiente antes de enviar.</p>`)
+      + `<button class="go" style="margin-top:16px" ${p.length?"disabled":""} onclick="alert('En el sistema real, acá se envía la solicitud a la Escribanía General de Gobierno.')">Enviar solicitud</button>`
+      + (p.length?`<p class="legend">La solicitud no se puede enviar hasta que esté todo. Así evitás que rebote.</p>`
+                 :`<p class="legend">Que no falte documentación no garantiza que la solicitud prospere: la valoración del interés legítimo es de la Escribanía.</p>`);
+  }
+
+  const c=$("#costs");
+  if(!t){ c.innerHTML=`<div class="empty">El costo aparece cuando elijas el trámite.</div>`; }
+  else if(S.tramite==="antecedentes"){
+    c.innerHTML=`<div class="ready">Este trámite es sin costo</div>
+      <p class="legend">La consulta de antecedentes es gratuita, tanto digital como presencial.</p>`;
+  } else if(S.tramite==="copia"){
+    if(!S.modo||!S.soporte){ c.innerHTML=`<div class="empty">Elegí para qué la necesitás y en qué soporte.</div>`; }
+    else if(!S.hojas){
+      const k0=(S.modo==="cert"?"cert":"simple")+"_"+S.soporte;
+      c.innerHTML=`<div class="cost"><span>${(S.modo==="cert"?"Copia certificada":"Copia simple")+(S.soporte==="digital"?" digital":" en papel")}</span><span class="v">${pesos(t.precios[k0])}</span></div>
+        <div class="cost"><span>Cantidad de hojas</span><span class="v" style="color:var(--muted)">a determinar</span></div>
+        <div class="empty" style="padding:16px 8px 4px">El total se calcula en el paso 3, cuando el sistema encuentre la escritura y sepa cuántas hojas tiene.</div>`;
+    }
+    else{
+      const k=(S.modo==="cert"?"cert":"simple")+"_"+S.soporte, u=t.precios[k];
+      const etq=(S.modo==="cert"?"Copia certificada":"Copia simple")+(S.soporte==="digital"?" digital":" en papel");
+      c.innerHTML=`<div class="cost"><span>${etq}</span><span class="v">${pesos(u)}</span></div>
+        <div class="cost"><span>Hojas según el protocolo</span><span class="v">${S.hojas}</span></div>
+        <div class="total"><span class="l">Total estimado</span><span class="v">${pesos(u*S.hojas)}</span></div>
+        <p class="legend" style="margin-top:14px">Estimado sobre las ${S.hojas} hojas que registra el protocolo. El valor definitivo lo confirma la Escribanía al liquidar la Tasa Retributiva (Ley Impositiva Anual N° 11.090, actualizable). La deuda no se genera hasta ese momento.</p>`;
+    }
+  } else {
+    if(!S.soporte){ c.innerHTML=`<div class="empty">Elegí el soporte del testimonio.</div>`; }
+    else{
+      const u=t.precios[S.soporte];
+      c.innerHTML=`<div class="cost"><span>Testimonio ${S.soporte==="digital"?"digital":"en papel"}</span><span class="v">${pesos(u)}</span></div>
+        <div class="total"><span class="l">Total</span><span class="v">${pesos(u)}</span></div>
+        <p class="legend" style="margin-top:14px">La deuda no se genera hasta que se emite la Tasa Retributiva (Ley Impositiva Anual N° 11.090, actualizable).</p>`;
+    }
+  }
+
+  const pv=$("#preview");
+  if(!t){ pv.innerHTML=`<div class="empty">Acá vas a ver el formulario armándose solo, a medida que contestás.</div>`; return; }
+  const f=v=>v?`<span class="fill">${esc(v)}</span>`:`<span class="blank">— sin completar —</span>`;
+  const e=S.escritura, ca=S.caracter?CARACTERES[S.caracter]:null;
+  const objTxt = S.objeto==="Otro" ? S.objetoOtro : S.objeto;
+  const dstTxt = S.destino==="Otro" ? S.destinoOtro : S.destino;
+  const acredHTML = ca&&ca.campos.length
+    ? ca.campos.map(x=>`${x[0]}: ${f(S.acred[x[0]])}`).join("<br>") : "";
+
+  pv.innerHTML=`<div class="doc">
+    <h3>${t.form}</h3>
+    <p class="org">Escribanía General de Gobierno · Fiscalía de Estado · Provincia de Córdoba</p>
+    <div class="sec">1 · Datos del solicitante</div>
+    Apellido y nombre: ${f("Ferreyra, Martín")}<br>
+    Domicilio: ${f("Deán Funes, Provincia de Córdoba")}<br>
+    Carácter en que actúa: ${f(ca?ca.t:"")}
+    ${acredHTML?`<div class="sec">2 · Acreditación del carácter</div>${acredHTML}`:""}
+    <div class="sec">${acredHTML?"3":"2"} · Datos de la escritura</div>
+    Escritura / Acta N°: ${f(e?e.n:"")} &nbsp; Fecha: ${f(e?e.fecha:"")}<br>
+    Escribano/a autorizante: ${f(e?e.escribano:"")}<br>
+    Partes intervinientes: ${f(e?e.partes:"")}<br>
+    Acto instrumentado: ${f(e?e.acto:"")}
+    ${S.tramite==="testimonio"&&e?`<br>Inmueble: ${f(e.inmueble)}`:""}
+    ${S.tramite==="copia"?`<div class="sec">${acredHTML?"4":"3"} · Objeto y destino</div>
+      Tipo de copia: ${f(S.modo?(S.modo==="cert"?"Copia certificada":"Copia simple"):"")} ${S.soporte?f(S.soporte==="digital"?"digital":"en papel"):""}<br>
+      Objeto del pedido: ${f(objTxt)}${S.modo==="cert"?`<br>Destino: ${f(dstTxt)}`:""}`:""}
+    ${S.tramite==="testimonio"?`<div class="sec">${acredHTML?"4":"3"} · Declaración jurada — motivo</div>
+      Declaro bajo fe de juramento que el testimonio de dicha escritura fue: ${f(S.motivo)}`:""}
+    ${S.tramite==="antecedentes"?`<div class="sec">${acredHTML?"4":"3"} · Modalidad</div>
+      Consulta: ${f(S.soporte?(S.soporte==="digital"?"Digital — visualización en línea":"Presencial — con turno"):"")}`:""}
+    <div class="sec">Firma</div>
+    ${S.tramite==="testimonio"?`<span class="blank">Firma del solicitante con certificación notarial</span>`
+      :`<span class="blank">Firma del solicitante</span>`}
+  </div>
+  <p class="legend"><span class="sw"></span>Lo resaltado lo completó el sistema con datos que ya tenía o que vos elegiste.</p>
+  <button class="mini" onclick="window.print()">Descargar el formulario</button>`;
+}
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,2579 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Escrituras sociales — Escribanía General de Gobierno</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<script>
+/* Modo oscuro de SIGEC. Una sola preferencia, sigec.tema, que vale para la cáscara y para
+   todas las herramientas, estén sueltas o adentro del marco. Va en el <head> para que la
+   página nunca se dibuje en claro y pegue el salto. */
+(function(){
+  var K='sigec.tema';
+  function aplicar(t){document.documentElement.setAttribute('data-theme',t==='oscuro'?'dark':'light');}
+  function leer(){try{var v=localStorage.getItem(K);return (v==='oscuro'||v==='claro')?v:null;}catch(e){return null;}}
+  aplicar(leer()||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'oscuro':'claro'));
+  window.SIGEC_TEMA={
+    actual:function(){return document.documentElement.getAttribute('data-theme')==='dark'?'oscuro':'claro';},
+    poner:function(t){try{localStorage.setItem(K,t);}catch(e){}aplicar(t);this.avisar();},
+    alternar:function(){this.poner(this.actual()==='oscuro'?'claro':'oscuro');},
+    avisar:function(){document.dispatchEvent(new CustomEvent('sigec:tema'));}
+  };
+  window.addEventListener('storage',function(e){if(e.key===K&&e.newValue){aplicar(e.newValue);window.SIGEC_TEMA.avisar();}});
+})();
+</script>
+<style>
+:root{
+ --acc:#B5533C;--acc-s:#FBEFEC;
+ --navy:#1B2F5E;--bone:#EEF2F5;--line:#D8E0EA;--muted:#65748C;--tx:#1E2634;--pap:#fff;
+ --ok:#1F6B3C;--ok-bg:#E6F3EB;--warn:#8A6A12;--warn-bg:#FBF3DC;--bad:#A81419;--bad-bg:#FBEAEA;
+ --cel:#2E5385;--cel-bg:#E8F0F9;--marca:#FFF3C4;--marca-bd:#E8D389;--marca-tx:#1E2634;
+}
+html[data-theme="dark"]{
+ --acc:#E08A6F;--acc-s:#2E1E19;
+ --navy:#16233F;--bone:#12181F;--line:#2E3A47;--muted:#94A3B5;--tx:#E4E9EE;--pap:#1B232C;
+ --ok:#7FD9A6;--ok-bg:#14301F;--warn:#E8C37A;--warn-bg:#3A2C10;--bad:#F09A93;--bad-bg:#3A1414;
+ --cel:#A9C6E6;--cel-bg:#1B2A3D;--marca:#4A3A12;--marca-bd:#7A6321;--marca-tx:#F2E7C8;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Montserrat,system-ui,sans-serif;background:var(--bone);color:var(--tx);
+ font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+
+.cinta{background:var(--navy);color:#A9BFDA;font-size:10.5px;letter-spacing:.13em;
+ text-transform:uppercase;text-align:center;padding:5px;font-weight:600}
+/* Quién mira no puede deducirse: tiene que decirlo la pantalla. El auxiliar ve menos que
+   la escribana, y confundirse de vista es creer que faltan lotes que están. */
+.cinta.aux{background:var(--acc);color:#fff}
+.top h1{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.top .quien{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
+ border-radius:999px;padding:3px 10px;white-space:nowrap}
+.top .quien.esc{background:var(--navy);color:#fff}
+.top .quien.aux{background:var(--acc-s);color:var(--acc);box-shadow:inset 0 0 0 1.5px var(--acc)}
+html.embebido .cinta{display:none}
+.top{background:var(--pap);border-bottom:3px solid var(--acc);padding:13px 20px;
+ display:flex;align-items:center;gap:14px;flex-wrap:wrap;position:sticky;top:0;z-index:30}
+.top .sub b{color:var(--tx);font-weight:700}
+.top .sub .sep{color:var(--line);margin:0 5px}
+.top h1{margin:0;font-size:18px;font-weight:700;color:var(--acc)}
+.top .sub{font-size:12.5px;color:var(--muted)}
+.top .acc{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+/* La franja pasó a ser el borde del encabezado, para que no se despegue al bajar. */
+
+button{font-family:inherit;font-size:12.5px;font-weight:600;cursor:pointer;border-radius:7px;
+ padding:7px 13px;border:1.5px solid var(--line);background:var(--pap);color:var(--tx)}
+button:hover{border-color:var(--acc)}
+button.p{background:var(--acc);border-color:var(--acc);color:var(--pap)}
+button.p:hover{filter:brightness(1.08)}
+button.ch{padding:4px 9px;font-size:11.5px}
+button.ch.borrar{color:var(--bad);border-color:transparent}
+button.ch.borrar:hover{border-color:var(--bad)}
+select.rol{font-family:inherit;font-size:12.5px;font-weight:600;padding:6px 9px;border-radius:7px;
+ border:1.5px solid var(--line);background:var(--pap);color:var(--tx);width:auto;max-width:190px}
+
+.wrap{max-width:1180px;margin:0 auto;padding:20px 18px 70px}
+
+/* ── lo que hay que hacer ── */
+.tareas{background:var(--pap);border:1.5px solid var(--acc);border-radius:11px;
+ padding:16px 18px;margin-bottom:18px}
+.tareas h2{margin:0 0 3px;font-size:15.5px;color:var(--acc)}
+.tareas .sub{font-size:12.5px;color:var(--muted);margin:0 0 12px}
+.tareas .item{display:flex;gap:12px;align-items:center;padding:9px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.tareas .item:last-child{border-bottom:0}
+.tareas .item .q{flex:1;min-width:200px;font-size:13.5px}
+.tareas .item .q b{display:block}
+.tareas .item .q span{font-size:12px;color:var(--muted)}
+.tareas .nada{font-size:13.5px;color:var(--muted);font-style:italic}
+
+.alerta{border-left:4px solid var(--bad);background:var(--bad-bg);color:var(--bad);
+ border-radius:0 9px 9px 0;padding:12px 16px;margin:0 0 18px;font-size:13.5px}
+.alerta b{display:block;margin-bottom:3px}
+.alerta ul{margin:6px 0 0;padding-left:18px}
+.alerta.calma{border-left-color:var(--ok);background:var(--ok-bg);color:var(--ok)}
+/* Ni verde ni rojo: todavía no se sabe. Es un estado propio y tiene que verse como tal. */
+.alerta.tibia{border-left-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
+
+/* ── barrio ── */
+.barrio{background:var(--pap);border:1.5px solid var(--line);border-left:5px solid var(--acc);
+ border-radius:11px;margin-bottom:14px;overflow:hidden}
+.barrio.fin{border-left-color:var(--line)}
+.bh{display:flex;align-items:center;gap:12px;padding:14px 17px;cursor:pointer;flex-wrap:wrap}
+.bh:hover{background:var(--acc-s)}
+.bh .nom{font-size:16.5px;font-weight:700;color:var(--acc)}
+.barrio.fin .bh .nom{color:var(--muted)}
+.bh .cuenta{font-size:12.5px;color:var(--muted)}
+.bh .der{margin-left:auto;display:flex;gap:7px;align-items:center}
+.bh .fl{color:var(--muted);font-size:12px;width:14px}
+.bc{padding:0 17px 15px;border-top:1px solid var(--line)}
+.barrio.plegado .bc{display:none}
+
+.base{display:flex;gap:10px;flex-wrap:wrap;align-items:center;padding:12px 0;
+ border-bottom:1px dashed var(--line);margin-bottom:12px}
+.base .tit{font-size:10px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);font-weight:700;width:100%}
+
+.et{display:inline-block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+ font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.et.ok{color:var(--ok);background:var(--ok-bg)}
+.et.no{color:var(--muted);background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.et.wa{color:var(--warn);background:var(--warn-bg)}
+.et.ba{color:var(--bad);background:var(--bad-bg)}
+.et.ce{color:var(--cel);background:var(--cel-bg)}
+
+.res .rh{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:7px}
+.res .rn{font-weight:700;font-size:13.5px}
+
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);
+ font-weight:700;padding:6px 9px;border-bottom:1.5px solid var(--line);white-space:nowrap}
+td{padding:8px 9px;border-bottom:1px solid var(--line);vertical-align:middle}
+tr:last-child td{border-bottom:0}
+tbody tr:hover{background:var(--acc-s)}
+td.nom{font-size:15.5px;font-weight:700;letter-spacing:-.005em;line-height:1.3}
+td.nom .car{display:flex;align-items:center;gap:8px}
+td.nom .car svg{flex:0 0 auto;color:var(--acc)}
+td.lm{font-size:12.5px;color:var(--muted);white-space:nowrap}
+td.lm i{font-style:normal;color:var(--line)}
+td.acc{text-align:right;white-space:nowrap}
+td .chica{font-size:11.5px;color:var(--muted);font-weight:400;margin-top:1px}
+td .obsx{font-size:11.5px;color:var(--bad);margin-top:3px}
+
+.obsbox{border-left:3px solid var(--bad);background:var(--bad-bg);border-radius:0 9px 9px 0;
+ padding:11px 13px;margin:14px 0 4px}
+.obsbox .quien{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:var(--bad);font-weight:700}
+.obsbox .texto{font-size:13px;line-height:1.45;color:var(--bad);margin-top:4px}
+.obsbox button{margin-top:10px;font-family:inherit;font-size:11.5px;font-weight:600;background:var(--pap);
+ border:1.5px solid var(--bad);color:var(--bad);border-radius:6px;padding:5px 11px;cursor:pointer}
+.avisobox{background:var(--warn-bg);color:var(--warn);border-radius:9px;padding:10px 13px;
+ margin:14px 0 4px;font-size:12.5px;line-height:1.45}
+.panel h2 .car{display:flex;align-items:center;gap:9px}
+.panel h2 .car svg{flex:0 0 auto}
+.tabla{overflow-x:auto}
+
+.firmadas{margin-top:10px;border-top:1px dashed var(--line);padding-top:8px}
+.lineafirm{display:flex;align-items:center;gap:7px;background:transparent;border:0;padding:4px 0;
+ font-family:inherit;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;
+ font-weight:700;color:var(--muted);cursor:pointer}
+.lineafirm:hover{color:var(--acc)}
+.firmadas table{opacity:.72}
+
+.obsbase{border-left:3px solid var(--bad);background:var(--bad-bg);color:var(--bad);
+ border-radius:0 8px 8px 0;padding:10px 14px;margin:0 0 12px;font-size:13px}
+.obsbase b{display:block}
+.obsbase .q{font-size:11.5px;opacity:.85;margin-top:3px}
+
+.vacio{color:var(--muted);font-size:13px;padding:10px 0;font-style:italic}
+.hint{font-size:12.5px;color:var(--muted);margin:4px 0 0}
+
+/* ── paneles y avisos ── */
+.fondo{position:fixed;inset:0;background:rgba(15,28,58,.45);display:none;z-index:40}
+.fondo.on{display:block}
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(470px,100%);background:var(--pap);
+ border-left:1.5px solid var(--line);z-index:41;display:none;overflow-y:auto;padding:20px}
+.panel.on{display:block}
+.panel h2{margin:0 0 3px;font-size:17px;color:var(--acc);padding-right:30px}
+.panel .cerrar{position:absolute;top:14px;right:16px;border:0;background:transparent;font-size:20px;color:var(--muted);padding:2px 7px}
+label{display:block;font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;
+ color:var(--muted);font-weight:700;margin:13px 0 4px}
+input,select,textarea{width:100%;font-family:inherit;font-size:14px;padding:8px 10px;border-radius:7px;
+ border:1.5px solid var(--line);background:var(--pap);color:var(--tx)}
+textarea{min-height:90px;resize:vertical;line-height:1.5}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--acc)}
+.dos{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.grupo{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);font-weight:700;
+ margin:24px 0 2px;padding-bottom:6px;border-bottom:1.5px solid var(--line)}
+.pbtn{display:flex;gap:9px;margin-top:20px;flex-wrap:wrap}
+.borrar{margin-left:auto;color:var(--bad);border-color:transparent}
+.borrar:hover{border-color:var(--bad)}
+.desig{margin-top:12px}
+.desig .fila{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr) minmax(0,.9fr);
+ gap:7px;align-items:center;padding:7px 0;border-bottom:1px solid var(--line)}
+.desig .fila:last-child{border-bottom:0}
+.desig .q{display:flex;flex-direction:column;min-width:0;font-size:12.5px;line-height:1.3}
+.desig .q span{font-size:11px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.desig input,.desig select{font-size:12.5px;padding:6px 8px}
+
+.aviso-barra{position:fixed;top:0;left:0;right:0;z-index:60;padding:13px 18px;font-size:13.5px;
+ font-weight:600;text-align:center;background:var(--acc);color:#fff;cursor:pointer;
+ transform:translateY(-100%);transition:transform .18s}
+.aviso-barra.on{transform:none}
+.aviso-barra.grave{background:var(--bad)}
+.dialogo{position:fixed;inset:0;background:rgba(15,28,58,.5);z-index:70;display:none;
+ align-items:center;justify-content:center;padding:20px}
+.dialogo.on{display:flex}
+.dialogo .caja{background:var(--pap);border-radius:12px;padding:22px 24px;max-width:430px;
+ box-shadow:0 22px 60px rgba(15,28,58,.35)}
+.dialogo p{margin:0 0 18px;font-size:14.5px;line-height:1.5}
+.dialogo .btns{display:flex;gap:9px;justify-content:flex-end}
+.dialogo .btns .p{background:var(--bad);border-color:var(--bad);color:var(--pap)}
+.dialogo .btns .p.suave{background:var(--acc);border-color:var(--acc)}
+
+/* ══════════════════ Las dos pantallas de la minuta ══════════════════
+   La minuta base es del barrio y la individual es del lote: no son otra herramienta, son
+   la misma. Por eso la cáscara no cambia —la cinta de SIGEC, el encabezado con el nombre
+   del producto y la franja siguen ahí— y solo cambia lo de abajo. Mismos tokens, mismos
+   botones, mismas fichas que el tablero. */
+#armador{display:none}
+body.enArmador>.wrap{display:none}
+body.enArmador #armador{display:block}
+/* Adentro de la minuta no hay ninguna salida: se vuelve al barrio, y recién de ahí a
+   SIGEC. Nunca se sale del producto por el costado. */
+body.enArmador #volverSigec{display:none!important}
+
+#armador .pantalla{display:none}
+#armador .pantalla.on{display:block}
+#armador .layout{display:grid;grid-template-columns:minmax(0,1fr) 420px;gap:18px;align-items:start}
+@media(max-width:1040px){#armador .layout{grid-template-columns:1fr}}
+#armador aside{position:sticky;top:80px}
+@media(max-width:1040px){#armador aside{position:static}}
+
+#armador .card{background:var(--pap);border:1.5px solid var(--line);border-radius:11px;
+ padding:16px 18px;margin-bottom:14px}
+#armador .card h2{margin:0 0 3px;font-size:15.5px;font-weight:700;color:var(--acc)}
+#armador .hint{margin:0 0 12px}
+#armador .g2{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+#armador .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px}
+@media(max-width:700px){#armador .g2,#armador .g3{grid-template-columns:1fr}}
+#armador .fl{grid-column:1/-1}
+#armador .field{margin-bottom:10px}
+#armador label.f{margin:0 0 4px}
+#armador label.f i{font-style:normal;text-transform:none;letter-spacing:0;color:var(--muted);opacity:.85}
+#armador textarea{min-height:60px}
+
+/* .btn y .btn.pri son los nombres que traía el armador; el aspecto es el del tablero. */
+#armador .btn.pri{background:var(--acc);border-color:var(--acc);color:var(--pap)}
+#armador .btn.pri:hover{filter:brightness(1.08)}
+#armador .btn.x{border-color:transparent;color:var(--bad);padding:4px 9px;font-size:11.5px}
+#armador .btn.x:hover{border-color:var(--bad)}
+#armador .btn:disabled{opacity:.5;cursor:not-allowed}
+#armador .btn:disabled:hover{border-color:var(--line)}
+
+#armador .adj{border:1.5px solid var(--line);border-radius:11px;padding:13px 15px;
+ margin-bottom:11px;background:var(--bone)}
+#armador .adj .ah{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+#armador .adj .ah b{color:var(--acc);font-size:13.5px}
+#armador .auto{font-size:11.5px;color:var(--ok);margin-top:3px}
+
+/* El panel de la derecha es una tarjeta más, con la cabecera del color del producto. */
+#armador .apanel{background:var(--pap);border:1.5px solid var(--line);border-radius:11px;overflow:hidden}
+#armador .ph{background:var(--acc);color:var(--pap);padding:11px 15px;display:flex;
+ align-items:center;gap:10px}
+#armador .ph b{font-size:13.5px}
+#armador .ph .st{margin-left:auto;font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+ font-weight:700;color:var(--pap);opacity:.85;white-space:nowrap}
+#armador .doc{padding:15px 17px;font-family:Georgia,"Times New Roman",serif;font-size:12.5px;
+ line-height:1.95;text-align:justify;max-height:min(58vh,540px);overflow:auto}
+#armador .doc .h{background:var(--marca);color:var(--marca-tx);
+ box-shadow:0 0 0 1px var(--marca-bd) inset;padding:0 2px}
+#armador .doc .falta{background:var(--bad-bg);color:var(--bad);font-weight:700;padding:0 3px;border-radius:2px}
+#armador .acts{display:flex;gap:8px;padding:11px 15px;border-top:1px solid var(--line);flex-wrap:wrap}
+#armador .acts button{flex:1;min-width:110px}
+
+/* Los avisos, con la misma forma que los del tablero: barra de color a la izquierda. */
+#armador .chk{display:flex;gap:9px;padding:11px 14px;margin:0 15px 9px;font-size:12.5px;
+ line-height:1.45;border-left:4px solid var(--bad);background:var(--bad-bg);color:var(--bad);
+ border-radius:0 9px 9px 0}
+#armador .chk.k{border-left-color:var(--ok);background:var(--ok-bg);color:var(--ok)}
+#armador .chk.a{border-left-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
+#armador .note{border-left:4px solid var(--warn);background:var(--warn-bg);color:var(--warn);
+ padding:11px 14px;border-radius:0 9px 9px 0;font-size:12.5px;line-height:1.45;margin:11px 0}
+#armador .info{border-left:4px solid var(--cel);background:var(--cel-bg);color:var(--cel);
+ padding:11px 14px;border-radius:0 9px 9px 0;font-size:12.5px;line-height:1.45;margin:11px 0}
+
+/* Las marcas son fichas, como los estados del tablero. */
+/* Cada sugerencia va envuelta en un <label> para que se pueda tocar toda la fila. Sin
+   esto hereda el rotulo del tablero —10,5px, MAYUSCULAS y gris— y la lista es ilegible. */
+#armador label.sug{display:flex;gap:9px;align-items:flex-start;padding:9px 11px;
+ border:1.5px solid var(--line);border-radius:9px;margin:0 0 6px;cursor:pointer;
+ font-size:12.5px;font-weight:400;letter-spacing:0;text-transform:none;color:var(--tx)}
+#armador label.sug:hover{border-color:var(--acc)}
+#armador label.sug input{width:auto;margin-top:3px}
+/* La carpeta del lote, con la misma lógica del explorador de Windows: los documentos que
+   suele llevar, y cuáles estaban la última vez que alguien la miró. */
+.docs{margin-top:10px}
+.docs .fila{display:flex;gap:10px;align-items:baseline;padding:7px 0;border-bottom:1px solid var(--line)}
+.docs .fila:last-child{border-bottom:0}
+.docs .fila .n{flex:1;font-size:13px}
+.docs .fila .n span{display:block;font-size:11.5px;color:var(--muted)}
+.docs .otros{font-size:12px;color:var(--muted);margin-top:9px;line-height:1.5}
+.docs .cuando{font-size:11.5px;color:var(--muted);margin:0 0 8px}
+#armador .marcas{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:6px}
+#armador .marcas button{border:1.5px solid var(--line);background:var(--pap);border-radius:999px;
+ padding:4px 11px;font-size:11px;font-weight:700;letter-spacing:.03em;color:var(--tx)}
+#armador .marcas button:hover{border-color:var(--acc);background:var(--acc-s);color:var(--acc)}
+#armador .grupoM{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--acc);
+ font-weight:700;margin:16px 0 7px;padding-bottom:6px;border-bottom:1.5px solid var(--line)}
+#armador .tag{display:inline-block;background:var(--cel-bg);color:var(--cel);border-radius:999px;
+ padding:2px 9px;font-size:10.5px;font-weight:700;letter-spacing:.04em}
+#armador #baseTexto{font-family:Georgia,serif;font-size:13px;line-height:1.85;min-height:420px}
+
+/* ── carátula para imprimir ── */
+#caratula{display:none}
+@media print{
+ body{background:#fff}
+ /* Dos cosas distintas se imprimen desde la misma página: la carátula del expediente y
+    la minuta del lote. La clase del body dice cuál de las dos. */
+ body:not(.impMinuta)>*{display:none!important}
+ body:not(.impMinuta) #caratula{display:block!important;color:#000;font-family:Montserrat,system-ui,sans-serif}
+ body.impMinuta>*{display:none!important}
+ body.impMinuta #armador{display:block!important}
+ body.impMinuta #armador main,body.impMinuta #armador .ph,
+ body.impMinuta #armador .acts,body.impMinuta #armador .chk{display:none!important}
+ body.impMinuta #armador .layout{display:block;padding:0}
+ body.impMinuta #armador aside{position:static}
+ body.impMinuta #armador .apanel{border:0}
+ body.impMinuta #armador .doc{max-height:none;overflow:visible;padding:0;font-size:13px;line-height:2}
+ body.impMinuta #armador .doc .h,body.impMinuta #armador .doc .falta{background:none!important;
+  box-shadow:none!important;color:inherit!important;font-weight:inherit!important}
+ @page{size:A4;margin:18mm}
+}
+#caratula h1{font-size:15px;text-align:center;letter-spacing:.06em;margin:0 0 3px;text-transform:uppercase}
+#caratula .bajo{text-align:center;font-size:11px;margin:0 0 16px;letter-spacing:.12em;text-transform:uppercase}
+#caratula .ident{width:100%;border-collapse:collapse;margin-bottom:14px;font-size:12.5px}
+#caratula .ident td{border:0;padding:5px 4px}
+#caratula .ident .k{font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;color:#555;display:block}
+#caratula .ident .v{border-bottom:1px solid #000;min-height:19px;display:block;font-weight:600}
+#caratula .tics{font-size:12.5px;margin:0 0 14px}
+#caratula .tics span{margin-right:26px}
+#caratula table.inf{width:100%;border-collapse:collapse;font-size:12px}
+#caratula table.inf th,#caratula table.inf td{border:1px solid #000;padding:7px 6px;text-align:left}
+#caratula table.inf td{height:26px}
+#caratula .obs{margin-top:14px;font-size:12.5px}
+#caratula .obs .caja{border:1px solid #000;height:96px;margin-top:5px}
+#caratula .pie{margin-top:12px;font-size:9.5px;color:#555}
+</style>
+</head>
+<body>
+
+<div class="cinta" id="cinta">SIGEC · Sistema interno de la Escribanía General de Gobierno · Provincia de Córdoba</div>
+<div class="top">
+  <div>
+    <h1>Escrituras sociales <span class="quien" id="quienChip"></span></h1>
+    <div class="sub" id="sub">Barrios y lotes — Ley 9811</div>
+  </div>
+  <!-- El encabezado es siempre el mismo: cambia lo que se puede hacer, no quién sos ni
+       dónde estás. Por eso el nombre del producto nunca se va de la pantalla. -->
+  <div class="acc" id="accTablero">
+    <select class="rol" id="rol" title="Cambia lo que se ve en pantalla"></select>
+    <button id="bNuevo" class="p">+ Nuevo barrio</button>
+    <button id="bEjemplo">Cargar ejemplo</button>
+    <button id="bExp">Guardar copia (.json)</button>
+    <button id="bImp">Abrir copia</button>
+    <input type="file" id="fImp" accept=".json" style="display:none">
+  </div>
+  <div class="acc" id="accMinuta" style="display:none"></div>
+</div>
+
+<div class="wrap">
+  <div id="tareas"></div>
+  <div id="alerta"></div>
+  <div id="lista"></div>
+  <p class="hint" id="pie"></p>
+</div>
+
+<!-- ══════════════════ Las dos pantallas de la minuta ══════════════════
+     Antes eran otra herramienta, con su propio archivo, su propio encabezado y su propio
+     botón. La minuta base es del barrio y la individual es del lote: se entra desde el
+     barrio y se vuelve al barrio, sin cambiar de página ni de aspecto. Lo que se arma
+     queda guardado ahí, no en un .json suelto del disco R. -->
+<div id="armador">
+  <!-- ─────────── armar la minuta base del barrio ─────────── -->
+  <div class="pantalla" id="m1"><div class="wrap layout">
+  <main>
+    <div class="card">
+      <h2>1 · De qué manzana es</h2>
+      <p class="hint">La minuta base pertenece a una manzana. Si el barrio tiene varias, se arma una por cada una.</p>
+      <div class="g3">
+        <div class="field"><label class="f">Barrio</label><input id="bBarrio" placeholder="Campo de la Ribera"></div>
+        <div class="field"><label class="f">Manzana <i>(en letras)</i></label><input id="bMza" placeholder="treinta"></div>
+        <div class="field"><label class="f">Armada por</label><input id="bAutor" placeholder="Apellido, Nombre"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>2 · El texto de la escritura</h2>
+      <p class="hint">Pegá una escritura ya hecha de esta manzana. Después marcás sobre ella qué partes son variables.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn" id="cargarEjemplo">Cargar el modelo de ejemplo</button>
+        <button class="btn" id="btnArchivo">Cargar desde un archivo (.docx o .json)</button>
+        <input type="file" id="fileWord" accept=".docx,.json" style="display:none">
+        <button class="btn" id="limpiarBase">Vaciar</button>
+      </div>
+      <textarea id="baseTexto" placeholder="Pegá acá la escritura completa…"></textarea>
+    </div>
+
+    <div class="card">
+      <h2>3 · Marcar lo que cambia en cada escritura</h2>
+      <p class="hint">Seleccioná en el texto de arriba la parte variable y tocá el botón que corresponde. Se reemplaza por una marca.</p>
+      <div style="display:flex;gap:9px;flex-wrap:wrap;margin-bottom:14px">
+        <button class="btn pri" id="detectar">Detectar todo automáticamente</button>
+        <button class="btn" id="detectarConc">Solo concordancias</button>
+        <button class="btn" id="detectarDatos">Solo datos</button>
+      </div>
+      <div id="sugerencias"></div>
+      <div id="botonesMarcas"></div>
+      <div class="info" style="margin-top:14px"><b>Las concordancias se resuelven solas.</b> Donde pongas <span class="tag">{TRATAMIENTO}</span> va a salir “el señor” o “los señores” según cuántos adjudicatarios tenga el lote. Lo mismo con “dice/dicen”, “ACEPTA/ACEPTAN”, etc.</div>
+    </div>
+
+    <div class="card">
+      <h2>4 · Guardarla en el barrio</h2>
+      <p class="hint">Queda guardada en el barrio: no hay archivo que dejar en ninguna carpeta ni que cargar después, y la usan todos los lotes. El respaldo <i>.json</i> es por si alguna vez hace falta llevarla a otra computadora.</p>
+      <div style="display:flex;gap:9px;flex-wrap:wrap">
+        <button class="btn pri" id="guardarBase">Guardar la minuta base</button>
+        <button class="btn" id="probarBase">Ver cómo queda con datos de ejemplo</button>
+        <button class="btn" id="bajarBase">Descargar un respaldo (.json)</button>
+      </div>
+      <div id="avisoBase"></div>
+    </div>
+  </main>
+  <aside>
+    <div class="apanel">
+      <div class="ph"><b>Marcas usadas</b><span class="st" id="contadorMarcas"></span></div>
+      <div style="padding:14px 16px;max-height:520px;overflow:auto" id="listaMarcas"></div>
+    </div>
+  </aside>
+  </div></div>
+
+  <!-- ─────────── confeccionar la minuta del lote ─────────── -->
+  <div class="pantalla" id="m2"><div class="wrap layout">
+  <main>
+    <div id="zonaDatos">
+      <div id="avisoPrefill"></div>
+      <div class="card">
+        <h2>Encabezado</h2>
+        <div class="g3">
+          <div class="field"><label class="f">Sección</label><input id="escSec" value="A"></div>
+          <div class="field"><label class="f">Fecha del acto <i>(dd/mm/aaaa)</i></label><input id="fecha" class="fch" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10"></div>
+          <div class="field"><label class="f">Escribana</label><select id="escribana"><option value="General">Escribana General</option><option value="Sustituta">Escribana Sustituta</option></select></div>
+          <div class="field"><label class="f">Concordancia</label><select id="conc"><option value="auto">Automática</option><option value="sing">Forzar singular</option><option value="plur">Forzar plural</option></select></div>
+          <div class="field"><label class="f">Copias de los documentos</label><select id="docs"><option value="agrego">Se agregan a esta escritura</option><option value="corren">Corren agregadas a otra</option></select></div>
+          <div class="field fl g2" id="wCorren" style="display:none;padding:0">
+            <div class="field"><label class="f">Escritura donde corren <i>(en letras)</i></label><input id="corrN"></div>
+            <div class="field"><label class="f">Fecha de esa escritura <i>(en letras)</i></label><input id="corrF"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Adjudicatarios</h2>
+        <p class="hint">Si son dos o más, todo el texto pasa a plural y se agrega el condominio por partes iguales.</p>
+        <div id="adjs"></div>
+        <button class="btn" id="addAdj">Agregar adjudicatario</button>
+      </div>
+
+      <div class="card">
+        <h2>Lote e inmueble</h2>
+        <div class="g3">
+          <div class="field"><label class="f">Lote <i>(en letras)</i></label><input id="lote"></div>
+          <div class="field"><label class="f">Manzana <i>(en letras)</i></label><input id="mza"></div>
+          <div class="field"><label class="f">Barrio <i>(si va en el domicilio)</i></label><input id="barrio"></div>
+          <div class="field"><label class="f">Localidad</label><input id="loc"></div>
+          <div class="field"><label class="f">Departamento</label><input id="depto"></div>
+          <div class="field"><label class="f">Matrícula</label><input id="matricula" class="mmil"></div>
+          <div class="field"><label class="f">N° de cuenta</label><input id="cuenta" class="mcuenta"></div>
+          <div class="field"><label class="f">Superficie <i>(m²)</i></label><input id="sup" type="number" step="0.01"></div>
+          <div class="field fl"><label class="f">Nomenclatura catastral</label><input id="nomen"></div>
+          <div class="field"><label class="f">Base imponible <i>($)</i></label><input id="base" class="mmil"><div class="auto" id="baseHint"></div></div>
+          <div class="field"><label class="f">Año de la base</label><input id="baseAnio" placeholder="dos mil veintiséis"></div>
+        </div>
+        <div class="field"><label class="f">Descripción del lote <i>(pegá el texto de la matrícula)</i></label>
+          <textarea id="desc" rows="5"></textarea></div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap">
+          <button class="btn pri" id="convDesc">Convertir a letras y extraer la superficie</button>
+          <span id="convMsg" style="font-size:12px;color:var(--ok);align-self:center"></span>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Actuaciones y certificados</h2>
+        <div class="g3">
+          <div class="field"><label class="f">Expediente individual</label><input id="expInd" class="mexp"></div>
+          <div class="field"><label class="f">Resolución individual N°</label><input id="resN"></div>
+          <div class="field"><label class="f">Fecha resolución <i>(dd/mm/aaaa)</i></label><input id="resF" class="fch" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10"></div>
+          <div class="field"><label class="f">Certificado catastral N°</label><input id="cc"></div>
+          <div class="field"><label class="f">Fecha catastral</label><input id="ccf" class="fch" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10"></div>
+          <div class="field"><label class="f">Certificado notarial N°</label><input id="cn"></div>
+          <div class="field"><label class="f">Fecha notarial</label><input id="cnf" class="fch" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Al protocolizar</h2>
+        <p class="hint">El número de escritura no se sabe al confeccionar: sale del protocolo, recién cuando se va a imprimir. Por eso está acá abajo y no cuenta como dato faltante.</p>
+        <div class="g3">
+          <div class="field"><label class="f">Escritura N° <i>(en letras)</i></label><input id="escNum"></div>
+        </div>
+      </div>
+
+      <div class="card" id="cardRev">
+        <h2>Revisión</h2>
+        <p class="hint">Cada dato, contra el documento del que sale. Mientras no esté marcada como revisada, la descarga avisa y pide confirmar.</p>
+        <div id="revCab"></div>
+        <div id="revLista"></div>
+        <div style="display:flex;gap:9px;flex-wrap:wrap;margin-top:12px">
+          <button class="btn pri" id="revOk">Marcar como revisada</button>
+          <button class="btn" id="revReset">Reiniciar</button>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <aside>
+    <div class="apanel">
+      <div class="ph"><b id="tituloMinuta">Minuta</b><span class="st" id="estado"></span></div>
+      <div id="chk"></div>
+      <div class="doc" id="doc"></div>
+      <div class="acts">
+        <button class="btn pri" id="descargarWord">Descargar en Word</button>
+        <button class="btn" id="copiar">Copiar</button>
+        <button class="btn" id="imprimir">Imprimir</button>
+      </div>
+    </div>
+  </aside>
+  </div></div>
+</div>
+
+<div class="aviso-barra" id="aviso"></div>
+<div class="fondo" id="fondo"></div>
+<div class="panel" id="panel"><button class="cerrar" id="pCerrar">✕</button><div id="pCuerpo"></div></div>
+<div class="dialogo" id="dialogo"><div class="caja">
+  <p id="dlgTexto"></p>
+  <div class="btns"><button class="p" id="dlgSi">Borrar</button><button id="dlgNo">Cancelar</button></div>
+</div></div>
+<div id="caratula"></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+try{ if(window.self!==window.top) document.documentElement.classList.add('embebido'); }catch(e){}
+
+/* ══════════════════ Quién mira ══════════════════
+   La escribana y los auxiliares no miran lo mismo, y no es una cuestión de permisos: es
+   que tienen preguntas distintas. La escribana pregunta "qué hay que repartir y cómo va
+   todo"; el auxiliar pregunta "qué tengo que hacer yo hoy". Una sola pantalla que
+   conteste las dos termina contestando mal las dos. */
+const EQUIPO=["Ávila","Ferreyra"];
+const CLAVE_ROL="sociales_rol";
+let ROL="escribana";
+function esEscribana(){ return ROL==="escribana"; }
+function cargarRol(){
+  try{ const r=localStorage.getItem(CLAVE_ROL); if(r) ROL=r; }catch(e){}
+  $("#rol").innerHTML=`<option value="escribana">Vista de la escribana</option>`+
+    EQUIPO.map(n=>`<option value="${esc(n)}">Vista de ${esc(n)}</option>`).join("");
+  $("#rol").value=ROL;
+}
+$("#rol").addEventListener("change",e=>{
+  ROL=e.target.value;
+  try{ localStorage.setItem(CLAVE_ROL,ROL); }catch(err){}
+  pintar();
+});
+
+/* ══════════════════ Fechas ══════════════════
+   dd/mm/aaaa siempre, con máscara y nunca el selector del navegador: muestra el mes
+   primero según cómo esté configurada cada máquina, y acá corren ocho distintas. */
+function partesFecha(s){
+  const m=String(s||"").match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(!m) return null;
+  const d=+m[1],mes=+m[2],a=+m[3];
+  if(mes<1||mes>12||d<1||d>31) return null;
+  const f=new Date(a,mes-1,d);
+  if(f.getDate()!==d||f.getMonth()!==mes-1) return null;
+  return {d,mes,a,f};
+}
+const fechaValida=s=>!!partesFecha(s);
+function masaFecha(el){
+  /* Solo reescribe el valor si de verdad cambió, y deja el cursor después de la misma
+     cantidad de dígitos: si no, escribir en el medio salta al final. */
+  const antes=el.value, pos=el.selectionStart;
+  const digAntes=antes.slice(0,pos).replace(/\D/g,"").length;
+  const d=antes.replace(/\D/g,"").slice(0,8);
+  let out=d.slice(0,2);
+  if(d.length>2) out+="/"+d.slice(2,4);
+  if(d.length>4) out+="/"+d.slice(4,8);
+  if(out===antes) return;
+  el.value=out;
+  let i=0,n=0;
+  while(i<out.length&&n<digAntes){ if(/\d/.test(out[i]))n++; i++; }
+  el.setSelectionRange(i,i);
+}
+/* El expediente se teclea de corrido y los separadores salen solos: 0435-000012/2025. */
+function masaExpte(el){
+  const antes=el.value, pos=el.selectionStart;
+  const digAntes=antes.slice(0,pos).replace(/\D/g,"").length;
+  const d=antes.replace(/\D/g,"").slice(0,14);
+  let out=d.slice(0,4);
+  if(d.length>4) out+="-"+d.slice(4,10);
+  if(d.length>10) out+="/"+d.slice(10,14);
+  if(out===antes) return;
+  el.value=out;
+  let i=0,n=0;
+  while(i<out.length&&n<digAntes){ if(/\d/.test(out[i]))n++; i++; }
+  el.setSelectionRange(i,i);
+}
+function masDias(s,n){
+  const p=partesFecha(s); if(!p) return "";
+  const f=new Date(p.a,p.mes-1,p.d); f.setDate(f.getDate()+n);
+  const dd=x=>String(x).padStart(2,"0");
+  return dd(f.getDate())+"/"+dd(f.getMonth()+1)+"/"+f.getFullYear();
+}
+function diasHasta(s){
+  const p=partesFecha(s); if(!p) return null;
+  const hoy=new Date(); hoy.setHours(0,0,0,0);
+  return Math.round((p.f-hoy)/86400000);
+}
+function hoyTexto(){
+  const f=new Date(), dd=x=>String(x).padStart(2,"0");
+  return dd(f.getDate())+"/"+dd(f.getMonth()+1)+"/"+f.getFullYear();
+}
+
+/* ══════════════════ Los datos ══════════════════
+   El contenedor durable es el BARRIO. Los lotes cuelgan directo del barrio y la
+   resolución es un dato de cada lote, no un nivel: una ampliación es dar de alta lotes
+   nuevos en un barrio que ya existe. */
+const CLAVE="sociales_barrios";
+let DATOS={barrios:[]};
+let avisado=false;
+
+/* Los estados son los del circuito real, más la designación adelante, que es donde
+   empieza todo cuando llega el expediente madre. */
+const ESTADOS={
+  sin:       {n:"Sin designar",     cls:"no", orden:0},
+  designado: {n:"Designado",        cls:"ce", orden:1},
+  confeccion:{n:"En confección",    cls:"ce", orden:2},
+  revision:  {n:"En revisión",      cls:"wa", orden:3},
+  observado: {n:"Observado",        cls:"ba", orden:4},
+  listo:     {n:"Listo para firmar",cls:"ok", orden:5},
+  firmada:   {n:"Firmada",          cls:"ok", orden:6}
+};
+const estadoDe=l=>ESTADOS[l.estado]||ESTADOS.sin;
+
+function cargar(){
+  try{
+    const t=localStorage.getItem(CLAVE);
+    if(t) DATOS=JSON.parse(t);
+  }catch(e){
+    setTimeout(()=>avisar("No se pudo leer lo guardado en esta computadora. Se abre vacío; si tenés una copia .json, abrila con «Abrir copia».",true),50);
+  }
+  if(!DATOS||!Array.isArray(DATOS.barrios)) DATOS={barrios:[]};
+  migrar();
+}
+/* Casos guardados con formatos anteriores: se aplanan y se completan solos al abrir. */
+function migrar(){
+  for(const b of DATOS.barrios){
+    if(Array.isArray(b.resoluciones)){
+      b.lotes=b.lotes||[];
+      for(const r of b.resoluciones) for(const l of (r.lotes||[])){
+        if(!l.resolucion) l.resolucion=r.numero||"";
+        b.lotes.push(l);
+      }
+      delete b.resoluciones;
+    }
+    b.lotes=b.lotes||[];
+    if(b.terminado!==undefined){ b.firmado=b.firmado||b.terminado; delete b.terminado; }
+    if(b.obsBase===undefined) b.obsBase="";
+    if(b.minutero===undefined) b.minutero="";
+    /* La minuta base dejó de ser el nombre de un archivo del disco R: es el texto, y vive
+       adentro del barrio. b.minuta queda para los barrios cargados antes, que todavía
+       apuntan al archivo. */
+    if(b.base===undefined) b.base=null;
+    if(b.fijos===undefined) b.fijos=null;
+    for(const l of b.lotes){
+      if(l.obs===undefined) l.obs="";
+      if(l.obsQuien===undefined) l.obsQuien="";
+      if(l.obsFecha===undefined) l.obsFecha="";
+      if(l.firma===undefined) l.firma="";
+      if(l.datos===undefined) l.datos=null;   // la minuta individual, si ya se empezó
+      if(l.archivos===undefined) l.archivos=null; // lo que tenía la carpeta la última vez
+      if(!l.estado){
+        l.estado = l.firmada ? "firmada" : (l.responsable ? "designado" : "sin");
+      }
+      delete l.firmada;
+    }
+  }
+}
+/* Un guardado que falla no puede decir que anduvo. Avisa una sola vez, no en cada tecla. */
+function guardar(){
+  try{ localStorage.setItem(CLAVE,JSON.stringify(DATOS)); avisado=false; return true; }
+  catch(e){
+    if(!avisado){ avisado=true;
+      avisar("No se pudo guardar: puede estar lleno el almacenamiento del navegador. Lo que ves sigue acá, pero se pierde al cerrar. Guardá una copia con «Guardar copia (.json)» antes de seguir.",true);
+    }
+    return false;
+  }
+}
+const id=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const nuevoBarrio=n=>({id:id(),nombre:n,madre:"",estudio:"",minuta:"",minutero:"",obsBase:"",
+                       base:null,fijos:null,creador:ROL,firmado:false,plegado:false,lotes:[]});
+const nuevoLote=()=>({id:id(),lote:"",manzana:"",carpeta:"",resolucion:"",responsable:"",escribana:"",obsQuien:"",obsFecha:"",
+                      inicio:hoyTexto(),expediente:"",firma:"",notarial:"",estado:"sin",obs:"",datos:null,archivos:null});
+
+const barrioDe=i=>DATOS.barrios.find(b=>b.id===i);
+function ubicarLote(loteId){
+  for(const b of DATOS.barrios){
+    const l=b.lotes.find(x=>x.id===loteId);
+    if(l) return {b,l};
+  }
+  return null;
+}
+const todosLosLotes=()=>DATOS.barrios.flatMap(b=>b.lotes.map(l=>({b,l})));
+/* Lo que ve un auxiliar: sus lotes, y el barrio donde él arma la minuta. */
+const mios=b=>esEscribana()?b.lotes:b.lotes.filter(l=>l.responsable===ROL);
+/* El auxiliar ve TODOS los barrios activos, porque tiene que poder cargar su expediente
+   individual en cualquiera. Lo que no ve son los lotes de los demás: «solo lo tuyo» es
+   sobre los lotes, no sobre la existencia del barrio. Los barrios firmados donde no tuvo
+   nada no le aparecen: ahí ya no hay nada que hacer. */
+const veBarrio=b=>esEscribana()||!b.firmado||b.minutero===ROL||b.creador===ROL||b.lotes.some(l=>l.responsable===ROL);
+/* Un barrio donde el auxiliar todavía no tiene ningún lote: se muestra plegado, para que la
+   pantalla siga mostrando lo que tiene que pasar y no todo lo que existe. */
+const ajeno=b=>!esEscribana()&&mios(b).length===0;
+const abiertos=new Set();
+
+/* ══════════════════ El reloj ══════════════════
+   Lo que mueve el proceso es la FECHA DE FIRMA. El certificado notarial vence a los 30
+   días contados desde que vuelve contestado, así que el riesgo concreto no es "vence
+   pronto": es que VENZA ANTES DE LA FIRMA. Eso es lo que se avisa. */
+const DIAS_NOTARIAL=30;
+function venceNotarial(l){ return l.notarial ? masDias(l.notarial,DIAS_NOTARIAL) : ""; }
+function riesgo(l){
+  if(l.estado==="firmada") return null;
+  const vence=venceNotarial(l);
+  if(!vence) return null;
+  const dv=diasHasta(vence);
+  const df=l.firma?diasHasta(l.firma):null;
+  /* el caso que importa: la firma cae después del vencimiento */
+  if(df!==null && df>dv) return {clase:"ba",texto:"El notarial vence antes de la firma",vence,dv,df};
+  if(dv<0)  return {clase:"ba",texto:"Notarial vencido el "+vence,vence,dv,df};
+  if(dv<=7) return {clase:"ba",texto:"El notarial vence en "+dv+(dv===1?" día":" días"),vence,dv,df};
+  if(dv<=15)return {clase:"wa",texto:"El notarial vence en "+dv+" días",vence,dv,df};
+  return null;
+}
+
+/* ══════════════════ Dibujar ══════════════════ */
+function pintar(){ pintarRol(); pintarTareas(); pintarAlerta(); pintarLista(); pintarPie(); }
+
+/* Quién mira no se deduce: se dice. Confundir la vista del auxiliar con la de la escribana
+   es creer que faltan lotes que están, o que no hay nada para revisar. */
+function pintarRol(){
+  const yo=esEscribana();
+  const chip=$("#quienChip");
+  chip.textContent = yo ? "Vista de la escribana" : "Vista de "+ROL;
+  chip.className = "quien "+(yo?"esc":"aux");
+  const c=$("#cinta");
+  c.className = "cinta"+(yo?"":" aux");
+  c.textContent = yo
+    ? "SIGEC · Escrituras sociales · Vista de la escribana — ves todos los barrios"
+    : "SIGEC · Escrituras sociales · Vista de "+ROL+" — ves solo lo tuyo";
+}
+
+/* Lo que hay que hacer, según quién mira. Es la barra de tareas: la escribana ve lo que
+   tiene que repartir, el auxiliar ve lo que le repartieron. */
+function pintarTareas(){
+  const el=$("#tareas");
+  if(!DATOS.barrios.length){ el.innerHTML=""; return; }
+  let items=[];
+  if(esEscribana()){
+    DATOS.barrios.filter(b=>!b.firmado).forEach(b=>{
+      if(!b.minutero) items.push({q:`<b>${esc(b.nombre)} — falta designar quién arma la minuta base</b>
+        <span>${b.madre?"Expediente madre "+esc(b.madre)+" · ":""}${b.lotes.length} lote${b.lotes.length===1?"":"s"}</span>`,
+        btn:`<button class="ch p" data-editarb="${b.id}">Designar</button>`});
+      const sinD=b.lotes.filter(l=>!l.responsable);
+      if(sinD.length) items.push({q:`<b>${esc(b.nombre)} — ${sinD.length} lote${sinD.length===1?"":"s"} sin designar</b>
+        <span>Repartir entre los auxiliares</span>`,
+        btn:`<button class="ch p" data-desig="${b.id}">Designar lotes</button>`});
+      const enRev=b.lotes.filter(l=>l.estado==="revision");
+      if(enRev.length) items.push({q:`<b>${esc(b.nombre)} — ${enRev.length} lote${enRev.length===1?"":"s"} esperando tu revisión</b>
+        <span>${enRev.map(l=>"Lote "+esc(l.lote||"?")).join(" · ")}</span>`,
+        btn:`<button class="ch" data-plegar="${b.id}">Ver</button>`});
+    });
+  }else{
+    DATOS.barrios.filter(b=>!b.firmado).forEach(b=>{
+      if(b.minutero===ROL && !b.base) items.push({q:`<b>${esc(b.nombre)} — armar la minuta base</b>
+        <span>Te la designó la escribana. Hasta que esté, ningún lote del barrio se puede confeccionar.</span>`,
+        btn:`<button class="ch p" data-base="${b.id}">Armarla</button>`});
+      const obs=b.lotes.filter(l=>l.responsable===ROL&&l.estado==="observado");
+      if(obs.length) items.push({q:`<b>${esc(b.nombre)} — ${obs.length} lote${obs.length===1?"":"s"} observado${obs.length===1?"":"s"}</b>
+        <span>${obs.map(l=>"Lote "+esc(l.lote||"?")).join(" · ")}</span>`,
+        btn:`<button class="ch" data-plegar="${b.id}">Ver</button>`});
+      if(b.obsBase) items.push({q:`<b>${esc(b.nombre)} — la minuta base tiene una observación</b>
+        <span>${esc(b.obsBase)}</span>`,
+        btn:`<button class="ch" data-plegar="${b.id}">Ver</button>`});
+      const porHacer=b.lotes.filter(l=>l.responsable===ROL&&["designado","confeccion"].includes(l.estado));
+      if(porHacer.length) items.push({q:`<b>${esc(b.nombre)} — ${porHacer.length} lote${porHacer.length===1?"":"s"} para confeccionar</b>
+        <span>${porHacer.map(l=>"Lote "+esc(l.lote||"?")).join(" · ")}</span>`,
+        btn:`<button class="ch" data-plegar="${b.id}">Ver</button>`});
+    });
+  }
+  el.innerHTML=`<div class="tareas">
+    <h2>${esEscribana()?"Para designar y revisar":"Lo tuyo"}</h2>
+    <p class="sub">${esEscribana()
+      ? "Lo que no puede avanzar hasta que vos lo repartas o lo revises."
+      : "Lo que te designó la escribana."}</p>
+    ${items.length?items.map(i=>`<div class="item"><div class="q">${i.q}</div>${i.btn}</div>`).join("")
+                  :`<p class="nada">Nada pendiente${esEscribana()?"":" para vos"} por ahora.</p>`}
+  </div>`;
+}
+
+function pintarAlerta(){
+  const urg=todosLosLotes()
+    .filter(x=>veBarrio(x.b)&&(esEscribana()||x.l.responsable===ROL))
+    .map(x=>({...x,r:riesgo(x.l)}))
+    .filter(x=>x.r)
+    .sort((a,b)=>a.r.dv-b.r.dv);
+  if(!todosLosLotes().length){ $("#alerta").innerHTML=""; return; }
+  /* Sin la fecha del notarial o la de firma no se puede calcular el vencimiento. Decir
+     «ninguno llega vencido» en ese caso es afirmar algo que no se sabe, y es la función
+     principal del producto dando luz verde sobre nada. */
+  const aCiegas=todosLosLotes()
+    .filter(x=>veBarrio(x.b)&&(esEscribana()||x.l.responsable===ROL))
+    .filter(x=>x.l.estado!=="firmada"&&(!x.l.notarial||!x.l.firma)).length;
+  if(!urg.length){
+    $("#alerta").innerHTML = aCiegas
+      ? `<div class="alerta tibia"><b>Todavía no se puede saber si algún notarial vence antes de la firma.</b>
+         ${aCiegas===1?"Hay un lote sin":"Hay "+aCiegas+" lotes sin"} la fecha de firma o la del notarial.
+         El aviso aparece en cuanto estén las dos.</div>`
+      : `<div class="alerta calma"><b>Ningún certificado notarial llega vencido a la firma.</b>
+         Se avisa acá en cuanto alguno esté en riesgo.</div>`;
+    return;
+  }
+  const cola = aCiegas ? `<p class="hint" style="margin:8px 0 0">Y ${aCiegas===1?"un lote todavía no tiene":aCiegas+" lotes todavía no tienen"} las dos fechas cargadas, así que de ${aCiegas===1?"ese":"esos"} no se sabe.</p>` : "";
+  $("#alerta").innerHTML=`<div class="alerta"><b>${urg.length===1?"Un certificado notarial en riesgo":urg.length+" certificados notariales en riesgo"}</b>
+    Los 30 días corren desde que el certificado vuelve contestado. Si vence antes de la firma, hay que volver a pedirlo.
+    <ul>${urg.map(x=>`<li><b>${esc(x.b.nombre)}</b> — Lote ${esc(x.l.lote||"?")} Mza ${esc(x.l.manzana||"?")}${x.l.carpeta?" · "+esc(x.l.carpeta):""}:
+      ${esc(x.r.texto.toLowerCase())}${x.l.firma?` (firma el ${esc(x.l.firma)}, vence el ${esc(x.r.vence)})`:""}</li>`).join("")}</ul>${cola}</div>`;
+}
+
+/* El que firma antes va primero. Es toda la función del tablero —cuál de los once
+   necesita atención— y cargados en el orden de alta no la cumple. Sin fecha de firma
+   van al final: todavía no entraron en el calendario. */
+function porFirma(a,b){
+  const da=a.firma?diasHasta(a.firma):1e9, db=b.firma?diasHasta(b.firma):1e9;
+  if(da!==db) return da-db;
+  return estadoDe(a).orden-estadoDe(b).orden;
+}
+
+const firmVisibles=new Set();
+
+/* La fila es la carpeta: el ícono hace que se lea como lo que se abre en Windows. */
+const ICONO_CARPETA='<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" '
+ +'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 '
+ +'2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>';
+
+/* Si la minuta ya se empezó —y si pasó la revisión— se ve desde el tablero sin abrir
+   nada. Es justamente lo que la escribana necesita para saber qué le toca mirar. */
+function marcaMinuta(l){
+  if(!l.datos) return "";
+  const rev=l.datos.rev&&l.datos.rev.fecha;
+  return `<div class="chica" style="color:${rev?"var(--ok)":"var(--muted)"}">Minuta ${rev?"revisada el "+esc(l.datos.rev.fecha):"empezada, sin revisar"}</div>`;
+}
+function filaLote(l,firmada){
+  const e=estadoDe(l), r=riesgo(l);
+  const pie=[l.expediente?"Expte. "+l.expediente:"", l.resolucion?"Res. "+l.resolucion:""].filter(Boolean).join(" · ");
+  return `<tr>
+    <td class="nom"><span class="car">${ICONO_CARPETA}<span>${esc(l.carpeta||"—")}</span></span>
+        ${pie?`<div class="chica">${esc(pie)}</div>`:""}</td>
+    <td class="lm">Lote ${esc(l.lote||"—")} <i>·</i> Mza ${esc(l.manzana||"—")}</td>
+    <td>${esc(l.responsable||"—")}${l.escribana?`<div class="chica">${esc(l.escribana)}</div>`:""}</td>
+    ${firmada?"":`<td><span class="et ${e.cls}">${esc(e.n)}</span>${marcaMinuta(l)}</td>
+    <td>${l.firma?esc(l.firma):`<span class="chica">sin fecha</span>`}
+        ${r?`<div class="obsx">${esc(r.texto)}</div>`:(l.notarial?`<div class="chica">notarial hasta ${esc(venceNotarial(l))}</div>`:"")}</td>`}
+    <td class="acc">
+      ${firmada
+        ? `<button class="ch" data-minuta="${l.id}">Minuta</button>
+           ${esEscribana()?`<button class="ch" data-despendiente="${l.id}">Volver a pendiente</button>
+           <button class="ch borrar" data-borrarlote="${l.id}">Borrar</button>`:`<button class="ch" data-editarl="${l.id}">Abrir</button>`}`
+        : `<button class="ch p" data-minuta="${l.id}">Minuta</button>
+           <button class="ch" data-caratula="${l.id}">Carátula</button>
+           <button class="ch" data-editarl="${l.id}">Abrir</button>`}
+    </td></tr>`;
+}
+
+function bloqueLotes(b){
+  const todos=mios(b);
+  const pend=todos.filter(l=>l.estado!=="firmada").sort(porFirma);
+  const firm=todos.filter(l=>l.estado==="firmada");
+  const abierto=firmVisibles.has(b.id);
+  const obsN=pend.filter(l=>l.estado==="observado").length;
+  return `<div class="res">
+    <div class="rh">
+      <span class="rn">${esEscribana()?"Lotes":"Tus lotes"}</span>
+      <span class="chica" style="font-size:12px;color:var(--muted)">${pend.length} pendiente${pend.length===1?"":"s"}</span>
+      ${obsN?`<span class="et ba">${obsN} observado${obsN===1?"":"s"}</span>`:""}
+      <span class="der" style="margin-left:auto;display:flex;gap:7px">
+        ${esEscribana()&&b.lotes.length?`<button class="ch" data-desig="${b.id}">Designar</button>`:""}
+        <button class="ch" data-nlote="${b.id}">+ Lote</button>
+      </span>
+    </div>
+
+    ${pend.length?`<div class="tabla"><table>
+      <thead><tr><th>Adjudicatarios</th><th>Lote / Mza</th><th>Responsable</th><th>Estado</th><th>Firma</th><th></th></tr></thead>
+      <tbody>${pend.map(l=>filaLote(l,false)).join("")}</tbody></table></div>`
+    :(todos.length?`<p class="vacio">Todos los lotes de este barrio están firmados.</p>`
+                  :`<p class="vacio">${esEscribana()?"Todavía no hay lotes cargados. Se cargan leyendo la resolución.":"No tenés lotes en este barrio. Con «+ Lote» cargás el tuyo y queda designado a vos."}</p>`)}
+
+    ${firm.length?`<div class="firmadas">
+      <button class="lineafirm" data-verfirm="${b.id}">
+        <span class="fl">${abierto?"▾":"▸"}</span>${firm.length} firmada${firm.length===1?"":"s"}
+      </button>
+      ${abierto?`<div class="tabla"><table>
+        <thead><tr><th>Adjudicatarios</th><th>Lote / Mza</th><th>Responsable</th><th></th></tr></thead>
+        <tbody>${firm.map(l=>filaLote(l,true)).join("")}</tbody></table></div>`:""}
+    </div>`:""}
+  </div>`;
+}
+
+function pintarLista(){
+  const vis=DATOS.barrios.filter(veBarrio);
+  if(!DATOS.barrios.length){
+    $("#lista").innerHTML=`<div class="barrio"><div class="bc" style="border-top:0;padding-top:15px">
+      <p class="vacio">Todavía no hay ningún barrio cargado.</p>
+      <p class="hint">Empezá con «+ Nuevo barrio», o mirá cómo queda con «Cargar ejemplo».</p>
+    </div></div>`;
+    return;
+  }
+  if(!vis.length){
+    $("#lista").innerHTML=`<div class="barrio"><div class="bc" style="border-top:0;padding-top:15px">
+      <p class="vacio">No tenés nada designado todavía.</p>
+      <p class="hint">Cuando la escribana te designe un lote o el armado de una minuta, aparece acá.</p>
+    </div></div>`;
+    return;
+  }
+  $("#lista").innerHTML=vis.map(b=>{
+    const lotes=mios(b);
+    const firmadas=lotes.filter(l=>l.estado==="firmada").length;
+    const plegado=ajeno(b)?!abiertos.has(b.id):!!b.plegado;
+    return `<div class="barrio ${b.firmado?"fin":""} ${plegado?"plegado":""}" data-b="${b.id}">
+      <div class="bh" data-plegar="${b.id}">
+        <span class="fl">${plegado?"▸":"▾"}</span>
+        <span class="nom">${esc(b.nombre)}</span>
+        <span class="cuenta">${ajeno(b)?"no tenés lotes acá"
+          :`${lotes.length} lote${lotes.length===1?"":"s"}${lotes.length?" · "+firmadas+" firmada"+(firmadas===1?"":"s"):""}`}</span>
+        <span class="der">
+          ${b.obsBase?`<span class="et ba">Minuta observada</span>`:""}
+          ${b.firmado?`<span class="et no">Barrio firmado</span>`:""}
+          ${ajeno(b)?`<button class="ch p" data-nlote="${b.id}">+ Mi lote</button>`:""}
+          ${esEscribana()?`<button class="ch" data-editarb="${b.id}">Editar barrio</button>`:""}
+        </span>
+      </div>
+      <div class="bc">
+        ${b.obsBase?`<div class="obsbase"><b>⚑ Observación de la minuta base — toca a todos los lotes</b>
+          <div>${esc(b.obsBase)}</div>
+          ${esEscribana()?`<div class="q"><button class="ch" data-quitarobs="${b.id}" style="margin-top:7px">Levantar la observación</button></div>`:""}</div>`:""}
+        <div class="base">
+          <span class="tit">Lo que el barrio guarda una vez</span>
+          ${b.madre?`<span class="et no">Expte. madre ${esc(b.madre)}</span>`:""}
+          <span class="et ${b.estudio?"ok":"no"}">Estudio de título${b.estudio?" ✓":""}</span>
+          ${b.base?`<span class="et ok">Minuta base ✓ · Mza ${esc(b.base.mza||"—")}</span>`
+                  :(b.minuta?`<span class="et wa">Minuta base todavía en un archivo: ${esc(b.minuta)}</span>`
+                            :`<span class="et no">Sin minuta base</span>`)}
+          <span class="et ${b.minutero?"ce":"no"}">${b.minutero?"La arma "+esc(b.minutero):"Sin designar quién la arma"}</span>
+          <button class="ch p" data-base="${b.id}" style="margin-left:auto">${b.base?"Ver la minuta base":"Armar la minuta base"} →</button>
+        </div>
+        ${bloqueLotes(b)}
+      </div>
+    </div>`;
+  }).join("");
+}
+
+function pintarPie(){
+  $("#pie").textContent = todosLosLotes().length
+    ? "Los datos quedan en esta computadora. Guardá una copia con «Guardar copia (.json)» para llevarlos a otra máquina o al disco R."
+    : "";
+}
+
+/* ══════════════════ Preguntar y avisar, sin el navegador ══════════════════
+   Nada de confirm() ni alert(). Adentro de un marco aislado Chrome los ignora: confirm()
+   devuelve "no" sin preguntar, así que el borrado se cancelaba solo y en silencio. */
+/* El cuarto argumento dice que lo que se pregunta no borra nada, y el boton deja de
+   ser rojo. Un rojo puesto donde no corresponde ensena a ignorar el rojo. */
+function preguntar(texto, etiquetaSi, alSi, suave){
+  $("#dlgTexto").textContent=texto;
+  $("#dlgSi").className=suave?"p suave":"p";
+  $("#dlgSi").textContent=etiquetaSi;
+  $("#dialogo").classList.add("on");
+  $("#dlgSi").onclick=()=>{ cerrarDialogo(); alSi(); };
+  $("#dlgNo").onclick=cerrarDialogo;
+  $("#dlgSi").focus();
+}
+function cerrarDialogo(){ $("#dialogo").classList.remove("on"); }
+let avisoT=null;
+function avisar(texto, grave){
+  const el=$("#aviso");
+  el.textContent=texto;
+  el.className="aviso-barra on"+(grave?" grave":"");
+  clearTimeout(avisoT);
+  if(!grave) avisoT=setTimeout(()=>el.classList.remove("on"),4500);
+  el.onclick=()=>el.classList.remove("on");
+}
+
+/* ══════════════════ Borradores ══════════════════
+   Cerrar el panel sin querer se llevaba todo lo escrito. Ahora el alta guarda lo que se va
+   tipeando, tecla por tecla, y al volver a abrirla sigue donde estaba. Se limpia sola al
+   guardar. Sobrevive a cerrar la pestaña, porque va al mismo almacenamiento que el resto. */
+const CLAVE_BORR="sociales_borradores";
+let BORR={};
+function cargarBorradores(){ try{ BORR=JSON.parse(localStorage.getItem(CLAVE_BORR)||"{}"); }catch(e){ BORR={}; } }
+function guardarBorradores(){ try{ localStorage.setItem(CLAVE_BORR,JSON.stringify(BORR)); }catch(e){} }
+function borrarBorrador(clave){ delete BORR[clave]; guardarBorradores(); }
+function atarBorrador(clave,ids){
+  const leer=()=>{ const o={}; ids.forEach(id=>{ const e=$("#"+id); if(e) o[id]=(e.type==="checkbox")?e.checked:e.value; }); return o; };
+  const anotar=()=>{ BORR[clave]=leer(); guardarBorradores(); };
+  ids.forEach(id=>{ const e=$("#"+id); if(e){ e.addEventListener("input",anotar); e.addEventListener("change",anotar); } });
+}
+function aplicarBorrador(clave,ids){
+  const o=BORR[clave]; if(!o) return false;
+  let algo=false;
+  ids.forEach(id=>{ const e=$("#"+id); if(!e||o[id]===undefined) return;
+    if(e.type==="checkbox"){ if(o[id]){ e.checked=true; algo=true; } }
+    else if(o[id]!==""){ e.value=o[id]; algo=true; } });
+  return algo;
+}
+/* El cartel de «venías cargando esto», con la salida para empezar de cero. */
+function cartelBorrador(clave,ids,alLimpiar){
+  const cont=$("#borrCartel");
+  if(!cont) return;
+  cont.innerHTML=`<div class="avisobox">Seguís con lo que habías empezado a cargar. 
+    <button class="ch" id="borr_limpiar" style="margin-top:8px">Empezar de cero</button></div>`;
+  $("#borr_limpiar").onclick=()=>{ borrarBorrador(clave); ids.forEach(id=>{ const e=$("#"+id); if(e){ if(e.type==="checkbox") e.checked=false; else e.value=""; } }); cont.innerHTML=""; if(alLimpiar) alLimpiar(); };
+}
+
+/* ══════════════════ Paneles ══════════════════ */
+function abrirPanel(html){
+  $("#pCuerpo").innerHTML=html;
+  $("#panel").classList.add("on"); $("#fondo").classList.add("on");
+  const p=$("#pCuerpo input"); p&&p.focus();
+}
+function cerrarPanel(){ $("#panel").classList.remove("on"); $("#fondo").classList.remove("on"); }
+$("#pCerrar").onclick=cerrarPanel; $("#fondo").onclick=cerrarPanel;
+function atarMascaras(){
+  $("#pCuerpo").querySelectorAll("input.fecha").forEach(el=>el.addEventListener("input",()=>masaFecha(el)));
+  $("#pCuerpo").querySelectorAll("input.expte").forEach(el=>el.addEventListener("input",()=>masaExpte(el)));
+}
+const opcionesEquipo=(sel)=>`<option value="">— sin designar —</option>`+
+  EQUIPO.map(n=>`<option value="${esc(n)}"${sel===n?" selected":""}>${esc(n)}</option>`).join("");
+
+const IDS_BARRIO=["e_nombre","e_madre","e_estudio","e_minutero","e_obs","e_term"];
+function panelBarrio(b){
+  const nuevo=!b.nombre;
+  abrirPanel(`<h2>${b.nombre?"Editar barrio":"Nuevo barrio"}</h2>
+    <p class="hint">El barrio es el que dura: guarda el estudio de título y la minuta base. Los lotes cuelgan de acá, cada uno con el número de la resolución que le dio procedencia.</p>
+    <div id="borrCartel"></div>
+    <label>Nombre del barrio</label><input id="e_nombre" value="${esc(b.nombre)}" placeholder="Ej.: Campo de la Ribera">
+    <label>Expediente madre</label><input id="e_madre" class="expte" inputmode="numeric" maxlength="16" value="${esc(b.madre)}" placeholder="0435-000000/2025">
+    <p class="hint">El que manda Vivienda. Al darlo de alta con sus lotes, la escribana los reparte.</p>
+
+    <div class="grupo">Lo que el barrio guarda una vez</div>
+    <label>Estudio de título</label><input id="e_estudio" value="${esc(b.estudio)}" placeholder="Ej.: Manzanas 30 y 31 — hecho 04/2026">
+    <p class="hint">Es sobre la manzana, no sobre las personas: una ampliación no lo rehace, salvo que traiga una manzana nunca estudiada.</p>
+    <label>Quién arma la minuta base</label><select id="e_minutero">${opcionesEquipo(b.minutero)}</select>
+    <label>Minuta base</label>
+    <p class="hint" style="margin:4px 0 9px">${b.base
+      ? "Guardada en el barrio el "+esc(b.base.fecha||"—")+", de la manzana "+esc(b.base.mza||"—")+". La usan todos los lotes."
+      : (b.minuta ? "Todavía está como archivo suelto (“"+esc(b.minuta)+"”). Abrila con «Armar la minuta base» y queda guardada acá."
+                  : "Todavía no hay. Se arma una vez por manzana y la usan todos los lotes del barrio.")}</p>
+    <button type="button" class="ch p" id="e_base">${b.base?"Ver la minuta base":"Armar la minuta base"} →</button>
+
+    <div class="grupo">Observación de la minuta base</div>
+    <p class="hint">Un error de la base toca a <b>todos</b> los lotes del barrio. Lo que se escriba acá lo ve todo el equipo.</p>
+    <textarea id="e_obs" placeholder="Ej.: falta la mención del acta de constatación en el párrafo de INTERVENCIÓN.">${esc(b.obsBase)}</textarea>
+
+    <label><input type="checkbox" id="e_term" ${b.firmado?"checked":""} style="width:auto;margin-right:7px">Barrio firmado</label>
+    <p class="hint">Como la carpeta «BARRIOS FIRMADOS» del disco R: se pliega en una línea y deja de estar en el medio.</p>
+    <div class="pbtn">
+      <button class="p" id="e_ok">Guardar</button>
+      <button id="e_cancel">Cancelar</button>
+      ${b.nombre?`<button class="borrar" id="e_del">Borrar barrio</button>`:""}
+    </div>`);
+  atarMascaras();
+  /* Alta nueva: lo que se va escribiendo queda anotado, así cerrar sin querer no lo borra. */
+  if(nuevo){
+    if(aplicarBorrador("barrio",IDS_BARRIO)) cartelBorrador("barrio",IDS_BARRIO);
+    atarBorrador("barrio",IDS_BARRIO);
+  }
+  const eb=$("#e_base");
+  /* Entrar al armador desde acá guarda primero lo que esté escrito: si no, cambiar el
+     nombre del barrio y tocar el botón se lo comía. */
+  if(eb) eb.onclick=()=>{
+    if(!$("#e_nombre").value.trim()){ avisar("Ponele un nombre al barrio antes de armar la minuta.",true); $("#e_nombre").focus(); return; }
+    $("#e_ok").click();
+    if(window.ARMADOR) ARMADOR.abrirBase(b);
+  };
+  $("#e_ok").onclick=()=>{
+    const n=$("#e_nombre").value.trim();
+    if(!n){ avisar("Ponele un nombre al barrio.",true); $("#e_nombre").focus(); return; }
+    b.nombre=n; b.madre=$("#e_madre").value.trim();
+    b.estudio=$("#e_estudio").value.trim();
+    b.minutero=$("#e_minutero").value; b.obsBase=$("#e_obs").value.trim();
+    /* El propio texto del casillero promete que el barrio «se pliega en una línea y deja
+       de estar en el medio». Para los barrios creados en la app nunca se plegaba: nacen con
+       plegado:false y la condición solo actuaba si era undefined. Se pliega al marcarlo y
+       se despliega al desmarcarlo, que es lo que dice. */
+    const eraFirmado=!!b.firmado;
+    b.firmado=$("#e_term").checked;
+    if(b.firmado!==eraFirmado) b.plegado=b.firmado;
+    if(!DATOS.barrios.includes(b)) DATOS.barrios.push(b);
+    borrarBorrador("barrio");
+    guardar(); cerrarPanel(); pintar();
+  };
+  $("#e_cancel").onclick=cerrarPanel;
+  const del=$("#e_del");
+  if(del) del.onclick=()=>{
+    const n=b.lotes.length;
+    preguntar(`¿Borrar el barrio "${b.nombre}"`+(n?` y sus ${n} lote${n===1?"":"s"}`:"")+"? No se puede deshacer.","Borrar el barrio",()=>{
+      DATOS.barrios=DATOS.barrios.filter(x=>x!==b); guardar(); cerrarPanel(); pintar();
+      avisar("Barrio borrado.");
+    });
+  };
+}
+
+/* Al dar de alta un lote solo se sabe lo que dice la resolución. Quién lo lleva se designa
+   después, y en ese momento no volvió ningún certificado todavía. Por eso el alta son
+   cinco campos y se encadena: se carga la tanda entera sin cerrar el panel. */
+const IDS_LOTE=["l_lote","l_mza","l_carp","l_exp","l_res","l_ini"];
+function panelAlta(b,cuantos,ultimaRes){
+  const l=nuevoLote();
+  const mio=!esEscribana();
+  abrirPanel(`<h2>Nuevo lote</h2>
+    <p class="hint">${esc(b.nombre)}${cuantos?` — <b>${cuantos} cargado${cuantos===1?"":"s"}</b> en esta tanda`:""}</p>
+    <div id="borrCartel"></div>
+    ${mio?`<div class="avisobox">Los lotes que cargues quedan designados a vos. La escribana los puede repartir de nuevo si hace falta.</div>`:""}
+    <div class="dos">
+      <div><label>Lote</label><input id="l_lote" placeholder="Ej.: 07"></div>
+      <div><label>Manzana</label><input id="l_mza" placeholder="Ej.: 30"></div>
+    </div>
+    <label>Carpeta — adjudicatario o adjudicatarios</label>
+    <input id="l_carp" placeholder="Ej.: MOLINA Ramona del Valle">
+    <p class="hint">Un lote puede tener más de un adjudicatario: van todos acá, que es como se llama la carpeta del expediente.</p>
+    <label>Expediente</label>
+    <input id="l_exp" class="expte" inputmode="numeric" maxlength="16" placeholder="0435-000000/2025">
+    <p class="hint">Tecleá los números de corrido: el guion y la barra salen solos.</p>
+    <div class="dos">
+      <div><label>Resolución</label><input id="l_res" value="${esc(ultimaRes||"")}" placeholder="Ej.: 412/2025"></div>
+      <div><label>Fecha de inicio</label><input id="l_ini" class="fecha" inputmode="numeric" maxlength="10" value="${esc(l.inicio)}" placeholder="dd/mm/aaaa"></div>
+    </div>
+    <p class="hint">La resolución queda puesta para el lote que sigue: cargando una tanda entera se escribe una sola vez.</p>
+    <div class="pbtn">
+      <button class="p" id="l_otro">Guardar y cargar otro</button>
+      <button id="l_ok">Guardar y cerrar</button>
+      <button id="l_cancel">Cancelar</button>
+    </div>
+    <p class="hint" style="margin-top:12px">${mio?"La fecha de firma la pone la escribana.":"Quién lo lleva y la fecha de firma se ponen después, con «Designar»."}</p>`);
+  atarMascaras();
+  const claveB="lote:"+b.id;
+  if(aplicarBorrador(claveB,IDS_LOTE)) cartelBorrador(claveB,IDS_LOTE);
+  atarBorrador(claveB,IDS_LOTE);
+  const tomar=()=>{
+    const f=$("#l_ini").value.trim();
+    if(f&&!fechaValida(f)){ avisar("La fecha de inicio tiene que ser dd/mm/aaaa.",true); $("#l_ini").focus(); return null; }
+    l.lote=$("#l_lote").value.trim(); l.manzana=$("#l_mza").value.trim();
+    l.carpeta=$("#l_carp").value.trim(); l.expediente=$("#l_exp").value.trim();
+    l.resolucion=$("#l_res").value.trim(); l.inicio=f;
+    if(!l.lote&&!l.carpeta){ avisar("Cargá por lo menos el lote o el adjudicatario.",true); $("#l_lote").focus(); return null; }
+    /* El que carga el expediente individual suele ser el que lo lleva: se designa solo.
+       La escribana lo puede repartir de nuevo, y sigue pudiendo designar de una tanda. */
+    if(mio){ l.responsable=ROL; l.estado="designado"; }
+    b.lotes.push(l); borrarBorrador(claveB); guardar(); pintar(); return true;
+  };
+  $("#l_otro").onclick=()=>{ const res=$("#l_res").value.trim(); if(tomar()) panelAlta(b,(cuantos||0)+1,res); };
+  $("#l_ok").onclick=()=>{ if(tomar()) cerrarPanel(); };
+  $("#l_cancel").onclick=cerrarPanel;
+  $("#pCuerpo").querySelectorAll("input").forEach(el=>el.addEventListener("keydown",ev=>{
+    if(ev.key==="Enter"){ ev.preventDefault(); $("#l_otro").click(); }
+  }));
+}
+
+/* Un lote ya cargado. Lo que puede tocar cada uno es distinto: el auxiliar mueve su lote
+   por el circuito, la escribana además designa, observa y fija la fecha de firma. */
+function panelLote(b,l){
+  const yo=esEscribana();
+  const r=riesgo(l);
+  abrirPanel(`<h2><span class="car">${ICONO_CARPETA}<span>${esc(l.carpeta||"Sin adjudicatario cargado")}</span></span></h2>
+    <p class="hint">Lote ${esc(l.lote||"—")} · Mza ${esc(l.manzana||"—")} — ${esc(b.nombre)}</p>
+
+    ${r?`<div class="avisobox">${esc(r.texto)}${l.notarial?` — el notarial vence el ${esc(venceNotarial(l))}`:""}.</div>`:""}
+
+    ${yo
+      ? `<div class="grupo">Observación de este lote</div>
+         <p class="hint">Un error puntual de este lote. Al escribirlo, el lote queda «Observado» y le aparece al responsable; al borrarlo, vuelve a confección.</p>
+         <textarea id="l_obs" placeholder="Ej.: el DNI del cónyuge no coincide con el del convenio.">${esc(l.obs)}</textarea>`
+      : (l.obs
+          ? `<div class="obsbox">
+               <div class="quien">Observado${l.obsQuien?" por "+esc(l.obsQuien):""}${l.obsFecha?" · "+esc(l.obsFecha):""}</div>
+               <div class="texto">${esc(l.obs)}</div>
+               ${l.estado==="observado"?`<button id="l_corregi">Lo corregí</button>`:""}
+             </div>`
+          : "")}
+
+    <div class="grupo">Lo que dice la resolución</div>
+    <div class="dos">
+      <div><label>Lote</label><input id="l_lote" value="${esc(l.lote)}" placeholder="Ej.: 07"></div>
+      <div><label>Manzana</label><input id="l_mza" value="${esc(l.manzana)}" placeholder="Ej.: 30"></div>
+    </div>
+    <label>Carpeta — adjudicatario o adjudicatarios</label>
+    <input id="l_carp" value="${esc(l.carpeta)}" placeholder="Ej.: MOLINA Ramona del Valle">
+    <div class="dos">
+      <div><label>Expediente</label><input id="l_exp" class="expte" inputmode="numeric" maxlength="16" value="${esc(l.expediente)}" placeholder="0435-000000/2025"></div>
+      <div><label>Resolución</label><input id="l_res" value="${esc(l.resolucion)}" placeholder="Ej.: 412/2025"></div>
+    </div>
+    <label>Fecha de inicio</label>
+    <input id="l_ini" class="fecha" inputmode="numeric" maxlength="10" value="${esc(l.inicio)}" placeholder="dd/mm/aaaa">
+
+    <div class="grupo">La carpeta</div>
+    <p class="hint">Los mismos documentos que en Windows. «Ver la carpeta» abre el explorador para elegirla y deja anotado qué tenía, así lo ve también quien no la tiene a mano.</p>
+    <div id="l_docs"></div>
+    <input type="file" id="l_dir" webkitdirectory directory multiple style="display:none">
+    <button type="button" class="ch" id="l_verdir" style="margin-top:10px">Ver la carpeta</button>
+
+    <div class="grupo">Cómo va</div>
+    <label>Estado</label>
+    <select id="l_est">${Object.keys(ESTADOS).map(k=>
+      /* El auxiliar mueve su lote entre confección y revisión; designar, observar, dar
+         por listo y dar por firmada son actos de la escribana. Antes solo «Observado»
+         estaba deshabilitado y podía marcar su propio lote como firmado. */
+      `<option value="${k}"${l.estado===k?" selected":""}${(!yo&&k!==l.estado&&k!=="confeccion"&&k!=="revision")?" disabled":""}>${esc(ESTADOS[k].n)}</option>`).join("")}</select>
+    ${yo?"":`<p class="hint">Cuando lo dejes «En revisión», le aparece a la escribana para que lo mire.</p>`}
+    <div class="dos">
+      <div><label>Responsable</label>${yo?`<select id="l_resp">${opcionesEquipo(l.responsable)}</select>`
+        :`<input id="l_resp" value="${esc(l.responsable)}" disabled>`}</div>
+      <div><label>Escribana</label>${yo?`<input id="l_escr" value="${esc(l.escribana)}" placeholder="Titular o sustituta">`
+        :`<input id="l_escr" value="${esc(l.escribana)}" disabled>`}</div>
+    </div>
+    <label>Fecha de firma</label>
+    <input id="l_firma" class="fecha" inputmode="numeric" maxlength="10" value="${esc(l.firma)}" placeholder="dd/mm/aaaa"${yo?"":" disabled"}>
+    <p class="hint">Es lo que ordena todo: los lotes se muestran por fecha de firma, del más próximo al más lejano.</p>
+    <label>Certificado notarial: volvió contestado el</label>
+    <input id="l_not" class="fecha" inputmode="numeric" maxlength="10" value="${esc(l.notarial)}" placeholder="dd/mm/aaaa">
+    <p class="hint">Vale 30 días desde esa fecha. Si el vencimiento cae antes de la firma, se avisa arriba.</p>
+
+    <div class="pbtn">
+      <button class="p" id="l_ok">Guardar</button>
+      <button id="l_cancel">Cancelar</button>
+      ${yo?`<button class="borrar" id="l_del">Borrar lote</button>`:""}
+    </div>`);
+  atarMascaras();
+  pintarDocs(l);
+  $("#l_verdir").onclick=()=>$("#l_dir").click();
+  $("#l_dir").onchange=ev=>{
+    const fs=[...(ev.target.files||[])];
+    if(!fs.length){ avisar("No se eligió ninguna carpeta.",true); return; }
+    /* Del explorador salen las rutas relativas: alcanza con el nombre del archivo. */
+    const lista=[...new Set(fs.map(f=>(f.webkitRelativePath||f.name).split("/").pop()).filter(Boolean))];
+    l.archivos={fecha:hoyTexto(), quien:esEscribana()?"la escribana":ROL, lista};
+    guardar(); pintarDocs(l);
+    avisar("Se leyeron "+lista.length+" archivo"+(lista.length===1?"":"s")+" de la carpeta.");
+    ev.target.value="";
+  };
+  $("#l_ok").onclick=()=>{
+    for(const [campo,nom] of [["l_ini","fecha de inicio"],["l_firma","fecha de firma"],["l_not","fecha del certificado notarial"]]){
+      const el=$("#"+campo); if(!el) continue;
+      const val=el.value.trim();
+      if(val&&!fechaValida(val)){ avisar("La "+nom+" tiene que ser dd/mm/aaaa.",true); el.focus(); return; }
+    }
+    l.lote=$("#l_lote").value.trim(); l.manzana=$("#l_mza").value.trim();
+    l.carpeta=$("#l_carp").value.trim(); l.expediente=$("#l_exp").value.trim();
+    l.resolucion=$("#l_res").value.trim(); l.inicio=$("#l_ini").value.trim();
+    l.notarial=$("#l_not").value.trim();
+    l.estado=$("#l_est").value;
+    if(yo){
+      l.responsable=$("#l_resp").value; l.escribana=$("#l_escr").value.trim();
+      l.firma=$("#l_firma").value.trim();
+      const obs=$("#l_obs").value.trim();
+      /* Escribir una observación es marcar Corregir: no hacen falta dos acciones.
+         Y queda firmada: una observación que no dice quién la escribió no se puede repreguntar. */
+      if(obs&&obs!==l.obs&&l.estado!=="firmada"){
+        l.estado="observado"; l.obsQuien="la escribana"; l.obsFecha=hoyTexto();
+      }
+      if(!obs&&l.obs&&l.estado==="observado") l.estado="confeccion";
+      if(!obs){ l.obsQuien=""; l.obsFecha=""; }
+      l.obs=obs;
+      if(l.responsable&&l.estado==="sin") l.estado="designado";
+    }
+    guardar(); cerrarPanel(); pintar();
+  };
+  $("#l_cancel").onclick=cerrarPanel;
+  const corr=$("#l_corregi");
+  /* Sin esto la observación es un cartel pegado que alguien tiene que acordarse de sacar. */
+  if(corr) corr.onclick=()=>{
+    l.estado="revision"; guardar(); cerrarPanel(); pintar();
+    avisar("Listo. Le vuelve a la escribana para que lo revise.");
+  };
+  const del=$("#l_del");
+  if(del) del.onclick=()=>{
+    preguntar(`¿Borrar el lote ${l.lote||""} — ${l.carpeta||"sin adjudicatario"}? No se puede deshacer.`,"Borrar el lote",()=>{
+      b.lotes=b.lotes.filter(x=>x!==l); guardar(); cerrarPanel(); pintar();
+      avisar("Lote borrado.");
+    });
+  };
+}
+
+/* Lo que suele llevar la carpeta de un lote. La regla es no dar por incompleto un lote
+   porque un archivo se llame distinto: lo que no se reconoce se lista aparte, no se
+   descarta. */
+const DOCS_LOTE=[
+  {n:"Minuta individual",         re:/minuta/i},
+  {n:"Resolución individual",     re:/resoluc/i},
+  {n:"DNI de los adjudicatarios", re:/\bdni\b|documento\s*nacional/i},
+  {n:"Constancia de CUIL",        re:/cuil|cuit/i},
+  {n:"Certificado notarial",      re:/notarial/i},
+  {n:"Certificado catastral",     re:/catastral|catastro/i}
+];
+function pintarDocs(l){
+  const cont=$("#l_docs"); if(!cont) return;
+  const a=l.archivos;
+  if(!a||!a.lista||!a.lista.length){
+    cont.innerHTML=`<p class="vacio" style="padding:6px 0">Todavía nadie miró esta carpeta desde acá.</p>`;
+    return;
+  }
+  const usados=new Set();
+  const filas=DOCS_LOTE.map(d=>{
+    const hit=a.lista.find(f=>d.re.test(f));
+    if(hit) usados.add(hit);
+    return `<div class="fila"><span class="et ${hit?"ok":"no"}">${hit?"está":"no aparece"}</span>
+      <span class="n">${esc(d.n)}${hit?`<span>${esc(hit)}</span>`:""}</span></div>`;
+  }).join("");
+  const otros=a.lista.filter(f=>!usados.has(f));
+  cont.innerHTML=`<p class="cuando">Vista el ${esc(a.fecha)}${a.quien?" por "+esc(a.quien):""} — ${a.lista.length} archivo${a.lista.length===1?"":"s"}</p>
+    <div class="docs">${filas}
+    ${otros.length?`<div class="otros"><b>Además hay:</b> ${otros.map(esc).join(" · ")}</div>`:""}
+    </div>
+    <p class="hint">Que un documento «no aparezca» puede ser solo que el archivo se llame distinto. No lo tomes como que falta.</p>`;
+}
+
+/* Designar es de la escribana y del barrio entero: los lotes se dan de alta primero y
+   después se reparten, que es lo que pasa cuando llega el expediente madre. */
+function panelDesignar(b){
+  if(!b.lotes.length){ avisar("Este barrio todavía no tiene lotes."); return; }
+  abrirPanel(`<h2>Designar</h2>
+    <p class="hint">${esc(b.nombre)} — ${b.lotes.length} lote${b.lotes.length===1?"":"s"}</p>
+    <label>Poner a todos</label>
+    <div class="dos">
+      <select id="d_todosR">${opcionesEquipo("")}</select>
+      <input id="d_todosF" class="fecha" inputmode="numeric" maxlength="10" placeholder="Fecha de firma">
+    </div>
+    <p class="hint">Llena las filas de abajo que estén vacías. Después se corrige lo que haga falta.</p>
+    <div class="desig">${b.lotes.map((l,i)=>`
+      <div class="fila">
+        <div class="q"><b>${esc(l.lote||"—")} / ${esc(l.manzana||"—")}</b><span>${esc(l.carpeta||"sin adjudicatario")}${l.resolucion?" · Res. "+esc(l.resolucion):""}</span></div>
+        <select data-dr="${i}">${opcionesEquipo(l.responsable)}</select>
+        <input data-df="${i}" class="fecha" inputmode="numeric" maxlength="10" value="${esc(l.firma)}" placeholder="dd/mm/aaaa">
+      </div>`).join("")}</div>
+    <div class="pbtn">
+      <button class="p" id="d_ok">Guardar</button>
+      <button id="d_cancel">Cancelar</button>
+    </div>`);
+  atarMascaras();
+  $("#d_todosR").addEventListener("change",e=>{
+    const v=e.target.value; if(!v) return;
+    $("#pCuerpo").querySelectorAll("[data-dr]").forEach(el=>{ if(!el.value) el.value=v; });
+  });
+  $("#d_todosF").addEventListener("input",e=>{
+    masaFecha(e.target);
+    const v=e.target.value.trim(); if(!fechaValida(v)) return;
+    $("#pCuerpo").querySelectorAll("[data-df]").forEach(el=>{ if(!el.value.trim()) el.value=v; });
+  });
+  $("#d_ok").onclick=()=>{
+    const malas=[...$("#pCuerpo").querySelectorAll("[data-df]")].filter(el=>el.value.trim()&&!fechaValida(el.value.trim()));
+    if(malas.length){ avisar("Hay una fecha de firma que no es dd/mm/aaaa.",true); malas[0].focus(); return; }
+    $("#pCuerpo").querySelectorAll("[data-dr]").forEach(el=>{
+      const l=b.lotes[+el.dataset.dr];
+      l.responsable=el.value;
+      if(l.responsable&&l.estado==="sin") l.estado="designado";
+    });
+    $("#pCuerpo").querySelectorAll("[data-df]").forEach(el=>{ b.lotes[+el.dataset.df].firma=el.value.trim(); });
+    guardar(); cerrarPanel(); pintar();
+    avisar("Designado.");
+  };
+  $("#d_cancel").onclick=cerrarPanel;
+}
+
+/* ══════════════════ La carátula ══════════════════
+   Se imprime y se pega en el expediente físico. La grilla de informes sale VACÍA: se
+   sigue tildando a mano sobre el papel. Así no hay doble carga, y el tablero no se
+   construye — aparece solo, porque estos datos ya quedaron cargados. */
+function imprimirCaratula(loteId){
+  const u=ubicarLote(loteId); if(!u) return;
+  const {b,l}=u;
+  const dato=(k,v)=>`<td style="width:50%"><span class="k">${k}</span><span class="v">${esc(v||"")}</span></td>`;
+  $("#caratula").innerHTML=`
+    <h1>Trámite — Carátula de carpeta</h1>
+    <p class="bajo">${esc(b.nombre)}${l.resolucion?" · Resolución "+esc(l.resolucion):""}</p>
+    <table class="ident">
+      <tr>${dato("Escribana",l.escribana)}${dato("Carpeta",l.carpeta)}</tr>
+      <tr>${dato("Fecha de inicio",l.inicio)}${dato("Responsable",l.responsable)}</tr>
+      <tr>${dato("Expediente",l.expediente)}${dato("Lote y manzana",(l.lote?"Lote "+l.lote:"")+(l.manzana?" — Mza "+l.manzana:""))}</tr>
+    </table>
+    <p class="tics"><span>☐ Constancia de CUIL</span><span>☐ Copias de Resolución y DNI</span></p>
+    <table class="inf">
+      <thead><tr><th style="width:34%">Informes</th><th style="width:14%">Armado</th><th style="width:26%">Fecha entrada</th><th style="width:26%">Fecha salida</th></tr></thead>
+      <tbody>
+        <tr><td>Certificado catastral N°</td><td></td><td></td><td></td></tr>
+        <tr><td>Rentas N°</td><td></td><td></td><td></td></tr>
+        <tr><td>Certificado notarial N°</td><td></td><td></td><td></td></tr>
+        <tr><td>Minuta</td><td></td><td></td><td></td></tr>
+      </tbody>
+    </table>
+    <div class="obs">Observaciones:<div class="caja"></div></div>
+    <p class="pie">Fecha de entrada y de salida están desde la óptica del Registro: entrada es cuando el trámite entra, salida cuando vuelve contestado.</p>`;
+  window.print();
+}
+
+/* ══════════════════ Copias ══════════════════ */
+$("#bExp").onclick=()=>{
+  /* De memoria, no del localStorage: si el almacenamiento falló, la copia tiene que
+     salir bien igual. Es justamente cuando más se necesita. */
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(DATOS,null,1)],{type:"application/json"}));
+  a.download="escrituras-sociales-"+hoyTexto().replace(/\//g,"-")+".json";
+  a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+  avisar("Se guardó en tu carpeta de Descargas. Si no bajó nada, estás en la copia en línea: ahí el navegador bloquea las descargas.");
+};
+$("#bImp").onclick=()=>$("#fImp").click();
+$("#fImp").onchange=e=>{
+  const f=e.target.files[0]; if(!f) return;
+  const fr=new FileReader();
+  fr.onload=()=>{
+    try{
+      const d=JSON.parse(fr.result);
+      if(!d||!Array.isArray(d.barrios)) throw new Error("No parece una copia de escrituras sociales.");
+      const poner=()=>{ DATOS=d; migrar(); guardar(); pintar(); avisar("Copia abierta."); };
+      if(DATOS.barrios.length)
+        preguntar("Esto reemplaza los "+DATOS.barrios.length+" barrio"+(DATOS.barrios.length===1?"":"s")+" que hay cargados. ¿Seguir?","Reemplazar",poner);
+      else poner();
+    }catch(err){ avisar("No se pudo abrir el archivo: "+err.message,true); }
+  };
+  fr.readAsText(f);
+  e.target.value="";
+};
+
+/* ══════════════════ Ejemplo ══════════════════
+   Inventado de punta a punta. Regla del proyecto: el ejemplo se inventa desde el
+   principio, nunca se copia de un caso real. */
+$("#bEjemplo").onclick=()=>{
+  if(DATOS.barrios.length) preguntar("Esto reemplaza lo que hay cargado. ¿Seguir?","Cargar el ejemplo",ponerEjemplo);
+  else ponerEjemplo();
+};
+function ponerEjemplo(){
+  const d=n=>masDias(hoyTexto(),n);
+  const L=(lote,mza,carp,res,resp,est,firma,not,obs)=>{
+    const l=nuevoLote();
+    l.lote=lote; l.manzana=mza; l.carpeta=carp; l.resolucion=res;
+    l.responsable=resp; l.escribana="Titular";
+    l.expediente="0435-00"+(1000+Math.floor(Math.random()*8999))+"/2025";
+    l.inicio="05/09/2025"; l.estado=est; l.firma=firma||""; l.notarial=not||""; l.obs=obs||"";
+    if(obs){ l.obsQuien="la escribana"; l.obsFecha=masDias(hoyTexto(),-3); }
+    return l;
+  };
+  const b=nuevoBarrio("Villa Los Robles");
+  b.madre="0435-000777/2025";
+  b.estudio="Manzanas 12, 13 y 14 — hecho 03/2026";
+  b.minutero="Ávila";
+  /* El ejemplo trae la minuta base puesta: así se puede entrar a un lote y ver la minuta
+     armarse sola, que es lo que la herramienta hace. El texto es inventado. */
+  if(window.ARMADOR) b.base=Object.assign({},ARMADOR.baseModelo,
+    {barrio:"Villa Los Robles",mza:"doce",autor:"Ávila",fecha:hoyTexto()});
+  b.lotes=[
+    L("03","12","SUÁREZ Marta Elena","412/2025","Ávila","listo",d(9),d(-26)),
+    L("04","12","LEDESMA Hugo Alberto y LEDESMA Nora","412/2025","Ferreyra","revision",d(20),d(-2)),
+    L("05","12","VILLARREAL Nora Beatriz","412/2025","Ávila","confeccion",d(31),d(-6)),
+    L("12","14","ROMERO Sergio Ariel","412/2025","Ávila","observado",d(15),d(-8),
+      "Falta la constancia de CUIL del cónyuge."),
+    L("07","13","QUIROGA Ramón","412/2025","Ferreyra","observado",d(26),d(-2),
+      "El estado civil no coincide con el del convenio: dice soltero y el convenio dice casado."),
+    L("08","13","BENÍTEZ Silvia Noemí","412/2025","Ávila","firmada","",d(-40)),
+    L("11","14","MOLINA Jorge Daniel","412/2025","Ferreyra","confeccion","",""),
+    L("15","14","ACOSTA Ramona del Valle","512/2026","","sin","",""),
+    L("16","14","PEREYRA Luis y PEREYRA Ana María","512/2026","Ferreyra","confeccion",d(40),"")
+  ];
+  const t=nuevoBarrio("Campo Norte");
+  t.madre="0435-000210/2024";
+  t.estudio="Manzana 02 — hecho 11/2024"; t.minutero="Ferreyra";
+  t.firmado=true; t.plegado=true;
+  t.lotes=[L("01","02","GÓMEZ Rosa","208/2024","Ávila","firmada","",d(-120)),
+           L("02","02","IBARRA Carlos","208/2024","Ferreyra","firmada","",d(-118))];
+  DATOS={barrios:[b,t]};
+  guardar(); pintar();
+}
+
+/* ══════════════════ Clics ══════════════════ */
+$("#bNuevo").onclick=()=>panelBarrio(nuevoBarrio(""));
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-plegar],[data-editarb],[data-editarl],[data-nlote],[data-desig],[data-caratula],[data-base],[data-minuta],[data-verfirm],[data-despendiente],[data-borrarlote],[data-quitarobs]");
+  if(!t) return;
+  const d=t.dataset;
+  /* El armador vive adentro de esta misma página: no hay ventana nueva que abrir ni
+     archivo que cargar. Antes esto llamaba a window.open, que la copia publicada bloquea
+     en silencio, y la base viajaba en un .json suelto del disco R. */
+  if(d.base){ const b=barrioDe(d.base); if(b) ARMADOR.abrirBase(b); return; }
+  if(d.minuta){ const u=ubicarLote(d.minuta); if(u) ARMADOR.abrirMinuta(u.b,u.l); return; }
+  if(d.editarb){ const b=barrioDe(d.editarb); b&&panelBarrio(b); return; }
+  if(d.nlote){ const b=barrioDe(d.nlote); if(b){ const ult=b.lotes.length?b.lotes[b.lotes.length-1].resolucion:""; panelAlta(b,0,ult); } return; }
+  if(d.desig){ const b=barrioDe(d.desig); b&&panelDesignar(b); return; }
+  if(d.editarl){ const u=ubicarLote(d.editarl); u&&panelLote(u.b,u.l); return; }
+  if(d.caratula){ imprimirCaratula(d.caratula); return; }
+  if(d.quitarobs){ const b=barrioDe(d.quitarobs); if(b){ b.obsBase=""; guardar(); pintar(); avisar("Observación levantada."); } return; }
+  if(d.verfirm){ firmVisibles.has(d.verfirm)?firmVisibles.delete(d.verfirm):firmVisibles.add(d.verfirm); pintar(); return; }
+  if(d.despendiente){ const u=ubicarLote(d.despendiente); if(u){ u.l.estado="confeccion"; guardar(); pintar(); } return; }
+  if(d.borrarlote){
+    const u=ubicarLote(d.borrarlote);
+    if(u) preguntar(`¿Borrar el lote ${u.l.lote||""} — ${u.l.carpeta||"sin adjudicatario"}? No se puede deshacer.`,"Borrar el lote",()=>{
+      u.b.lotes=u.b.lotes.filter(x=>x!==u.l); guardar(); pintar(); avisar("Lote borrado.");
+    });
+    return;
+  }
+  if(d.plegar){
+    const b=barrioDe(d.plegar);
+    if(!b) return;
+    /* En un barrio ajeno el plegado es de quien mira, no del barrio: no tiene por qué
+       quedarle plegado a los demás. */
+    if(ajeno(b)){ abiertos.has(b.id)?abiertos.delete(b.id):abiertos.add(b.id); pintar(); return; }
+    b.plegado=!b.plegado; guardar(); pintar();
+  }
+});
+document.addEventListener("keydown",e=>{ if(e.key==="Escape"){ cerrarPanel(); cerrarDialogo(); } });
+document.addEventListener("sigec:tema",pintar);
+
+/* ══════════════════ Lo que el armador necesita de acá ══════════════════
+   El armador está en el mismo archivo, unas líneas más abajo, adentro de su propia
+   función para que no se pisen los nombres. Esto es todo lo que le presta el tablero. */
+function pedirTexto(titulo,valor,cb){
+  abrirPanel(`<h2>${esc(titulo)}</h2>
+    <label>Texto</label><textarea id="pt_v" placeholder="Escribí acá">${esc(valor||"")}</textarea>
+    <div class="pbtn"><button class="p" id="pt_ok">Guardar</button><button id="pt_no">Cancelar</button></div>`);
+  $("#pt_ok").onclick=()=>{ const v=$("#pt_v").value.trim(); cerrarPanel(); cb(v); };
+  $("#pt_no").onclick=cerrarPanel;
+  $("#pt_v").focus();
+}
+window.SOCIALES={guardar,pintar,avisar,preguntar,pedirTexto,esc,esEscribana,rol:()=>ROL,hoy:hoyTexto};
+
+cargarRol(); cargarBorradores(); cargar(); pintar();
+</script>
+
+<!-- El lector de Word y el generador de Word. Van con defer y con respaldo: si no llegan,
+     la pantalla igual se dibuja y lo único que no anda es leer o generar el .docx. -->
+<script defer src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.umd.js" onerror="this.onerror=null;var s=document.createElement('script');s.src='https://unpkg.com/docx@8.5.0/build/index.umd.js';document.body.appendChild(s);"></script>
+
+<!-- ══════════════════ El armador ══════════════════
+     Era otra herramienta, con su propio archivo. Ahora es la misma: la minuta base es del
+     barrio y la individual es del lote. Va adentro de una función para que sus nombres
+     —$, render, estado— no se crucen con los del tablero. -->
+<script>
+(function(){
+"use strict";
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+
+/* ============ números y fechas ============ */
+const UNI=["cero","uno","dos","tres","cuatro","cinco","seis","siete","ocho","nueve","diez","once","doce","trece","catorce","quince","dieciséis","diecisiete","dieciocho","diecinueve","veinte","veintiuno","veintidós","veintitrés","veinticuatro","veinticinco","veintiséis","veintisiete","veintiocho","veintinueve"];
+const DEC=["","","","treinta","cuarenta","cincuenta","sesenta","setenta","ochenta","noventa"];
+const CEN=["","ciento","doscientos","trescientos","cuatrocientos","quinientos","seiscientos","setecientos","ochocientos","novecientos"];
+function n3(n){if(!n)return"";if(n===100)return"cien";let s="";const c=Math.floor(n/100),r=n%100;
+ if(c)s+=CEN[c];if(r){if(s)s+=" ";if(r<30)s+=UNI[r];else{s+=DEC[Math.floor(r/10)];if(r%10)s+=" y "+UNI[r%10];}}return s;}
+function nLetras(n){n=Math.round(n);if(n===0)return"cero";const o=[],mi=Math.floor(n/1e6),ml=Math.floor((n%1e6)/1e3),r=n%1e3;
+ if(mi)o.push(mi===1?"un millón":n3(mi).replace(/uno$/,"ún")+" millones");
+ if(ml)o.push(ml===1?"mil":n3(ml).replace(/uno$/,"un")+" mil");
+ if(r)o.push(n3(r));return o.join(" ");}
+function metros(v){const m=Math.floor(v+1e-9),cm=Math.round((v-m)*100);let s="";
+ if(m>0||cm===0)s+=nLetras(m).replace(/uno$/,"un")+" metro"+(m===1?"":"s");
+ if(cm>0)s+=(s?" con ":"")+nLetras(cm).replace(/uno$/,"un")+" centímetro"+(cm===1?"":"s");
+ return s||"cero metros";}
+function medidaSup(v){const m=Math.floor(v+1e-9),d=Math.round((v-m)*100);
+ let s=nLetras(m).toUpperCase()+" METROS CUADRADOS";
+ if(d)s+=" CON "+nLetras(d).toUpperCase()+" DECÍMETROS CUADRADOS";return s;}
+function supLetras(v){return "SUPERFICIE "+medidaSup(v);}
+const MESES=["enero","febrero","marzo","abril","mayo","junio","julio","agosto","septiembre","octubre","noviembre","diciembre"];
+function parseF(v){if(!v)return null;v=String(v).trim();let d,m,y;
+ if(/^\d{4}-\d{1,2}-\d{1,2}$/.test(v)){[y,m,d]=v.split("-").map(Number);}
+ else{const p=v.split(/[\/\-.]/).map(Number);if(p.length<3)return null;[d,m,y]=p;}
+ if(!d||!m||!y||m<1||m>12||d<1||d>31)return null;if(y<100)y+=2000;return{d,m,y};}
+function fLetras(v){const f=parseF(v);if(!f)return"";return `${nLetras(f.d)} de ${MESES[f.m-1]} del año ${nLetras(f.y)}`;}
+function fDia(v){const f=parseF(v);if(!f)return"";return `a los ${nLetras(f.d)} días del mes de ${MESES[f.m-1]} del año ${nLetras(f.y)}`;}
+function autoFecha(e){const el=e.target;let v=el.value.replace(/[^\d]/g,"").slice(0,8);
+ if(v.length>4)v=v.slice(0,2)+"/"+v.slice(2,4)+"/"+v.slice(4);else if(v.length>2)v=v.slice(0,2)+"/"+v.slice(2);
+ if(v===el.value) return;
+ const fin=el.selectionStart===el.value.length;
+ el.value=v;
+ if(fin&&el.setSelectionRange) el.setSelectionRange(v.length,v.length);}
+document.addEventListener("input",e=>{if(e.target.classList&&e.target.classList.contains("fch"))autoFecha(e);},true);
+const fmtDni=v=>{const d=(v||"").replace(/\D/g,"");return d?d.replace(/\B(?=(\d{3})+(?!\d))/g,"."):"";};
+function soloDigitos(v){return (v||"").replace(/\D/g,"");}
+function maskMiles(v){const d=soloDigitos(v);return d?d.replace(/\B(?=(\d{3})+(?!\d))/g,"."):"";}
+function maskGrupos(v,g,seps){const d=soloDigitos(v);let out="",pos=0;
+ for(let i=0;i<g.length;i++){if(pos>=d.length)break;out+=(i>0?seps[i-1]:"")+d.slice(pos,pos+g[i]);pos+=g[i];}return out;}
+document.addEventListener("input",e=>{const el=e.target,c=el.classList;if(!c)return;
+ let v=null;
+ if(c.contains("mmil")) v=maskMiles(el.value);
+ else if(c.contains("mcuil")) v=maskGrupos(el.value,[2,8,1],["-","-"]);
+ else if(c.contains("mcuenta")) v=maskGrupos(el.value,[2,9,1],["-","-"]);
+ else if(c.contains("mexp")) v=maskGrupos(el.value,[4,6,4],["-","/"]);
+ if(v===null||v===el.value) return;          // no reescribir si no cambió: mueve el cursor
+ const fin = el.selectionStart===el.value.length;
+ el.value=v;
+ if(fin && el.setSelectionRange) el.setSelectionRange(v.length,v.length);},true);
+
+/* ============ conversión de la descripción catastral ============ */
+function convertirParesNumericos(t){return t.replace(/\b(\d+)([\/-])(\d+)\b/g,(m,a,s,b)=>nLetras(+a)+s+nLetras(+b));}
+function convertirDesignaciones(t){return t.replace(/\b(MANZANA|LOTE|PARCELA)\s+(\d+)\b/gi,(m,kw,n)=>{
+ let w=nLetras(+n);if(kw===kw.toUpperCase())w=w.toUpperCase();return kw+" "+w;});}
+function convertirSuperficieEnTexto(t){
+ const re=/(SUP(?:ERFICIE)?\.?\s*(?:TOTAL)?\s*)(DE|de)(\s*)([\d]+(?:[.,][\d]+)?)(\s*)(MTS?\.?\s*2|M\s*2|M²|METROS\s*CUADRADOS)/i;
+ const m=t.match(re);if(!m)return{texto:t,sup:null};
+ const val=parseFloat(m[4].replace(",","."));
+ return{texto:t.slice(0,m.index)+m[1]+"DE "+medidaSup(val)+t.slice(m.index+m[0].length),sup:val};}
+function expandCardinales(t){const par=[];let mk=t.replace(/\([^)]*\)/g,x=>{par.push(x);return `§${par.length-1}§`;});
+ [["NE","Noreste"],["NO","Noroeste"],["SE","Sudeste"],["SO","Suroeste"],["N","Norte"],["S","Sur"],["E","Este"],["O","Oeste"]]
+  .forEach(([ab,full])=>{mk=mk.replace(new RegExp(`(^|[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ])${ab}(\\.)?(?![A-Za-zÁÉÍÓÚÜÑáéíóúüñ])`,"g"),(m,p)=>p+full);});
+ return mk.replace(/§(\d+)§/g,(_,i)=>par[+i]);}
+function convertirDistancias(t){return t
+ .replace(/(\d+)[.,](\d+)\s*(mts?\.?|m\.?)(?![a-zA-Z])/gi,(m,i,d)=>+d===0?metros(parseFloat(i)):metros(parseFloat(i+"."+d)))
+ .replace(/\b(\d+)\s*(mts?\.?|m\.?)(?![a-zA-Z])/gi,(m,i)=>metros(parseFloat(i)));}
+function convertirNumerosSueltos(t){const b=[];
+ let x=t.replace(/\([^)]*\)/g,m=>{b.push(m);return `§P${b.length-1}§`;});
+ x=x.replace(/\d+[°º]\s*\d*['’]?\s*\d*["″]?/g,m=>{b.push(m);return `§P${b.length-1}§`;});
+ x=x.replace(/\b\d+\b/g,m=>nLetras(+m));
+ return x.replace(/§P(\d+)§/g,(_,i)=>b[+i]);}
+function convertirDescripcion(raw){
+ let t=convertirParesNumericos(raw);t=convertirDesignaciones(t);
+ const r=convertirSuperficieEnTexto(t);t=r.texto;
+ t=expandCardinales(t);t=convertirDistancias(t);t=convertirNumerosSueltos(t);
+ return{texto:t,sup:r.sup};}
+
+/* ============ catálogo de marcas ============ */
+const MARCAS_DATOS=[
+ ["{ADJUDICATARIOS}","Adjudicatarios completos","nombre, nacionalidad, nacimiento, DNI, CUIL y estado civil"],
+ ["{NOMBRES}","Solo los nombres","apellido y nombre, sin los demás datos"],
+ ["{LOTE}","Lote","en letras, minúscula"],
+ ["{LOTE_MAY}","LOTE en mayúscula",""],
+ ["{MANZANA}","Manzana","en letras, minúscula"],
+ ["{MANZANA_MAY}","MANZANA en mayúscula",""],
+ ["{PARCELA}","Parcela",""],
+ ["{BARRIO}","Barrio",""],
+ ["{LOCALIDAD}","Localidad",""],
+ ["{DEPARTAMENTO}","Departamento",""],
+ ["{DESCRIPCION}","Descripción del inmueble",""],
+ ["{SUPERFICIE}","Superficie en letras",""],
+ ["{MATRICULA}","Matrícula",""],
+ ["{CUENTA}","N° de cuenta",""],
+ ["{NOMENCLATURA}","Nomenclatura catastral",""],
+ ["{BASE}","Base imponible","en letras y números"],
+ ["{CERT_CATASTRAL}","Certificado catastral N°",""],
+ ["{FECHA_CATASTRAL}","Fecha del catastral","en letras"],
+ ["{CERT_NOTARIAL}","Certificado notarial N°",""],
+ ["{FECHA_NOTARIAL}","Fecha del notarial","en letras"],
+ ["{RESOLUCION}","Resolución individual N°",""],
+ ["{FECHA_RESOLUCION}","Fecha de la resolución","en letras"],
+ ["{EXPEDIENTE}","Expediente individual",""],
+ ["{ESCRITURA_NUMERO}","Escritura N°",""],
+ ["{SECCION}","Sección",""],
+ ["{FECHA_ACTO}","Fecha del acto","a los X días del mes de…"],
+ ["{ESCRIBANA}","Escribana","General o Sustituta"],
+ ["{COPIAS}","Copias de los documentos","agrego / corren agregadas…"],
+ ["{COPIAS_MUNI}","Copias de los funcionarios","igual, sin el punto final"]
+];
+const MARCAS_CONC=[
+ ["{TRATAMIENTO}","el señor / los señores"],
+ ["{TRATAMIENTO_NOMBRES}","el señor Juan PÉREZ / los señores…"],
+ ["{HACE}","lo hace / lo hacen"],
+ ["{DICE}","dice / dicen"],
+ ["{DECLARA}","DECLARA / DECLARAN"],
+ ["{ACEPTA}","ACEPTA / ACEPTAN EN CONDOMINIO Y POR PARTES IGUALES"],
+ ["{CONDOMINIO}","(nada) / EN CONDOMINIO Y POR PARTES IGUALES"],
+ ["{DOMICILIADO}","domiciliado / domiciliados"],
+ ["{PERSONA}","persona a quien identifico / personas a quienes…"],
+ ["{DOCUMENTO}","el documento idóneo… / los documentos idóneos…"],
+ ["{ACABA}","acaba / acaban"],
+ ["{BENEFICIARIO}","se declara beneficiario a sí mismo / …a sí mismos"],
+ ["{HABITA}","habita / habitan"],
+ ["{HALLA}","se halla acogido ni tramita / se hallan acogidos…"],
+ ["{SOLICITA}","solicita / solicitan"],
+ ["{PEP}","no revestir el carácter de persona/s expuesta/s…"],
+ ["{DERECHO}","su propio derecho / sus propios derechos"]
+];
+
+/* ============ lectura de .docx ============ */
+async function leerDocx(file){
+ if(!window.JSZip){ for(let i=0;i<25&&!window.JSZip;i++) await new Promise(r=>setTimeout(r,200)); }
+ if(!window.JSZip) throw new Error("No se pudo cargar el lector de Word. Verificá la conexión.");
+ const zip=await window.JSZip.loadAsync(file);
+ const xml=await zip.file("word/document.xml").async("string");
+ const doc=new DOMParser().parseFromString(xml,"application/xml");
+ const W="http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+ const parrafos=[...doc.getElementsByTagNameNS(W,"p")];
+ const out=[];
+ parrafos.forEach(p=>{
+  let buf="",abierto=false;
+  [...p.getElementsByTagNameNS(W,"r")].forEach(r=>{
+   const t=[...r.getElementsByTagNameNS(W,"t")].map(x=>x.textContent).join("");
+   if(!t) return;
+   const rPr=r.getElementsByTagNameNS(W,"rPr")[0];
+   const b=!!(rPr&&rPr.getElementsByTagNameNS(W,"b")[0]&&
+     (rPr.getElementsByTagNameNS(W,"b")[0].getAttributeNS(W,"val")??"1")!=="0");
+   if(b&&!abierto){buf+="<b>";abierto=true;}
+   if(!b&&abierto){buf+="</b>";abierto=false;}
+   buf+=t;
+  });
+  if(abierto) buf+="</b>";
+  if(buf.trim()) out.push(buf);
+ });
+ return out.join("\n\n").replace(/<b>\s*<\/b>/g,"").replace(/<\/b>(\s*)<b>/g,"$1");
+}
+$("#btnArchivo").addEventListener("click",()=>$("#fileWord").click());
+$("#fileWord").addEventListener("change",async ev=>{
+ const f=ev.target.files[0]; if(!f) return;
+ /* Las bases que ya existen viven como .json en el disco R, de cuando el armador era otra
+    herramienta. Se abren igual, y al guardarlas quedan adentro del barrio. */
+ if(/\.json$/i.test(f.name)){
+  const r=new FileReader();
+  r.onload=()=>{ try{ const bb=JSON.parse(r.result);
+    if(!bb||!bb.texto) throw new Error("sin texto");
+    $("#baseTexto").value=bb.texto;
+    if(bb.barrio&&!V("#bBarrio")) $("#bBarrio").value=bb.barrio;
+    if(bb.mza&&bb.mza!=="—"&&!V("#bMza")) $("#bMza").value=bb.mza;
+    if(bb.autor&&!V("#bAutor")) $("#bAutor").value=bb.autor;
+    pintarListaMarcas();
+    SOC.avisar("Minuta base abierta. Tocá «Guardar la minuta base» para dejarla en el barrio.");
+   }catch(e){ SOC.avisar("Ese archivo no es una minuta base válida.",true); } };
+  r.readAsText(f,"utf-8"); ev.target.value=""; return;
+ }
+ try{
+  const txt=await leerDocx(f);
+  $("#baseTexto").value=txt;
+  if(!V("#bBarrio")) $("#bBarrio").value=f.name.replace(/\.docx$/i,"");
+  pintarListaMarcas();
+  SOC.avisar("Se leyó el Word: "+txt.length+" caracteres, con la negrita conservada. Ahora tocá «Detectar todo automáticamente».");
+ }catch(e){ SOC.avisar(e.message||"No se pudo leer el archivo.",true); }
+ ev.target.value="";
+});
+
+/* ============ detección automática ============ */
+/* cada patrón: [expresión, marca, grupo a reemplazar, soloAdjudicatarios] */
+const DET_CONC=[
+ [/\bACEPTAN EN CONDOMINIO Y POR PARTES IGUALES\b|\bACEPTAN\b|\bACEPTA\b/g,"{ACEPTA}",0,true],
+ [/\bEN CONDOMINIO Y POR PARTES IGUALES\s(?=a favor)/g,"{CONDOMINIO}",0,true],
+ [/se declaran beneficiarios a sí mismos|se declara beneficiario a sí mismo/g,"{BENEFICIARIO}",0,true],
+ [/\bse hallan acogidos ni tramitan\b|\bse halla acogido ni tramita\b/g,"{HALLA}",0,true],
+ [/\bDECLARAN\b(?= BAJO FE)|\bDECLARA\b(?= BAJO FE)/g,"{DECLARA}",0,true],
+ [/\bhabitan\b|\bhabita\b(?= el inmueble)/g,"{HABITA}",0,true],
+ [/\bsolicitan\b|\bsolicita\b(?= la inscripción)/g,"{SOLICITA}",0,true],
+ [/\bacaban\b(?= de adquirir)|\bacaba\b(?= de adquirir)/g,"{ACABA}",0,true],
+ [/no revestir el carácter de personas expuestas políticamente|no revestir el carácter de persona expuesta políticamente/g,"{PEP}",0,true],
+ [/\bsus propios derechos\b|\bsu propio derecho\b/g,"{DERECHO}",0,true],
+ [/\blo hacen\b|\blo hace\b/g,"{HACE}",0,true],
+ [/\bdomiciliados en\b|\bdomiciliado en\b|\bdomiciliada en\b|\bdomiciliadas en\b/g,"{DOMICILIADO}",0,true],
+ [/los documentos idóneos mencionados que me exhiben y cuyas copias certificadas|el documento idóneo mencionado que me exhibe y cuya copia certificada/g,"{DOCUMENTO}",0,false],
+ [/personas a quienes identifico|persona a quien identifico/g,"{PERSONA}",0,false],
+ [/\bdicen\b|\bdice\b/g,"{DICE}",0,true],
+ [/\blos señores\b|\blas señoras\b|\bel señor\b|\bla señora\b/g,"{TRATAMIENTO}",0,false]
+];
+const DET_DATOS=[
+ [/(MATRÍCULA NÚMERO\s)([\d.]+)/g,"{MATRICULA}",2],
+ [/(MATRÍCULA N°\s)([\d.]+)/g,"{MATRICULA}",2],
+ [/(número de Cuenta\s)([\d-]+)/g,"{CUENTA}",2],
+ [/(Certificado Catastral N°\s)(\d+)/g,"{CERT_CATASTRAL}",2],
+ [/(Nomenclatura Catastral:\s)([^,]+)/g,"{NOMENCLATURA}",2],
+ [/(Parc\.\s)(\d+)/g,"{PARCELA}",2],
+ [/(Resolución N°\s)(\d+)(?=\s+de la Secretaría de Escrituración)/g,"{RESOLUCION}",2],
+ [/(Expediente N° 0716-015690\/2020 y N°\s)([\d\/-]+)/g,"{EXPEDIENTE}",2],
+ [/(ESCRITURA NÚMERO\s)([^.]*?)(?=\.-)/g,"{ESCRITURA_NUMERO}",2],
+ [/(SECCIÓN\s*"?)([A-Z])(?="?\.-)/g,"{SECCION}",2],
+ [/(ante mí\s)(Escribana (?:General|Sustituta))/g,"{ESCRIBANA}",2],
+ [/(a los .{3,60}? del año [a-zá-ú ]+?)(?=, ante mí)/g,"{FECHA_ACTO}",1],
+ [/(lote\s)([a-zá-ú]+)(?=\s+de la Manzana)/gi,"{LOTE}",2],
+ [/(Manzana\s)([a-zá-ú ]+?)(?=\s+(?:en|de la Localidad|del))/gi,"{MANZANA}",2]
+];
+function detectar(txt,cuales){
+ const marcador=txt.search(/Y por otra parte/i);
+ const hits=[];
+ const push=(ini,fin,orig,marca,sug)=>{
+  if(/[{}]/.test(txt.slice(ini,fin))) return;
+  if(hits.some(h=>!(fin<=h.ini||ini>=h.fin))) return;
+  hits.push({ini,fin,orig,marca,sug,ctx:txt.slice(Math.max(0,ini-55),ini)+"⟦"+orig+"⟧"+txt.slice(fin,fin+55)});
+ };
+ if(cuales!=="datos") DET_CONC.forEach(([re,marca,g,soloAdj])=>{
+  re.lastIndex=0; let m;
+  while((m=re.exec(txt))){
+   const sug = soloAdj ? true : (marcador>=0 && m.index>marcador);
+   push(m.index,m.index+m[0].length,m[0],marca,sug);
+  }});
+ if(cuales!=="conc") DET_DATOS.forEach(([re,marca,g])=>{
+  re.lastIndex=0; let m;
+  while((m=re.exec(txt))){
+   const pre=g===2?m[1]:""; const val=g===2?m[2]:m[1];
+   if(!val||!val.trim()) continue;
+   const ini=m.index+pre.length;
+   push(ini,ini+val.length,val,marca,true);
+  }});
+ return hits.sort((a,b)=>a.ini-b.ini);
+}
+let SUGS=[];
+function pintarSugerencias(cuales){
+ const txt=$("#baseTexto").value;
+ if(!txt.trim()){ SOC.avisar("Primero pegá el texto de la escritura.",true); return; }
+ SUGS=detectar(txt,cuales);
+ if(!SUGS.length){ $("#sugerencias").innerHTML=`<div class="note">No se encontró nada para marcar. Puede que el texto ya esté marcado.</div>`; return; }
+ const marcadas=SUGS.filter(s=>s.sug).length;
+ $("#sugerencias").innerHTML=`<div class="card" style="border-color:var(--acc);margin:0 0 14px">
+  <h2>Se encontraron ${SUGS.length} coincidencias</h2>
+  <p class="hint">Vienen tildadas las que corresponden a los adjudicatarios. <b>Destildá las que sean del intendente o del secretario</b>, que no llevan marca.</p>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+   <button class="btn" id="sugTodas">Tildar todas</button>
+   <button class="btn" id="sugNinguna">Destildar todas</button>
+   <button class="btn pri" id="sugAplicar">Aplicar las tildadas (${marcadas})</button>
+  </div>
+  <div style="max-height:340px;overflow:auto">${SUGS.map((s,i)=>`
+   <label class="sug">
+    <input type="checkbox" data-sug="${i}" ${s.sug?"checked":""}>
+    <div style="min-width:0">
+     <div><span class="tag">${s.marca}</span> <b>${s.orig}</b></div>
+     <div style="color:var(--muted);font-size:11.5px;margin-top:2px">…${s.ctx.replace(/⟦/g,"<b style='color:var(--acc)'>").replace(/⟧/g,"</b>")}…</div>
+    </div></label>`).join("")}</div></div>`;
+ $$("[data-sug]").forEach(c=>c.addEventListener("change",()=>{
+  SUGS[+c.dataset.sug].sug=c.checked;
+  $("#sugAplicar").textContent=`Aplicar las tildadas (${SUGS.filter(s=>s.sug).length})`;}));
+ $("#sugTodas").addEventListener("click",()=>{SUGS.forEach(s=>s.sug=true);pintarSugerenciasRefresh();});
+ $("#sugNinguna").addEventListener("click",()=>{SUGS.forEach(s=>s.sug=false);pintarSugerenciasRefresh();});
+ $("#sugAplicar").addEventListener("click",aplicarSugerencias);
+}
+function pintarSugerenciasRefresh(){
+ $$("[data-sug]").forEach(c=>{c.checked=SUGS[+c.dataset.sug].sug;});
+ $("#sugAplicar").textContent=`Aplicar las tildadas (${SUGS.filter(s=>s.sug).length})`;
+}
+function aplicarSugerencias(){
+ const ta=$("#baseTexto");
+ let txt=ta.value;
+ const elegidas=SUGS.filter(s=>s.sug).sort((a,b)=>b.ini-a.ini);
+ elegidas.forEach(s=>{ txt=txt.slice(0,s.ini)+s.marca+txt.slice(s.fin); });
+ ta.value=txt;
+ $("#sugerencias").innerHTML=`<div class="chk k" style="margin:0 0 14px"><div><b>Se marcaron ${elegidas.length} lugares.</b> Revisá el texto y marcá a mano lo que haya quedado sin detectar.</div></div>`;
+ pintarListaMarcas();
+}
+$("#detectar").addEventListener("click",()=>pintarSugerencias("todo"));
+$("#detectarConc").addEventListener("click",()=>pintarSugerencias("conc"));
+$("#detectarDatos").addEventListener("click",()=>pintarSugerencias("datos"));
+
+/* ============ estado ============ */
+let BASE=null;                 // {barrio, mza, autor, texto, fecha}
+let ADJ=[nuevoAdj()];
+function nuevoAdj(){return{nombre:"",apellido:"",sexo:"M",sexoManual:false,pais:"argentino",nac:"",dni:"",cuil:"",ec:"soltero",conyuge:"",acred:""};}
+const nomCompleto=x=>`${(x.nombre||"").trim()} ${(x.apellido||"").trim().toUpperCase()}`.trim();
+const V=id=>($(id)?.value||"").trim();
+
+/* ============ concordancias ============ */
+function P(){
+ const modo=V("#conc")||"auto", real=ADJ.length;
+ const n=modo==="sing"?1:modo==="plur"?Math.max(2,real):real;
+ const todasF=real>0&&ADJ.every(x=>x.sexo==="F");
+ const noms=ADJ.map(nomCompleto);
+ const lista=real===0?"":real===1?noms[0]:noms.slice(0,-1).join(", ")+" y "+noms[real-1];
+ const trat=n===1?((ADJ[0]?.sexo)==="F"?"el señor".replace("el señor","la señora"):"el señor"):(todasF?"las señoras":"los señores");
+ return {n,real,lista,trat,tratLista:lista?`${trat} ${lista}`:"",
+  hace:n===1?"lo hace":"lo hacen", dice:n===1?"dice":"dicen", DECLARA:n===1?"DECLARA":"DECLARAN",
+  acepta:n===1?"ACEPTA":"ACEPTAN EN CONDOMINIO Y POR PARTES IGUALES",
+  condominio:n>1?"EN CONDOMINIO Y POR PARTES IGUALES ":"",
+  domiciliado:n===1?"domiciliado en":"domiciliados en",
+  persona:n===1?"persona a quien identifico":"personas a quienes identifico",
+  documento:n===1?"el documento idóneo mencionado que me exhibe y cuya copia certificada":"los documentos idóneos mencionados que me exhiben y cuyas copias certificadas",
+  acaba:n===1?"acaba":"acaban",
+  beneficiario:n===1?"se declara beneficiario a sí mismo":"se declaran beneficiarios a sí mismos",
+  habita:n===1?"habita":"habitan",
+  halla:n===1?"se halla acogido ni tramita":"se hallan acogidos ni tramitan",
+  solicita:n===1?"solicita":"solicitan",
+  pep:n===1?"no revestir el carácter de persona expuesta políticamente":"no revestir el carácter de personas expuestas políticamente",
+  derecho:n===1?"su propio derecho":"sus propios derechos"};
+}
+function adjTexto(x){
+ let ec=x.ec;
+ if(/casad/.test(x.ec)&&x.conyuge) ec=`${x.ec} con ${x.conyuge}`;
+ else if(/divorc/.test(x.ec)&&x.acred) ec=`${x.ec}${x.conyuge?` de su cónyuge en primeras nupcias ${x.conyuge}`:""}, conforme acredita con ${x.acred}`;
+ else if(/viud/.test(x.ec)&&x.acred) ec=`${x.ec}${x.conyuge?` de ${x.conyuge}`:""}, conforme acredita con ${x.acred}`;
+ return `${h(x.nombre&&x.apellido,`<b><u>${nomCompleto(x)||"[adjudicatario]"}</u></b>`)}, ${h(x.pais)}, ${x.sexo==="F"?"nacida":"nacido"} el ${h(x.nac,fLetras(x.nac)||"[fecha de nacimiento]")}, Documento Nacional de Identidad Número ${h(x.dni,`“${fmtDni(x.dni)||"[DNI]"}”`)}, C.U.I.T/C.U.I.L N° ${h(x.cuil)}, quien manifiesta ser de estado civil ${h(x.ec,ec)}`;
+}
+function h(v,txt){return v?`<span class="h">${txt??v}</span>`:`<span class="falta">${txt||"—"}</span>`;}
+/* cómo se escribe cada dato en la escritura: b = negrita, bu = negrita y subrayado */
+const FORMATO={
+ "{LOTE_MAY}":"bu","{MANZANA_MAY}":"bu",
+ "{SUPERFICIE}":"b","{MATRICULA}":"b","{CUENTA}":"b","{NOMENCLATURA}":"b",
+ "{CERT_CATASTRAL}":"b","{CERT_NOTARIAL}":"b","{PARCELA}":"b",
+ "{RESOLUCION}":"b","{EXPEDIENTE}":"b","{BASE}":"b"
+};
+function fmt(marca,html){
+ const f=FORMATO[marca]; if(!f) return html;
+ if(f==="bu") return `<b><u>${html}</u></b>`;
+ return `<b>${html}</b>`;
+}
+
+/* ============ reemplazo de marcas ============ */
+function valoresMarcas(){
+ const p=P();
+ const corren=V("#docs")==="corren";
+ const baseN=+soloDigitos(V("#base"));
+ const baseAnio=V("#baseAnio")?` del año ${V("#baseAnio")}`:"";
+ return {
+  "{ADJUDICATARIOS}": ADJ.map(adjTexto).join(" y "),
+  "{NOMBRES}": h(p.lista,`<b><u>${p.lista||"[adjudicatarios]"}</u></b>`),
+  "{LOTE}": h(V("#lote")), "{LOTE_MAY}": h(V("#lote"),(V("#lote")||"—").toUpperCase()),
+  "{MANZANA}": h(V("#mza")), "{MANZANA_MAY}": h(V("#mza"),(V("#mza")||"—").toUpperCase()),
+  /* El lote y la parcela son el mismo número: se carga una sola vez. */
+  "{PARCELA}": h(V("#lote")), "{BARRIO}": h(V("#barrio")),
+  "{LOCALIDAD}": h(V("#loc")), "{DEPARTAMENTO}": h(V("#depto")),
+  "{DESCRIPCION}": h(V("#desc")),
+  "{SUPERFICIE}": V("#sup")?h(1,supLetras(+V("#sup"))):h("","[superficie]"),
+  "{MATRICULA}": h(V("#matricula")), "{CUENTA}": h(V("#cuenta")), "{NOMENCLATURA}": h(V("#nomen")),
+  "{BASE}": baseN?h(1,`pesos ${nLetras(baseN)} ($${baseN.toLocaleString("es-AR")})`)+baseAnio:h("","[base imponible]"),
+  "{CERT_CATASTRAL}": h(V("#cc")), "{FECHA_CATASTRAL}": h(V("#ccf"),fLetras(V("#ccf"))||"[fecha]"),
+  "{CERT_NOTARIAL}": h(V("#cn")), "{FECHA_NOTARIAL}": h(V("#cnf"),fLetras(V("#cnf"))||"[fecha]"),
+  "{RESOLUCION}": h(V("#resN")), "{FECHA_RESOLUCION}": h(V("#resF"),fLetras(V("#resF"))||"[fecha]"),
+  "{EXPEDIENTE}": h(V("#expInd")),
+  "{ESCRITURA_NUMERO}": h(V("#escNum")), "{SECCION}": h(V("#escSec")),
+  "{FECHA_ACTO}": h(V("#fecha"),fDia(V("#fecha"))||"[fecha del acto]"),
+  "{ESCRIBANA}": h(1,"Escribana "+(V("#escribana")||"General")),
+  "{COPIAS}": corren?`corren agregadas a la Escritura número ${h(V("#corrN"))}, Sección A, del ${h(V("#corrF"))} del presente protocolo, doy fe.`:`agrego a la presente, doy fe.`,
+  "{COPIAS_MUNI}": corren?`corren agregadas a la Escritura número ${h(V("#corrN"))}, Sección A, del ${h(V("#corrF"))} del presente protocolo, doy fe`:`agrego a la presente escritura, doy fe`,
+  "{TRATAMIENTO}": p.trat,
+  "{TRATAMIENTO_NOMBRES}": p.lista?`${p.trat} ${h(1,`<b><u>${p.lista}</u></b>`)}`:h("","[adjudicatario]"),
+  "{HACE}": p.hace, "{DICE}": p.dice, "{DECLARA}": p.DECLARA, "{ACEPTA}": p.acepta,
+  "{CONDOMINIO}": p.condominio, "{DOMICILIADO}": p.domiciliado, "{PERSONA}": p.persona,
+  "{DOCUMENTO}": p.documento, "{ACABA}": p.acaba, "{BENEFICIARIO}": p.beneficiario,
+  "{HABITA}": p.habita, "{HALLA}": p.halla, "{SOLICITA}": p.solicita, "{PEP}": p.pep, "{DERECHO}": p.derecho
+ };
+}
+function textoFinal(){
+ if(!BASE) return "";
+ const vals=valoresMarcas();
+ let t=BASE.texto;
+ // negrita marcada con **texto**
+ t=t.replace(/\*\*([^*\n]+)\*\*/g,"<b>$1</b>").replace(/__([^_\n]+)__/g,"<u>$1</u>");
+ Object.keys(vals).forEach(k=>{ t=t.split(k).join(fmt(k,vals[k])); });
+ return t.replace(/\n+/g," ").replace(/\s+/g," ").trim();
+}
+
+/* ============ marcas que faltan / sobran ============ */
+function marcasEnBase(txt){ return [...new Set((txt.match(/\{[A-Z_]+\}/g)||[]))]; }
+function faltantes(){
+ if(!BASE) return ["minuta base"];
+ const usadas=marcasEnBase(BASE.texto), f=[];
+ /* El número de escritura no entra acá a propósito: sale del protocolo, al imprimir.
+    Contarlo como faltante durante la confección es pedir un dato que todavía no existe. */
+ const need={"{LOTE}":"#lote","{LOTE_MAY}":"#lote","{MANZANA}":"#mza","{MANZANA_MAY}":"#mza","{PARCELA}":"#lote",
+  "{LOCALIDAD}":"#loc","{DEPARTAMENTO}":"#depto","{DESCRIPCION}":"#desc","{MATRICULA}":"#matricula",
+  "{CUENTA}":"#cuenta","{NOMENCLATURA}":"#nomen","{BASE}":"#base","{CERT_CATASTRAL}":"#cc",
+  "{FECHA_CATASTRAL}":"#ccf","{CERT_NOTARIAL}":"#cn","{FECHA_NOTARIAL}":"#cnf","{RESOLUCION}":"#resN",
+  "{FECHA_RESOLUCION}":"#resF","{EXPEDIENTE}":"#expInd","{FECHA_ACTO}":"#fecha"};
+ const nombre={"#lote":"lote","#mza":"manzana","#loc":"localidad","#depto":"departamento",
+  "#desc":"descripción","#matricula":"matrícula","#cuenta":"cuenta","#nomen":"nomenclatura","#base":"base imponible",
+  "#cc":"certificado catastral","#ccf":"fecha del catastral","#cn":"certificado notarial","#cnf":"fecha del notarial",
+  "#resN":"resolución","#resF":"fecha de la resolución","#expInd":"expediente","#fecha":"fecha del acto"};
+ usadas.forEach(m=>{ const id=need[m]; if(id&&!V(id)&&!f.includes(nombre[id])) f.push(nombre[id]); });
+ if(usadas.some(m=>/ADJUDICATARIOS|NOMBRES|TRATAMIENTO/.test(m))){
+  if(!ADJ.length||!ADJ[0].nombre||!ADJ[0].apellido) f.push("adjudicatario");
+  ADJ.forEach(x=>{ if(x.nombre&&x.apellido){ const nf=nomCompleto(x);
+   if(!x.dni) f.push(`DNI de ${nf}`); if(!x.cuil) f.push(`CUIL de ${nf}`); if(!x.nac) f.push(`nacimiento de ${nf}`);
+   if(/casad|viud|divorc/.test(x.ec)&&!x.conyuge&&!x.acred) f.push(`estado civil de ${nf}`); }});
+ }
+ return f;
+}
+
+/* Los datos cargados que NO tienen dónde entrar, porque la minuta base no lleva su marca.
+   Es la respuesta a «por qué no aparece lo que escribo»: se guarda igual, pero la base no
+   lo pide, así que el texto no lo muestra. Sin esto, la pantalla decía «no falta nada»
+   sobre una base que usaba cuatro marcas de veinticuatro. */
+const CAMPO_MARCA=[
+ ["{LOTE}","#lote","lote"],["{LOTE_MAY}","#lote","lote"],["{PARCELA}","#lote","lote"],
+ ["{MANZANA}","#mza","manzana"],["{MANZANA_MAY}","#mza","manzana"],
+ ["{BARRIO}","#barrio","barrio"],["{LOCALIDAD}","#loc","localidad"],["{DEPARTAMENTO}","#depto","departamento"],
+ ["{DESCRIPCION}","#desc","descripción del lote"],["{SUPERFICIE}","#sup","superficie"],
+ ["{MATRICULA}","#matricula","matrícula"],["{CUENTA}","#cuenta","cuenta"],["{NOMENCLATURA}","#nomen","nomenclatura"],
+ ["{BASE}","#base","base imponible"],
+ ["{CERT_CATASTRAL}","#cc","certificado catastral"],["{FECHA_CATASTRAL}","#ccf","fecha del catastral"],
+ ["{CERT_NOTARIAL}","#cn","certificado notarial"],["{FECHA_NOTARIAL}","#cnf","fecha del notarial"],
+ ["{RESOLUCION}","#resN","resolución"],["{FECHA_RESOLUCION}","#resF","fecha de la resolución"],
+ ["{EXPEDIENTE}","#expInd","expediente"],["{ESCRITURA_NUMERO}","#escNum","número de escritura"],
+ ["{FECHA_ACTO}","#fecha","fecha del acto"],["{SECCION}","#escSec","sección"]
+];
+function sinDonde(){
+ if(!BASE) return [];
+ const usadas=marcasEnBase(BASE.texto), out=[];
+ CAMPO_MARCA.forEach(([m,id,nom])=>{
+  if(!V(id)) return;
+  if(CAMPO_MARCA.some(([m2,id2])=>id2===id&&usadas.includes(m2))) return;  // otra marca del mismo campo sí está
+  if(!out.includes(nom)) out.push(nom);
+ });
+ if(ADJ.some(x=>x.nombre||x.apellido) && !usadas.some(m=>/ADJUDICATARIOS|NOMBRES|TRATAMIENTO/.test(m)))
+  out.push("los adjudicatarios");
+ return out;
+}
+const faltaEscritura=()=>!!(BASE&&marcasEnBase(BASE.texto).includes("{ESCRITURA_NUMERO}")&&!V("#escNum"));
+
+/* ============ revisión ============ */
+let REV={items:{},fecha:"",quien:""};
+const ORIGEN={
+ "{MATRICULA}":"la matrícula del Registro General","{CUENTA}":"el cedulón de Rentas",
+ "{NOMENCLATURA}":"el certificado catastral","{PARCELA}":"el certificado catastral",
+ "{DESCRIPCION}":"la matrícula","{SUPERFICIE}":"la matrícula","{BASE}":"el informe de Rentas",
+ "{CERT_CATASTRAL}":"el PDF del certificado catastral","{FECHA_CATASTRAL}":"el PDF del certificado catastral",
+ "{CERT_NOTARIAL}":"el PDF del certificado notarial","{FECHA_NOTARIAL}":"el PDF del certificado notarial",
+ "{RESOLUCION}":"la resolución individual","{FECHA_RESOLUCION}":"la resolución individual",
+ "{EXPEDIENTE}":"la carátula del expediente","{LOTE}":"la resolución y la matrícula",
+ "{LOTE_MAY}":"la resolución y la matrícula","{MANZANA}":"la resolución y la matrícula",
+ "{MANZANA_MAY}":"la resolución y la matrícula","{ESCRITURA_NUMERO}":"el libro de protocolo",
+ "{FECHA_ACTO}":"la agenda de firmas","{ESCRIBANA}":"quién autoriza el acto",
+ "{LOCALIDAD}":"la matrícula","{DEPARTAMENTO}":"la matrícula","{BARRIO}":"la resolución",
+ "{SECCION}":"el protocolo","{COPIAS}":"el protocolo","{COPIAS_MUNI}":"el protocolo"
+};
+function itemsRev(){
+ if(!BASE) return [];
+ const vals=valoresMarcas(), usadas=marcasEnBase(BASE.texto), it=[];
+ const limpio=x=>String(x).replace(/<[^>]+>/g,"").trim();
+ usadas.forEach(m=>{
+  if(m==="{ADJUDICATARIOS}"||m==="{NOMBRES}"||m==="{TRATAMIENTO_NOMBRES}") return;
+  if(!ORIGEN[m]) return;                       // las concordancias no se revisan una por una
+  it.push({k:m,label:m.replace(/[{}]/g,"").replace(/_/g," ").toLowerCase(),
+   valor:limpio(vals[m])||"—",contra:ORIGEN[m]});
+ });
+ ADJ.forEach((x,i)=>{
+  it.push({k:"adj"+i,label:"Adjudicatario "+(i+1),
+   valor:`${nomCompleto(x)||"—"} · DNI ${fmtDni(x.dni)||"—"} · CUIL ${x.cuil||"—"} · ${x.pais} · nac. ${fLetras(x.nac)||"—"} · ${x.ec}`,
+   contra:"el DNI y la constancia de CUIL"});
+ });
+ const p=P();
+ it.push({k:"conc",label:"Concordancia",
+  valor:p.n===1?"Singular":"Plural, con condominio por partes iguales",
+  contra:`${ADJ.length} adjudicatario${ADJ.length===1?"":"s"} cargado${ADJ.length===1?"":"s"}`});
+ return it;
+}
+function pintarRev(){
+ if(!BASE){ $("#cardRev").style.display="none"; return; }
+ $("#cardRev").style.display="";
+ const it=itemsRev();
+ const ok=it.filter(x=>REV.items[x.k]?.ok).length;
+ const obs=it.filter(x=>REV.items[x.k]?.obs).length;
+ $("#revCab").innerHTML=`<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:baseline;margin-bottom:10px">
+   <div><b style="color:var(--acc);font-size:19px">${ok}</b> <span style="color:var(--muted)">de ${it.length} verificados</span></div>
+   ${obs?`<span style="color:var(--warn);font-weight:600">${obs} a corregir</span>`:""}
+   ${REV.fecha?`<span style="margin-left:auto;color:var(--ok);font-weight:600;font-size:12.5px">Revisada el ${REV.fecha}</span>`:""}
+  </div>`;
+ $("#revLista").innerHTML=it.map(x=>{
+  const st=REV.items[x.k]||{};
+  return `<div style="border:1.5px solid ${st.ok?"var(--ok)":st.obs?"var(--warn)":"var(--line)"};border-radius:11px;padding:11px 13px;margin-bottom:7px;background:${st.ok?"var(--ok-bg)":st.obs?"var(--warn-bg)":"var(--pap)"}">
+   <div style="display:flex;gap:9px;align-items:flex-start">
+    <div style="flex:1;min-width:0">
+     <div style="font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:700">${x.label} · contra ${x.contra}</div>
+     <div style="font-size:13px;margin-top:2px;word-break:break-word">${x.valor}</div>
+     ${st.obs?`<div class="note" style="margin:7px 0 0"><b>A corregir:</b> ${st.obs}</div>`:""}
+    </div>
+    <button class="btn" data-rok="${x.k}" style="padding:5px 10px;font-size:11.5px;${st.ok?"border-color:var(--ok);color:var(--ok)":""}">${st.ok?"✓ Verificado":"Verificar"}</button>
+    <button class="btn" data-robs="${x.k}" style="padding:5px 10px;font-size:11.5px;${st.obs?"border-color:var(--warn);color:var(--warn)":""}">${st.obs?"A corregir":"Corregir"}</button>
+   </div></div>`;}).join("");
+ $$("[data-rok]").forEach(b=>b.addEventListener("click",()=>{
+  const k=b.dataset.rok; REV.items[k]=REV.items[k]||{};
+  REV.items[k].ok=!REV.items[k].ok; if(REV.items[k].ok) REV.items[k].obs="";
+  if(!REV.items[k].ok) REV.fecha=""; pintarRev(); render();}));
+ $$("[data-robs]").forEach(b=>b.addEventListener("click",()=>{
+  const k=b.dataset.robs; REV.items[k]=REV.items[k]||{};
+  if(REV.items[k].obs){ REV.items[k].obs=""; }
+  else { SOC.pedirTexto("¿Qué hay que corregir?","",t=>{ if(!t) return;
+    REV.items[k].obs=t; REV.items[k].ok=false; REV.fecha=""; pintarRev(); render(); }); return; }
+  REV.fecha=""; pintarRev(); render();}));
+ const b=$("#revOk");
+ b.disabled = ok<it.length || obs>0 || !it.length;
+ b.textContent = REV.fecha ? "Revisada" : !it.length ? "Nada para revisar"
+  : ok<it.length ? `Faltan ${it.length-ok} por verificar` : obs ? "Hay observaciones abiertas" : "Marcar como revisada";
+}
+$("#revOk").addEventListener("click",()=>{
+ REV.fecha=SOC.hoy();
+ pintarRev(); render(); guardarAhora();
+ SOC.avisar("Minuta marcada como revisada. Ya se puede descargar.");
+});
+/* Había un botón «Verificar todo» que tildaba los ítems de una. Si existe un botón para
+   tildarlos todos, los tildes no están haciendo el trabajo: la revisión dato por dato
+   pasa a ser decorativa. Es la misma corrección que se hizo en expropiaciones. */
+$("#revReset").addEventListener("click",()=>{REV={items:{},fecha:"",quien:""};pintarRev();render();});
+
+/* ============ pintar ============ */
+function pintarAdjs(){
+ $("#adjs").innerHTML=ADJ.map((x,i)=>`<div class="adj">
+  <div class="ah"><b>Adjudicatario ${i+1}</b>${ADJ.length>1?`<button class="btn x" data-del="${i}" style="margin-left:auto">Quitar</button>`:""}</div>
+  <div class="g3">
+   <div class="field"><label class="f">Nombre</label><input value="${x.nombre}" data-i="${i}" data-k="nombre"></div>
+   <div class="field"><label class="f">Apellido</label><input value="${x.apellido}" data-i="${i}" data-k="apellido"></div>
+   <div class="field"><label class="f" style="opacity:.7">En la escritura</label><input data-prev="${i}" value="${nomCompleto(x)}" disabled style="background:var(--bone);color:var(--muted);font-weight:600"></div>
+   <div class="field"><label class="f">DNI</label><input class="mmil" value="${x.dni}" data-i="${i}" data-k="dni"></div>
+   <div class="field"><label class="f">C.U.I.L.</label><input class="mcuil" value="${x.cuil}" data-i="${i}" data-k="cuil"></div>
+   <div class="field"><label class="f">Nacimiento <i>(dd/mm/aaaa)</i></label><input class="fch" value="${x.nac}" data-i="${i}" data-k="nac" maxlength="10"><div class="auto" data-hint="${i}">${x.nac&&parseF(x.nac)?fLetras(x.nac):""}</div></div>
+   <div class="field"><label class="f">Nacionalidad</label><input value="${x.pais}" data-i="${i}" data-k="pais"></div>
+   <div class="field"><label class="f">Sexo ${x.sexoManual?"":"<i>(automático)</i>"}</label><select data-i="${i}" data-k="sexo" data-selsexo="${i}">
+     <option value="M" ${x.sexo==="M"?"selected":""}>Masculino</option><option value="F" ${x.sexo==="F"?"selected":""}>Femenino</option></select></div>
+   <div class="field"><label class="f">Estado civil</label><select data-i="${i}" data-k="ec">
+     ${["soltero","soltera","casado en primeras nupcias","casada en primeras nupcias","viudo","viuda","divorciado","divorciada"].map(o=>`<option ${x.ec===o?"selected":""}>${o}</option>`).join("")}</select></div>
+   ${/casad/.test(x.ec)?`<div class="field fl"><label class="f">Cónyuge</label><input value="${x.conyuge}" data-i="${i}" data-k="conyuge"></div>`:""}
+   ${/viud|divorc/.test(x.ec)?`<div class="field"><label class="f">${/viud/.test(x.ec)?"Cónyuge fallecido":"Cónyuge del que se divorció"}</label><input value="${x.conyuge}" data-i="${i}" data-k="conyuge"></div>
+    <div class="field fl"><label class="f">Cómo lo acredita</label><input value="${x.acred}" data-i="${i}" data-k="acred" placeholder="${/viud/.test(x.ec)?"acta de defunción, tomo, folio y año":"Sentencia Número X de fecha…, Autos…, Juzgado…"}"></div>`:""}
+  </div></div>`).join("");
+ $$("#adjs [data-i]").forEach(e=>{
+  const hh=ev=>{
+   const i=+ev.target.dataset.i,k=ev.target.dataset.k;
+   ADJ[i][k]=ev.target.value;
+   if(k==="nac"){const t=$(`[data-hint="${i}"]`);if(t){const ok=parseF(ev.target.value);
+    t.textContent=ev.target.value?(ok?fLetras(ev.target.value):"día, mes y año — dd/mm/aaaa"):"";
+    t.style.color=ev.target.value&&!ok?"var(--warn)":"";}}
+   if(k==="nombre"||k==="apellido"){
+    const pv=$(`[data-prev="${i}"]`); if(pv) pv.value=nomCompleto(ADJ[i]);
+    if(!ADJ[i].sexoManual){const s2=inferSexo(ADJ[i].nombre);
+     if(s2&&s2!==ADJ[i].sexo){
+      ADJ[i].sexo=s2;
+      // nacionalidad y estado civil acompañan al sexo mientras no se hayan tocado a mano
+      const f=s2==="F";
+      if(/^argentin[oa]$/i.test(ADJ[i].pais)) ADJ[i].pais=f?"argentina":"argentino";
+      ADJ[i].ec=ADJ[i].ec
+        .replace(/\bsolter[oa]\b/i,f?"soltera":"soltero")
+        .replace(/\bcasad[oa]\b/i,f?"casada":"casado")
+        .replace(/\bviud[oa]\b/i,f?"viuda":"viudo")
+        .replace(/\bdivorciad[oa]\b/i,f?"divorciada":"divorciado");
+      // se actualizan los tres campos en su lugar, sin rehacer la lista,
+      // para no perder el foco mientras se escribe
+      const selS=$(`[data-selsexo="${i}"]`); if(selS) selS.value=s2;
+      const inpP=$(`[data-i="${i}"][data-k="pais"]`); if(inpP) inpP.value=ADJ[i].pais;
+      const selE=$(`[data-i="${i}"][data-k="ec"]`);
+      if(selE){ if(![...selE.options].some(o=>o.value===ADJ[i].ec)) selE.add(new Option(ADJ[i].ec,ADJ[i].ec));
+                selE.value=ADJ[i].ec; }
+     }}
+   }
+   if(k==="sexo") ADJ[i].sexoManual=true;
+   if(["ec","sexo"].includes(k)) pintarAdjs();
+   render();
+  };
+  e.addEventListener("input",hh); e.addEventListener("change",hh);});
+ $$("[data-del]").forEach(b=>b.addEventListener("click",()=>{ADJ.splice(+b.dataset.del,1);pintarAdjs();render();}));
+ render();
+}
+const EXC_F=["CARMEN","ISABEL","ESTHER","RAQUEL","INES","BEATRIZ","LUZ","MERCEDES","DOLORES","MILAGROS","ROCIO","RUTH","NOEMI","SOL","PAZ","MIRIAM","YAEL","ABIGAIL","NAIR","EVELYN","JAZMIN","MARLENE","JUDITH","EDITH","MARISOL","ANAHI","YESSICA","GUADALUPE","SOLEDAD","AZUL","BELEN","AILEN"];
+const EXC_M=["LUCA","NOA","JEREMIAS","MATIAS","TOMAS","NICOLAS","ANDRES","AGUSTIN","GASTON","ELIAS","JOSE"];
+function inferSexo(nom){const pr=(nom||"").trim().split(/\s+/)[0]||"";
+ const N=pr.normalize("NFD").replace(/[\u0300-\u036f]/g,"").toUpperCase();
+ if(!N)return null; if(EXC_F.includes(N))return "F"; if(EXC_M.includes(N))return "M";
+ return N.endsWith("A")?"F":"M";}
+
+function nombreMinuta(){
+ const ap=ADJ.map(a=>(a.apellido||"").trim()).filter(Boolean);
+ return `Minuta ${ap.length?ap.join(" y "):"sin adjudicatario"} — Lote ${V("#lote")||"s/n"} Mza ${V("#mza")||"s/n"}`;
+}
+function render(){
+ /* El nombre del lote ya está en el encabezado: acá alcanza con decir qué es esto.
+    nombreMinuta() sigue sirviendo para el nombre del archivo .docx. */
+ $("#tituloMinuta").textContent="Cómo va a quedar";
+ const bh=$("#baseHint"); const nb=+soloDigitos(V("#base"));
+ if(bh) bh.textContent=nb?`pesos ${nLetras(nb)} ($${nb.toLocaleString("es-AR")})`:"";
+
+ /* Sin minuta base se carga igual: los datos son del lote y la base es del barrio. El
+    texto aparece solo el día que la base esté, con lo que ya se haya cargado. */
+ if(!BASE){
+  $("#doc").innerHTML=`<div style="color:var(--muted);text-align:center;font-family:Montserrat,sans-serif;font-size:13px;padding:24px 8px;line-height:1.6">El texto aparece acá cuando el barrio tenga su minuta base.<br>Lo que cargues ahora se guarda igual y se cruza solo.</div>`;
+  $("#estado").textContent="sin minuta base";
+  $("#chk").innerHTML=`<div class="chk a"><div><b>Este barrio todavía no tiene minuta base.</b><div>Podés cargar todos los datos del lote igual: no se pierde nada. Cuando la base esté, el texto se arma solo con lo que ya cargaste.</div></div></div>`;
+  if(typeof pintarRev==="function") pintarRev();
+  return;
+ }
+
+ $("#doc").innerHTML=textoFinal();
+ const usadas=marcasEnBase(BASE.texto);
+ const f=faltantes(), sinM=sinDonde();
+ /* Una base sin marcas devuelve el mismo texto para todos los lotes. Y una base con pocas
+    marcas dejaba decir "no falta nada" sobre cuatro datos de veinticuatro: el contador no
+    puede hablar de la escritura, solo de lo que esta base pide. */
+ /* La ficha de arriba dice lo peor que pasa, no lo mejor: decir "sin faltantes" al lado
+    de un aviso de once datos que no salen es contradecirse en la misma tarjeta. */
+ $("#estado").textContent = !usadas.length ? "sin marcar"
+   : f.length ? `${f.length} sin completar`
+   : sinM.length ? `${sinM.length} no aparecen` : "sin faltantes";
+ let cajas = !usadas.length
+  ? `<div class="chk a"><div><b>La minuta base no tiene ninguna marca puesta.</b><div>El texto sale igual para todos los lotes, porque no hay nada que reemplazar. Marcala desde «Ver la minuta base».</div></div></div>`
+  : f.length
+  ? `<div class="chk b"><div><b>Faltan ${f.length} datos</b><div>${f.slice(0,6).join(" · ")}${f.length>6?` · y ${f.length-6} más`:""}</div></div></div>`
+  : `<div class="chk k"><div><b>Está todo lo que pide esta minuta base</b><div>Son ${usadas.length} marca${usadas.length===1?"":"s"}. No dice que la escritura esté bien: la revisión sigue siendo obligatoria.</div></div></div>`;
+ if(sinM.length) cajas+=`<div class="chk a"><div><b>${sinM.length} dato${sinM.length===1?"":"s"} que cargaste no aparece${sinM.length===1?"":"n"} en el texto.</b><div>La minuta base no tiene su marca, así que no hay dónde ponerlo${sinM.length===1?"":"s"}: ${sinM.slice(0,8).join(" · ")}${sinM.length>8?" · y "+(sinM.length-8)+" más":""}. Se guarda igual; para que salga, marcalo en «Ver la minuta base».</div></div></div>`;
+ if(faltaEscritura()) cajas+=`<div class="chk a"><div><b>Falta el número de escritura.</b><div>Se completa al protocolizar, no antes. Hasta entonces el texto sale sin él.</div></div></div>`;
+ $("#chk").innerHTML=cajas;
+ if(typeof pintarRev==="function") pintarRev();
+}
+
+/* ============ modo 1: armar la base ============ */
+function pintarBotonesMarcas(){
+ $("#botonesMarcas").innerHTML=
+  `<div class="grupoM">Datos que carga el auxiliar</div><div class="marcas">`
+  +MARCAS_DATOS.map(m=>`<button data-m="${m[0]}" title="${m[2]||m[1]}">${m[1]}</button>`).join("")+`</div>`
+  +`<div class="grupoM">Concordancias — se resuelven solas</div><div class="marcas">`
+  +MARCAS_CONC.map(m=>`<button data-m="${m[0]}" title="${m[1]}">${m[0].replace(/[{}]/g,"").toLowerCase().replace(/_/g," ")}</button>`).join("")+`</div>`;
+ $$("[data-m]").forEach(b=>b.addEventListener("click",()=>insertarMarca(b.dataset.m)));
+}
+function insertarMarca(marca){
+ const ta=$("#baseTexto");
+ const a=ta.selectionStart, b=ta.selectionEnd;
+ if(a===b){ SOC.avisar("Seleccioná primero en el texto la parte que corresponde a "+marca+".",true); return; }
+ ta.value=ta.value.slice(0,a)+marca+ta.value.slice(b);
+ ta.focus(); ta.selectionStart=ta.selectionEnd=a+marca.length;
+ pintarListaMarcas();
+}
+function pintarListaMarcas(){
+ const txt=$("#baseTexto").value;
+ const usadas=marcasEnBase(txt);
+ const todas=[...MARCAS_DATOS.map(m=>m[0]),...MARCAS_CONC.map(m=>m[0])];
+ const desconocidas=usadas.filter(m=>!todas.includes(m));
+ $("#contadorMarcas").textContent=`${usadas.length} de ${todas.length}`;
+ $("#listaMarcas").innerHTML=
+  (usadas.length?`<div style="display:flex;flex-wrap:wrap;gap:5px">${usadas.map(m=>`<span class="tag">${m}</span>`).join("")}</div>`
+   :`<div style="color:var(--muted);font-size:13px">Todavía no marcaste nada.</div>`)
+  +(desconocidas.length?`<div class="note"><b>Marcas que el sistema no reconoce:</b> ${desconocidas.join(" ")}. Revisá que estén bien escritas.</div>`:"")
+  +`<div class="info" style="margin-top:12px"><b>Negrita.</b> Envolvé el texto entre dos asteriscos para que salga en negrita: <span class="tag">**COMPARECEN:**</span></div>`;
+}
+$("#baseTexto").addEventListener("input",pintarListaMarcas);
+
+function baseDeLaPantalla(){
+ const txt=$("#baseTexto").value.trim();
+ if(!txt){ SOC.avisar("Todavía no hay texto para guardar.",true); return null; }
+ if(!V("#bMza")){ SOC.avisar("Poné de qué manzana es esta base.",true); $("#bMza").focus(); return null; }
+ return {version:1,barrio:V("#bBarrio"),mza:V("#bMza"),autor:V("#bAutor"),
+  fecha:SOC.hoy(),texto:txt};
+}
+$("#guardarBase").addEventListener("click",()=>{
+ const base=baseDeLaPantalla(); if(!base||!CTX||!CTX.b) return;
+ CTX.b.base=base;
+ if(!CTX.b.minutero&&V("#bAutor")) CTX.b.minutero=V("#bAutor");
+ const ok=SOC.guardar();
+ $("#avisoBase").innerHTML=ok
+  ? `<div class="chk k" style="margin:12px 0 0"><div><b>Guardada en el barrio.</b> La usan todos los lotes de ${SOC.esc(CTX.b.nombre)}. Si mañana la corregís, las minutas ya cargadas se rearman solas con el texto nuevo.</div></div>`
+  : `<div class="chk b" style="margin:12px 0 0"><div><b>No se pudo guardar.</b> Está lleno el almacenamiento del navegador. Descargá una copia (.json) antes de cerrar.</div></div>`;
+ $("#sub").innerHTML=paso(`<b>${SOC.esc(CTX.b.nombre||"")}</b>`,"Minuta base del barrio")
+  +" · guardada el "+SOC.esc(base.fecha);
+});
+/* La copia suelta sigue existiendo, pero ya no es el mecanismo: es un respaldo. */
+$("#bajarBase").addEventListener("click",()=>{
+ const base=baseDeLaPantalla(); if(!base) return;
+ const a=document.createElement("a");
+ a.href=URL.createObjectURL(new Blob([JSON.stringify(base,null,1)],{type:"application/json"}));
+ a.download=`Minuta base — ${base.barrio} — Mza ${base.mza}.json`.replace(/[^\wÁÉÍÓÚÑáéíóúñ .—-]+/g,"");
+ a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+ SOC.avisar("Se guardó en tu carpeta de Descargas. Si no bajó nada, estás en la copia en línea: ahí el navegador bloquea las descargas.");
+});
+$("#probarBase").addEventListener("click",()=>{
+ const base=baseDeLaPantalla(); if(!base) return;
+ const b=CTX?CTX.b:null;
+ CTX={modo:"prueba",b:b,l:null};
+ ADJ=[nuevoAdj()]; REV={items:{},fecha:"",quien:""};
+ CAMPOS.forEach(id=>{ if($(id)) $(id).value=""; });
+ $("#escSec").value="A"; $("#docs").value="agrego"; $("#wCorren").style.display="none";
+ $("#conc").value="auto"; $("#escribana").value="General";
+ cargarEjemploDatos(); pintarAdjs();
+ activarBase(base);
+ $("#avisoPrefill").innerHTML=`<div class="note"><b>Prueba.</b> Los datos son inventados y no se guardan en ningún lote: es solo para ver cómo queda el texto.</div>`;
+ /* Acá la vuelta es a la base, no al barrio: dos flechas distintas en la misma barra
+    obligan a leer cuál es cuál. */
+ abrirPantalla(
+  paso(`<b>${SOC.esc(b&&b.nombre?b.nombre:"Minuta base")}</b>`,
+       "Prueba con datos de ejemplo — no se guarda nada"),
+  "", {texto:"← Volver a la minuta base", al:()=>{ if(b) abrirBase(b); else irModo("m1"); }});
+ irModo("m2");
+});
+$("#limpiarBase").addEventListener("click",()=>{
+ SOC.preguntar("¿Vaciar el texto de la minuta base? Lo que está guardado en el barrio no se toca hasta que guardes de nuevo.","Vaciar",()=>{
+  $("#baseTexto").value=""; $("#sugerencias").innerHTML=""; pintarListaMarcas();
+ });
+});
+
+/* ============ modo 2: confeccionar ============ */
+function activarBase(b){
+ BASE=b;
+ if(b&&!V("#mza")&&b.mza&&b.mza!=="—") $("#mza").value=b.mza;
+ render();
+}
+$("#cargarEjemplo").addEventListener("click",()=>{
+ $("#baseTexto").value=BASE_MODELO.texto;
+ $("#bBarrio").value=BASE_MODELO.barrio; $("#bMza").value=BASE_MODELO.mza;
+ pintarListaMarcas();
+});
+
+$("#addAdj").addEventListener("click",()=>{ADJ.push(nuevoAdj());pintarAdjs();});
+$("#docs").addEventListener("change",()=>{$("#wCorren").style.display=$("#docs").value==="corren"?"grid":"none";render();});
+$("#convDesc").addEventListener("click",()=>{
+ const raw=$("#desc").value;
+ if(!raw.trim()){ $("#convMsg").textContent="No hay texto para convertir."; return; }
+ const {texto,sup}=convertirDescripcion(raw);
+ $("#desc").value=texto;
+ if(sup){ $("#sup").value=sup; $("#convMsg").textContent=`Superficie detectada: ${sup} m².`; }
+ else $("#convMsg").textContent="Convertido. No se encontró la superficie total; cargala a mano.";
+ render();
+});
+const CAMPOS=["#escNum","#escSec","#fecha","#escribana","#conc","#corrN","#corrF","#lote","#mza","#barrio",
+ "#loc","#depto","#matricula","#cuenta","#sup","#nomen","#base","#baseAnio","#desc","#expInd","#resN","#resF","#cc","#ccf","#cn","#cnf"];
+CAMPOS.forEach(id=>{const e=$(id); if(e){e.addEventListener("input",render);e.addEventListener("change",render);}});
+
+/* ---- guardar / cargar escrituras ---- */
+function estado(){const o={adjs:ADJ,rev:REV,base:BASE?{barrio:BASE.barrio,mza:BASE.mza}:null};CAMPOS.forEach(id=>o[id]=V(id));o["#docs"]=V("#docs");return o;}
+function cargarEstado(o){ADJ=JSON.parse(JSON.stringify(o.adjs));REV=o.rev?JSON.parse(JSON.stringify(o.rev)):{items:{},fecha:"",quien:""};CAMPOS.forEach(id=>{if($(id))$(id).value=o[id]||"";});
+ $("#docs").value=o["#docs"]||"agrego";$("#wCorren").style.display=$("#docs").value==="corren"?"grid":"none";pintarAdjs();}
+
+/* ---- salida ---- */
+function limpiar(){return $("#doc").innerText.replace(/\s+/g," ").trim();}
+$("#copiar").addEventListener("click",()=>{
+ if(!navigator.clipboard){ SOC.avisar("El navegador no deja copiar desde acá. Seleccioná el texto de la derecha y copialo a mano.",true); return; }
+ navigator.clipboard.writeText(limpiar()).then(()=>{
+  const b=$("#copiar");b.textContent="Copiado";setTimeout(()=>b.textContent="Copiar",1300);
+ }).catch(()=>SOC.avisar("El navegador no dejó copiar. Seleccioná el texto de la derecha y copialo a mano.",true));
+});
+/* Imprimir la minuta y no la carátula: las dos viven ahora en la misma página. */
+$("#imprimir").addEventListener("click",()=>{
+ document.body.classList.add("impMinuta");
+ window.print();
+ setTimeout(()=>document.body.classList.remove("impMinuta"),1000);
+});
+$("#descargarWord").addEventListener("click",()=>{
+ if(!BASE){ SOC.avisar("Este barrio todavía no tiene minuta base.",true); return; }
+ if(!REV.fecha){
+  const f=faltantes();
+  SOC.preguntar("Esta minuta todavía no está marcada como revisada."
+   +(f.length?" Además faltan "+f.length+" datos: "+f.slice(0,6).join(", ")+(f.length>6?", …":"")+".":"")
+   +" Se descarga igual, pero sale sin revisar.","Descargar igual",bajarWord,true);
+  return;
+ }
+ bajarWord();
+});
+async function bajarWord(){
+ if(!window.docx){ for(let i=0;i<20&&!window.docx;i++) await new Promise(r=>setTimeout(r,200)); }
+ if(!window.docx){ SOC.avisar("No se pudo cargar el generador de Word. Suele ser la conexión. Lo que cargaste sigue acá.",true); return; }
+ const {Document,Packer,Paragraph,TextRun,AlignmentType}=window.docx;
+ const limpio=$("#doc").innerHTML.replace(/<span[^>]*>/g,"").replace(/<\/span>/g,"").replace(/\n+/g," ").replace(/\s+/g," ");
+ // se recorre el HTML llevando la cuenta de negrita, subrayado y cursiva
+ const runs=[];
+ const dec=t=>{const ta=document.createElement("textarea");ta.innerHTML=t;return ta.value;};
+ let b=0,u=0,it=0,buf="";
+ const cerrar=()=>{ if(!buf) return;
+  runs.push(new TextRun({text:dec(buf),bold:b>0,underline:u>0?{}:undefined,italics:it>0,font:"Cambria",size:24}));
+  buf=""; };
+ const tk=/<(\/?)(b|u|i|strong|em)>|([^<]+)/g; let m;
+ while((m=tk.exec(limpio))){
+  if(m[3]!==undefined){ buf+=m[3]; continue; }
+  cerrar();
+  const cierra=m[1]==="/", et=m[2];
+  const d=cierra?-1:1;
+  if(et==="b"||et==="strong") b+=d; else if(et==="u") u+=d; else it+=d;
+  if(b<0)b=0; if(u<0)u=0; if(it<0)it=0;
+ }
+ cerrar();
+ const doc=new Document({title:"Minuta",
+  styles:{default:{document:{run:{font:"Cambria",size:24,language:{value:"es-AR"}}}}},
+  sections:[{properties:{page:{size:{width:11906,height:16838},margin:{top:1984,bottom:340,left:3005,right:964}}},
+   children:[new Paragraph({alignment:AlignmentType.JUSTIFIED,spacing:{line:570,lineRule:"atLeast",before:0,after:0},children:runs})]}]});
+ const blob=await Packer.toBlob(doc);
+ const a=document.createElement("a");a.href=URL.createObjectURL(blob);
+ a.download=`${nombreMinuta().replace(/[^\wÁÉÍÓÚÑáéíóúñ ]+/g,"").replace(/\s+/g,"_")}.docx`;a.click();
+ setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+ SOC.avisar("Se guardó en tu carpeta de Descargas. Si no bajó nada, estás en la copia en línea: ahí el navegador bloquea las descargas.");
+}
+
+/* ============ navegación ============ */
+function irModo(m){
+ $$("#armador .pantalla").forEach(p=>p.classList.remove("on"));
+ $("#"+m).classList.add("on");
+ window.scrollTo(0,0);
+}
+
+/* ============ base de ejemplo: Colonia Tirolesa ============ */
+/* Base de EJEMPLO, para el boton "Usar el modelo de ejemplo". Los datos son inventados:
+   antes traia una escritura real, con el nombre, el DNI, la fecha de nacimiento y el
+   domicilio de una compareciente. Lo que la base tiene que mostrar es la FORMA -donde van
+   las marcas y como queda el texto-, y eso se ve igual con datos inventados. Las bases de
+   verdad no viven acá: se cargan desde el .json que queda en el disco R. */
+const BASE_MODELO={"version": 1, "barrio": "Modelo base — Provincia de Córdoba", "mza": "—", "autor": "Escribanía General de Gobierno", "fecha": "", "texto": "<b>ESCRITURA NÚMERO *********.- SECCIÓN \"A”.- </b>En la Ciudad de Córdoba, capital de la provincia del mismo nombre, República Argentina, a los ****** días del ******** de abril del año dos mil veintiséis, ante mí Escribana ******* del Registro Notarial de la Escribanía General de Gobierno de la Provincia,<b> COMPARECEN: </b>Por una parte, la Señora<b> Laura Beatriz EJEMPLO, </b>argentina, nacida el dos de marzo del año mil novecientos ochenta y uno, Documento Nacional de Identidad número “25.000.111”, quien manifiesta ser de estado civil soltera, con domicilio legal en calle Ejemplo número cien de esta Ciudad, persona de mi conocimiento según el artículo 306 inciso \"b\" del Código Civil y Comercial de la Nación; y por otra parte lo hace la señora<b> **************</b>, argentina, nacida el **** de **** del año mil novecientos ****, Documento Nacional de Identidad Número “*********”, C.U.I.T/C.U.I.L N° 27-**********-1, de estado civil divorciada de su cónyuge en primeras nupcias ************, conforme Sentencia Numero *********** de fecha *** de **** de dos mil *********, dictada por el Juzgado de Familia Cuarta Nominación de la ciudad de Córdoba en los Autos caratulados <b>“************ – DIVORCIO VINCULAR – CONTENCIOSO – EXPTE. N° *************” </b>Jueza de Primera Instancia *****************, la que en original tengo a la vista y en copia certificada agrego a la presente, conste; con domicilio en lote *** de la Manzana ********* del Barrio ************** de esta ciudad de Córdoba, persona a quien identifico conforme el artículo 306 inciso a) del Código Civil y Comercial de la Nación con el documento idóneo mencionado que me exhibe y cuya copia certificada agrego a la presente, doy fe.<b> INTERVENCIÓN: </b>La señora ************* comparece por sí en ejercicio de sus propios derechos; mientras que la Señora Laura Beatriz EJEMPLO lo hace en nombre y representación de la<b> PROVINCIA DE CÓRDOBA, </b>C.U.I.T. 30-70818712-3, con domicilio legal en el Centro Cívico del Bicentenario Gobernador Juan Bautista Bustos, Código Postal X 5004 GBB, de la Ciudad de Córdoba, en su carácter de <b>Secretaria General de Hábitat y Desarrollo Emprendedor</b> lo que acredita conforme a la siguiente documentación: 1) Ley Número 9811 y su decreto reglamentario que establece el Régimen de Escrituración de Viviendas Sociales, y modificatorias; 2) Decreto Número 2206 de fecha diez de diciembre del año Dos mil veintitrés, “Estructura Orgánica del Poder Ejecutivo”, y su modificatorio Decreto N°60 de fecha veintitrés de julio del dos mil veintiséis, que incorpora el artículo 15 ter y que reza lo siguiente: \"ARTÍCULO 15 ter.- COMPETE a la SECRETARÍA GENERAL DE HÁBITAT Y DESARROLLO EMPRENDEDOR, en el ámbito de su competencia y bajo la órbita del Ministerio Jefatura de Gabinete, en general asistir al Poder Ejecutivo, en todo lo vinculado a políticas públicas en materia de hábitat, integración socio-urbana, regularización dominial de barrios populares, escrituración de viviendas y lotes sociales y fomento del desarrollo emprendedor, y en particular, entender en:… 4- La implementación de las acciones necesarias para el otorgamiento de escrituras traslativas de dominio, con su consecuente suscripción e inscripción en el Registro 6º General de la Provincia, dentro del marco del Régimen de Escrituración Gratuita de Viviendas y Lotes Sociales…. 9- La implementación integral en carácter de Autoridad de Aplicación del \"Programa de Regularización y Escrituración de Viviendas Sociales\" creado por Decreto N° 495/09; el \"Régimen de Escrituración Gratuita de Viviendas y Lotes Sociales\" creado por Ley N° 9811…”;  3) Decreto de designación Número 13, de fecha veintisiete de febrero del año Dos mil veintiséis, como Secretaria General de Hábitat y Desarrollo Emprendedor, del Ministerio de Cooperativas y Mutuales de la Provincia de Córdoba, hoy dependiente del Ministerio Jefatura de Gabinete, en virtud de la modificación del Decreto N°60/2026; documentación que en copia certificada corre agregada a la Escritura Número Treinta y tres de fecha dieciocho de agosto de dos mil veintiséis; conste. Y la señora Laura Beatriz EJEMPLO en el carácter invocado y acreditado, conforme las actuaciones del Expediente Nº ********** relacionado al Régimen de Escrituración Gratuita de Viviendas Sociales del Barrio ************ y a la siguiente documentación, a saber: 1) Resolución N° ***-E y su Anexo I, de fecha *** de *** del año ****, que autoriza el inicio del trámite de los procesos individuales de escrituración a favor de los beneficiarios de las unidades habitacionales ubicadas en Barrio *************** de la ciudad de Córdoba, Departamento Capital, Provincia de Córdoba, dictada por la Secretaría de Desarrollo Territorial y Hábitat dependiente del entonces Ministerio de Promoción del Empleo y de la Economía Familiar, 2)  Resolución N°******-E de fecha *** de **** de dos mil *********, dictada por la Secretaría de escrituración y articulación territorial dependiente del Ministerio de Desarrollo Social y Promoción del Empleo, que amplía la nómina de beneficiarios de la Resolución N° *********-E y se autoriza el inicio de los trámites de los procesos individuales de escrituración a favor de los beneficiarios de una (1) unidad habitacional ubicada en Barrio ********** de la ciudad de Córdoba, Departamento Capital de la Provincia de Córdoba; 3)  Resolución N°******* de fecha **** de *** de dos mil *******, la cual declara procedente la pretensión articulada por el señora *********** en relación al Lote ** de la Manzana *** del Barrio ************ documentación que en copia certificada agrego a la presente escritura y Protocolo de la Escribanía General de Gobierno de mi titularidad, conste; y en relación al Expediente N° ************/2025, <b>DICE</b>: que por el presente acto jurídico <b>TRANSFIERE,</b> en nombre y representación de la Provincia de Córdoba a título de <b>ADJUDICACIÓN DIRECTA</b> gratuita con destino a vivienda a favor de <b>***********,</b> el siguiente inmueble de propiedad de su representada, que se describe así: El inmueble ubicado en el Departamento ***, Pedanía ********, Ciudad de Córdoba, ********, calle Publica Sin Número, designado como <b>LOTE *** de la MANZANA ********</b>que se describe como sigue: *************** superficie de <b>***************</b> (***,00 m2). De lo que se tomó razón en el Registro General de la Provincia en relación a la <b>MATRICULA N°*********** del Departamento *******</b> (**). El inmueble se encuentra empadronado en la Dirección General de Rentas bajo el número de cuenta: <b>11-*******-1</b>, Nomenclatura <b>Catastral D: 11, Ped: 01, Pue: 01, C: 16, S: 32, Mza. ***, P: ******</b>, con base imponible de Pesos *********s <b>($*********)</b> del corriente año. Certificado Catastral Número <b>“2***”</b> emitido con fecha *** de *** del año dos mil ********, se acredita que no constan observaciones formales, restricciones ni afectaciones. <b>LE CORRESPONDE</b>: a la Provincia de Córdoba, en razón de los siguientes antecedentes: 1) ****************de lo que tomó razón ante el Registro General de la Propiedad al Folio Real Matrícula N° **.**.* Departamento ** (***). 2) Posteriormente, sobre el Lote Ciento **** se realiza Plano de Mensura y Subdivisión en relación al Expediente N° 0033-******/2007 de la Dirección General de Catastro, visado con fecha *** de *** de ***, del cual surgen las Manzanas * ** y * ****, tomándose razón ante el Registro General de la Propiedad al Folio Real Matrículas N° ********* respectivamente, ambas del Departamento Capital (11). 3) Finalmente sobre la Manzana Ciento Veinticuatro se realiza <b>Plano de Mensura y Loteo N° ***, mediante Protocolización Administrativa de Plano en relación al Expediente N° 0033-*****/2021,</b> visado con fecha *** de **** de *****, del que surgen varios lotes y Manzanas, entre ellos el lote objeto de la presente Lote ** Manzana ******, de lo que tomó razón ante el Registro General de la Propiedad al <b>Folio Real Matrícula N° 1.400.001 Departamento Capital (11)</b>. Así resulta de los antecedentes que para este acto tengo a la vista y a los cuales me remito para mayor correlación, doy fe. Con el <b>CERTIFICADO NOTARIAL número “15827” </b>de fecha diecinueve de marzo del año dos mil veintiséis, expedido a mi solicitud por el Registro General de la Provincia, que agrego a la presente, se acredita: Que no aparecen inhibiciones a nombre de quienes se solicita, que no existen gravámenes y que el dominio consta según la forma expresada. El número de C.U.I.T es N° “30-70818712-3” y no como se cita.- Que al realizarse la escritura número Ciento diecinueve, Sección ´´A´´ de fecha diecinueve de mayo de dos mil seis, autorizada por el escribano Fernando Manuel EJEMPLO, escribano General de Gobierno, inscribiéndose en MATRÍCULA N°1.400.002 Departamento Capital (11), se consigna por un error involuntario como C.U.I.T. de la Provincia de Córdoba el N° “34-99923057-3” cuando <b>debió decir C.U.I.T N° “30-70818712-3”,</b> trasladándose el error asimismo al momento de realizarse la Comunicación de Protocolización Administrativa de Plano (Ley 10.432) de Mensura y Loteo N° 30001, en relación al Expediente N° 0033-100001/2021, visado con fecha uno de febrero de 2022, y las matrículas que surgen de éste, entre ellas MATRICULA N° 1.400.001, según documentación inherente que tengo a la vista, doy fe, doy fe. En virtud de lo anteriormente expuesto se solicita se <b>RECTIFIQUEN las MATRÍCULAS N°1.400.002, y 1.400.001,</b> ambas del Departamento Capital (11), en el sentido de que el número de CUIT no es “34-99923057-3 sino “<b>30-70818712-3</b>”, tomando debida nota de la presente rectificación por ante el Registro General de la Provincia.- <b>BAJO</b> tales conceptos en el carácter invocado, manifiesta <b>Laura Beatriz EJEMPLO </b>que le transfiere a la parte adjudicataria todos los derechos de propiedad, posesión y dominio que sobre lo adjudicado tenía su representada. A su vez la señora <b>*************</b> dice: que <b>ACEPTA </b>la presente adjudicación directa gratuita, por ser ella fiel reflejo de lo acordado, expresando además encontrarse en posesión real y efectiva del inmueble en virtud de la tradición verificada por la transmitente con anterioridad a este acto sin intervención notarial. Declarando la parte adjudicataria que en relación a cualquier deuda o saldo impago que pudiera existir en concepto de impuestos, tasas, servicios y/o contribuciones que afectaren el inmueble transferido las mismas son tomadas a su cargo, manifestando ambas partes que liberan a la escribana autorizante de toda obligación tributaria y responsabilidad de pago al respecto. <b>AFECTACIÓN AL REGIMEN DE VIVIENDA: </b>En este estado la señora ************** <b>DICE</b>: Que es su voluntad acogerse a los beneficios del Régimen de Vivienda (artículos 244 subsiguientes y concordantes del Código Civil y Comercial de la Nación Argentina) por este instrumento, respecto del inmueble descripto y que adquiere por este acto, cuya ubicación, designación, descripción, superficie y demás datos catastrales, dominiales e impositivos se dan aquí por reproducidos instituyéndose como beneficiaria a la propia afectante, Declarando bajo juramento: a) Que habita el inmueble; b) Que el bien motivo de la presente no tiene otro destino que el de vivienda familiar; c) Que no se ha acogido ni tramita igual beneficio en esta ni en otra jurisdicción.<b>;</b> d) Que el inmueble no se encuentra actualmente gravado. Finalmente los comparecientes declaran bajo fe de juramento: 1) La Señora Laura Beatriz EJEMPLO revestir el carácter de persona expuesta políticamente, en los términos de la Resolución 35/2023, modificada por la Resolución 192/2024 de la UIF, habiendo leído el listado integral relacionado en la misma y encontrándose mencionado en dicha nómina por su carácter de carácter de Secretaria General de Hábitat y Desarrollo Emprendedor, y la señora *****************no revestir el carácter de personas expuestas políticamente, en los términos de la mencionada Resolución, habiendo también leídoel listado integral relacionado en la misma. 2) Que la presente operación no se encuentra comprendida en los artículos 44 y 45 del Código Civil y Comercial de la Nación, por no tener restricción alguna en cuanto a su capacidad, ni hallarse en juicio en relación a la misma. En cumplimiento de la Resolución General de la ex A.F.I.P. (hoy ARCA) N° 348/99 se agregan las constancias de C.U.I.T/C.U.I.L respectivas. Asimismo, la presente operación no se encuentra sujeta a las disposiciones de la Resolución General N° 2371/2007 de la ex AFIP (hoy ARCA). Previa lectura y ratificación, firman las comparecientes por ante mí que doy fe. "};
+
+function cargarEjemploDatos(){
+ $("#loc").value="Colonia Tirolesa"; $("#depto").value="Colón"; $("#barrio").value="Barrio Sportivo";
+ $("#escSec").value="A"; $("#baseAnio").value="dos mil veintiséis";
+ $("#nomen").value="Circ. 01, Secc. 04, Mza. 030";
+}
+
+
+/* ══════════════════ La puerta: cómo se entra y cómo se vuelve ══════════════════
+   El armador ya no se abre solo. Se entra desde un barrio —para la minuta base— o desde
+   un lote —para la individual—, y lo que se carga queda guardado ahí mismo. No hay
+   ningún archivo suelto que alguien tenga que acordarse de dejar en la carpeta. */
+const SOC=window.SOCIALES;
+let CTX=null;               // {modo:"base"|"minuta"|"prueba", b, l}
+let tGuardar=null;
+
+const SUB_TABLERO="Barrios y lotes — Ley 9811";
+/* Una sola barra para todo el producto. Entrar a la minuta no cambia el encabezado: le
+   cambia el renglón de abajo, que dice dónde estás, y los botones de la derecha. El
+   nombre «Escrituras sociales» no se va nunca de la pantalla. */
+function abrirPantalla(donde,acciones,vuelta){
+ document.body.classList.add("enArmador");
+ $("#sub").innerHTML=donde;
+ $("#accTablero").style.display="none";
+ const a=$("#accMinuta");
+ a.style.display="";
+ a.innerHTML=`<button id="aVolver">${(vuelta&&vuelta.texto)||"← Volver al barrio"}</button>`+(acciones||"");
+ $("#aVolver").addEventListener("click",(vuelta&&vuelta.al)||salir);
+ window.scrollTo(0,0);
+}
+function marcaGuardado(txt){ const el=$("#accMinuta .guardado"); if(el) el.textContent=txt||""; }
+const paso=(a,b)=>a+`<span class="sep">›</span>`+b;
+
+/* Se guarda solo mientras se escribe: cerrar en medio de una minuta era lo único que
+   hacía perder trabajo de verdad. */
+function programarGuardado(){
+ if(!CTX||CTX.modo!=="minuta") return;
+ clearTimeout(tGuardar);
+ tGuardar=setTimeout(guardarAhora,900);
+}
+function guardarAhora(){
+ clearTimeout(tGuardar);
+ if(!CTX||CTX.modo!=="minuta") return;
+ const l=CTX.l, b=CTX.b;
+ l.datos=estado();
+ /* Lo que es del barrio y no del lote queda listo para el lote que sigue: localidad,
+    departamento, nomenclatura, año de la base. Se carga una vez por barrio. */
+ b.fijos={};
+ ["#escSec","#escribana","#loc","#depto","#nomen","#baseAnio","#docs","#corrN","#corrF","#barrio","#mza"]
+  .forEach(id=>{ b.fijos[id]=V(id); });
+ if(l.estado==="sin"||l.estado==="designado") l.estado="confeccion";
+ marcaGuardado(SOC.guardar()?"Guardado":"No se pudo guardar");
+}
+function salir(){
+ guardarAhora();
+ document.body.classList.remove("enArmador");
+ $("#sub").textContent=SUB_TABLERO;
+ $("#accTablero").style.display="";
+ $("#accMinuta").style.display="none"; $("#accMinuta").innerHTML="";
+ CTX=null;
+ SOC.pintar();
+ window.scrollTo(0,0);
+}
+
+/* Cada tecla redibuja la minuta; de paso, programa el guardado. */
+const renderCrudo=render;
+render=function(){ renderCrudo(); programarGuardado(); };
+
+/* ---- la minuta base del barrio ---- */
+function abrirBase(b){
+ CTX={modo:"base",b:b,l:null};
+ $("#bBarrio").value=(b.base&&b.base.barrio)||b.nombre||"";
+ $("#bMza").value=(b.base&&b.base.mza)||"";
+ $("#bAutor").value=(b.base&&b.base.autor)||b.minutero||"";
+ $("#baseTexto").value=(b.base&&b.base.texto)||"";
+ $("#sugerencias").innerHTML=""; $("#avisoBase").innerHTML="";
+ pintarListaMarcas();
+ /* La arma quien la tiene designada. Los demás la ven, y eso es lo que hace falta:
+    entender por qué la individual dice lo que dice. */
+ const puedo=SOC.esEscribana()||!b.minutero||b.minutero===SOC.rol();
+ $("#guardarBase").disabled=!puedo;
+ $("#limpiarBase").disabled=!puedo;
+ $("#baseTexto").readOnly=!puedo;
+ abrirPantalla(
+  paso(`<b>${SOC.esc(b.nombre||"Barrio sin nombre")}</b>`,`Minuta base del barrio`)
+   +(b.base&&b.base.fecha?" · guardada el "+SOC.esc(b.base.fecha):" · todavía no está guardada")
+   +(puedo?"":" · la arma "+SOC.esc(b.minutero)+", vos solo la ves"),
+  `<span class="guardado"></span>`);
+ irModo("m1");
+}
+
+/* ---- la minuta individual del lote ---- */
+/* La carpeta se escribe «APELLIDO Nombre», y cuando son varios «APELLIDO Uno y APELLIDO
+   Dos». De ahí salen los adjudicatarios sin tipearlos de nuevo. Pero la mayúscula del
+   apellido es del documento que se produce, no del que se lee: si no viene en mayúscula
+   no se adivina, se deja una nota. */
+function adjsDeCarpeta(txt){
+ const t=String(txt||"").trim();
+ if(!t) return {adjs:[],nota:""};
+ const esMay=w=>w.length>1&&w===w.toLocaleUpperCase("es")&&/[A-ZÁÉÍÓÚÜÑ]/.test(w);
+ const adjs=[]; let dudoso=false;
+ t.split(/\s+y\s+/i).map(s=>s.trim()).filter(Boolean).forEach(p=>{
+  const ap=[],no=[];
+  p.split(/\s+/).forEach(w=>{ (esMay(w)?ap:no).push(w); });
+  const a=nuevoAdj();
+  if(ap.length&&no.length){ a.apellido=ap.join(" "); a.nombre=no.join(" "); }
+  else { a.nombre=p; dudoso=true; }
+  const s=inferSexo(a.nombre);
+  if(s){ a.sexo=s; a.pais=s==="F"?"argentina":"argentino"; a.ec=s==="F"?"soltera":"soltero"; }
+  adjs.push(a);
+ });
+ return {adjs:adjs, nota: dudoso
+  ? "Los adjudicatarios salieron de la carpeta “"+SOC.esc(t)+"”, pero en alguno no se pudo separar el apellido del nombre porque no vino en mayúsculas. <b>Revisá los dos campos antes de seguir.</b>"
+  : "El adjudicatario, el lote, la manzana, el expediente y la resolución salieron del tablero. Revisalos igual: el resto hay que cargarlo."};
+}
+function prellenar(b,l){
+ const num=s=>{ const t=String(s||"").trim(); return /^\d+$/.test(t)?nLetras(+t):t; };
+ $("#lote").value=num(l.lote);
+ if(num(l.manzana)) $("#mza").value=num(l.manzana);
+ if(!V("#barrio")) $("#barrio").value=b.nombre||"";
+ $("#expInd").value=l.expediente||"";
+ $("#resN").value=l.resolucion||"";
+ if(l.firma) $("#fecha").value=l.firma;
+ if(l.notarial) $("#cnf").value=l.notarial;
+ if(l.escribana) $("#escribana").value=/sustitut/i.test(l.escribana)?"Sustituta":"General";
+ const r=adjsDeCarpeta(l.carpeta);
+ if(r.adjs.length) ADJ=r.adjs;
+ return r.nota;
+}
+function abrirMinuta(b,l){
+ /* Antes esto no dejaba entrar sin minuta base. Está al revés: los datos del lote son del
+    lote, la base es del barrio, y son independientes. Se carga igual y el texto se arma
+    solo el día que la base esté. */
+ CTX={modo:"minuta",b:b,l:l};
+ REV={items:{},fecha:"",quien:""};
+ ADJ=[nuevoAdj()];
+ CAMPOS.forEach(id=>{ if($(id)) $(id).value=""; });
+ /* Vaciar un select poniéndole "" lo deja en blanco, porque "" no es ninguna de sus
+    opciones. Los tres que tienen valor por defecto se reponen a mano. */
+ $("#escSec").value="A"; $("#docs").value="agrego";
+ $("#conc").value="auto"; $("#escribana").value="General";
+ let nota="";
+ if(l.datos){ cargarEstado(l.datos); }
+ else{
+  if(b.fijos) Object.keys(b.fijos).forEach(id=>{ if($(id)&&b.fijos[id]) $(id).value=b.fijos[id]; });
+  nota=prellenar(b,l);
+  pintarAdjs();
+ }
+ $("#wCorren").style.display=V("#docs")==="corren"?"grid":"none";
+ activarBase((b.base&&b.base.texto)?b.base:null);
+ $("#avisoPrefill").innerHTML = nota?`<div class="note">${nota}</div>`:"";
+ abrirPantalla(
+  paso(paso(`<b>${SOC.esc(b.nombre||"")}</b>`,
+            `Lote ${SOC.esc(l.lote||"—")} · Mza ${SOC.esc(l.manzana||"—")}`),
+       `<b>${SOC.esc(l.carpeta||"Sin adjudicatario cargado")}</b>`),
+  `<span class="guardado"></span><button id="verBase"${(b.base&&b.base.texto)?"":' class="p"'}>${(b.base&&b.base.texto)?"Ver":"Armar"} la minuta base</button>`);
+ $("#verBase").addEventListener("click",()=>{ guardarAhora(); abrirBase(b); });
+ irModo("m2");
+}
+
+window.ARMADOR={abrirBase:abrirBase,abrirMinuta:abrirMinuta,baseModelo:BASE_MODELO,
+ /* Para el tablero: si una minuta ya está revisada, y cuántos datos le faltan. */
+ resumen:function(l){
+  if(!l||!l.datos) return null;
+  return {rev:(l.datos.rev&&l.datos.rev.fecha)||""};
+ }};
+
+pintarBotonesMarcas(); pintarListaMarcas(); pintarAdjs();
+})();
+</script>
+
+<!-- Volver a SIGEC. Solo aparece cuando la herramienta se abrio sola: adentro del menu no
+     hace falta, porque la barra lateral ya esta. Antes, si abrias una herramienta aparte,
+     no habia ninguna forma de volver. -->
+<script>
+(function(){
+  try{ if(window.self !== window.top) return; }catch(e){ return; }
+  var a=document.createElement('a');
+  a.id='volverSigec';
+  a.href='../../index.html';
+  a.textContent='\u2190 Volver a SIGEC';
+  /* Mismo alto, misma tipografia y mismo radio que los botones del producto, y con los
+     tokens del tema para que no quede un azul fijo encima del modo oscuro. */
+  a.setAttribute('style','position:fixed;left:14px;bottom:14px;z-index:9999;'
+    +'font-family:Montserrat,system-ui,sans-serif;font-size:12.5px;font-weight:600;'
+    +'text-decoration:none;padding:7px 13px;border-radius:7px;'
+    +'border:1.5px solid var(--navy);background:var(--navy);color:#fff;'
+    +'box-shadow:0 2px 10px rgba(0,0,0,.22)');
+  function poner(){ if(document.body) document.body.appendChild(a); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',poner);
+  else poner();
+})();
+</script>
+</body>
+</html>

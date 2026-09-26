@@ -1,0 +1,25 @@
+SIGEC — como abrirlo
+====================
+
+1. Descomprimi esta carpeta entera en algun lado: el Escritorio esta bien.
+2. Entra a la carpeta "sigec" y hace doble clic en "index.html".
+   (En el disco R el mismo archivo se llama SIGEC.html.)
+
+Eso es todo. No hay que instalar nada.
+
+IMPORTANTE
+----------
+El index tiene que quedar al lado de la carpeta "productos". Si copias el
+index solo a otro lado, las herramientas abren en blanco.
+
+QUE ANDA Y QUE NO
+-----------------
+Abriendo asi, desde la carpeta, anda TODO: generar los Word, los PDF del
+Registro, el .zip, imprimir la caratula y guardar las copias .json.
+
+En la copia que se mira por internet NO andan las descargas ni la vista
+previa de los PDF: eso lo bloquea el navegador, no es un problema del
+sistema. Por eso para mostrarlo conviene abrirlo desde la carpeta.
+
+Las dos herramientas que usan la API de Anthropic -DDJJ y Rogador- piden
+la clave la primera vez y la guardan en esa computadora.

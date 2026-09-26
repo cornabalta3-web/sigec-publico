@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Modelos — Escribanía General de Gobierno</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<script>
+/* Modo oscuro de SIGEC. Una sola preferencia, sigec.tema, que vale para la cáscara y para
+   todas las herramientas, estén sueltas o adentro del marco. */
+(function(){
+  var K='sigec.tema';
+  function aplicar(t){document.documentElement.setAttribute('data-theme',t==='oscuro'?'dark':'light');}
+  function leer(){try{var v=localStorage.getItem(K);return (v==='oscuro'||v==='claro')?v:null;}catch(e){return null;}}
+  aplicar(leer()||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'oscuro':'claro'));
+  window.SIGEC_TEMA={
+    actual:function(){return document.documentElement.getAttribute('data-theme')==='dark'?'oscuro':'claro';},
+    poner:function(t){try{localStorage.setItem(K,t);}catch(e){}aplicar(t);this.avisar();},
+    alternar:function(){this.poner(this.actual()==='oscuro'?'claro':'oscuro');},
+    avisar:function(){document.dispatchEvent(new CustomEvent('sigec:tema'));}
+  };
+  window.addEventListener('storage',function(e){if(e.key===K&&e.newValue){aplicar(e.newValue);window.SIGEC_TEMA.avisar();}});
+})();
+</script>
+<style>
+:root{
+ --acc:#55677E;--acc-s:#EFF2F6;
+ --navy:#1B2F5E;--bone:#EEF2F5;--line:#D8E0EA;--muted:#65748C;--tx:#1E2634;--pap:#fff;
+ --ok:#1F6B3C;--ok-bg:#E6F3EB;--warn:#8A6A12;--warn-bg:#FBF3DC;--bad:#A81419;--bad-bg:#FBEAEA;
+}
+html[data-theme="dark"]{
+ --acc:#9BAEC4;--acc-s:#1E252E;
+ --navy:#16233F;--bone:#12181F;--line:#2E3A47;--muted:#94A3B5;--tx:#E4E9EE;--pap:#1B232C;
+ --ok:#7FD9A6;--ok-bg:#14301F;--warn:#E8C37A;--warn-bg:#3A2C10;--bad:#F09A93;--bad-bg:#3A1414;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:Montserrat,system-ui,sans-serif;background:var(--bone);color:var(--tx);
+ font-size:14.5px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.cinta{background:var(--navy);color:#A9BFDA;font-size:10.5px;letter-spacing:.13em;
+ text-transform:uppercase;text-align:center;padding:5px;font-weight:600}
+html.embebido .cinta{display:none}
+.top{background:var(--pap);border-bottom:1px solid var(--line);padding:13px 20px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.top h1{margin:0;font-size:18px;font-weight:700;color:var(--acc)}
+.top .sub{font-size:12.5px;color:var(--muted)}
+.franja{height:3px;background:var(--acc)}
+.wrap{max-width:1000px;margin:0 auto;padding:20px 18px 70px}
+
+.proto{border-left:4px solid var(--warn);background:var(--warn-bg);color:var(--warn);
+ border-radius:0 9px 9px 0;padding:12px 16px;margin:0 0 18px;font-size:13px;line-height:1.55}
+.proto b{display:block;margin-bottom:2px}
+
+.buscador{position:relative;margin-bottom:6px}
+.buscador input{width:100%;font-family:inherit;font-size:17px;padding:15px 17px 15px 46px;
+ border-radius:11px;border:1.5px solid var(--line);background:var(--pap);color:var(--tx)}
+.buscador input:focus{outline:0;border-color:var(--acc)}
+.buscador .lupa{position:absolute;left:17px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:17px}
+.cuenta{font-size:12.5px;color:var(--muted);margin:0 0 16px;padding-left:4px}
+
+.tramite{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
+ font-weight:700;margin:22px 0 8px;padding-bottom:6px;border-bottom:1.5px solid var(--line)}
+.mod{background:var(--pap);border:1.5px solid var(--line);border-radius:10px;padding:14px 16px;
+ margin-bottom:9px;cursor:pointer;display:flex;gap:14px;align-items:flex-start}
+.mod:hover{border-color:var(--acc)}
+.mod .txt{min-width:0;flex:1}
+.mod .n{font-weight:700;font-size:15px;color:var(--tx)}
+.mod .d{font-size:12.5px;color:var(--muted);margin-top:3px;line-height:1.5}
+.mod .arch{font-family:ui-monospace,Menlo,monospace;font-size:11.5px;color:var(--muted);margin-top:5px}
+.mod.viejo{background:transparent;border-style:dashed}
+.mod.viejo .n{color:var(--muted);font-weight:600}
+
+.et{display:inline-block;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;
+ font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap;flex:0 0 auto}
+.et.ok{color:var(--ok);background:var(--ok-bg)}
+.et.no{color:var(--muted);background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
+.vacio{color:var(--muted);font-size:14px;padding:26px 0;text-align:center}
+.vacio b{display:block;color:var(--tx);margin-bottom:4px}
+
+.fondo{position:fixed;inset:0;background:rgba(15,28,58,.45);display:none;z-index:40}
+.fondo.on{display:block}
+.panel{position:fixed;top:0;right:0;bottom:0;width:min(470px,100%);background:var(--pap);
+ border-left:1.5px solid var(--line);z-index:41;display:none;overflow-y:auto;padding:22px}
+.panel.on{display:block}
+.panel .cerrar{position:absolute;top:14px;right:16px;border:0;background:transparent;font-size:20px;color:var(--muted);padding:2px 7px;cursor:pointer}
+.panel h2{margin:0 0 4px;font-size:18px;color:var(--acc);padding-right:30px}
+.panel .quees{font-size:13.5px;color:var(--muted);margin:0 0 18px;line-height:1.55}
+.campo{margin-bottom:14px}
+.campo .k{font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--muted);font-weight:700;display:block;margin-bottom:2px}
+.campo .v{font-size:14px}
+.campo .v.mono{font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.aviso{border-left:3px solid var(--bad);background:var(--bad-bg);color:var(--bad);
+ border-radius:0 8px 8px 0;padding:11px 14px;font-size:13px;margin:16px 0;line-height:1.5}
+button.p{font-family:inherit;font-size:13.5px;font-weight:600;background:var(--acc);color:#fff;
+ border:0;border-radius:8px;padding:11px 16px;cursor:pointer;width:100%}
+.botonLink{display:inline-block;text-decoration:none;text-align:center}
+.nota{font-size:12px;color:var(--muted);margin-top:9px;line-height:1.5}
+</style>
+</head>
+<body>
+
+<div class="cinta">SIGEC · Sistema interno de la Escribanía General de Gobierno · Provincia de Córdoba</div>
+<div class="top">
+  <div>
+    <h1>Modelos</h1>
+    <div class="sub">Cuál es el modelo que va, y cuál es el vigente</div>
+  </div>
+</div>
+<div class="franja"></div>
+
+<div class="wrap">
+  <div class="proto"><b>Prototipo, con modelos de ejemplo.</b>
+    Los veinte modelos de acá están inventados para mostrar cómo funcionaría. El catálogo de
+    verdad se arma leyendo la carpeta del disco R, una sola vez, y de ahí en más solo se
+    mantiene qué modelo es el vigente y quién lo dijo.</div>
+
+  <div class="buscador">
+    <span class="lupa">⌕</span>
+    <input id="q" placeholder="Escribí el trámite: salir del país, constatación, donación…" autocomplete="off">
+  </div>
+  <p class="cuenta" id="cuenta"></p>
+  <div id="lista"></div>
+</div>
+
+<div class="fondo" id="fondo"></div>
+<div class="panel" id="panel"><button class="cerrar" id="cerrar">✕</button><div id="cuerpo"></div></div>
+
+<script>
+"use strict";
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+try{ if(window.self!==window.top) document.documentElement.classList.add('embebido'); }catch(e){}
+
+/* ══════════════════ El catálogo ══════════════════
+   Los veinte son trámites distintos, no versiones del mismo: el problema no es el
+   versionado sino la identificación —cuál de los veinte corresponde al trámite que tengo
+   enfrente—. Por eso esto es una búsqueda, no un historial.
+
+   Cada modelo lleva "busca": las palabras con las que alguien lo buscaría, que casi nunca
+   son las del título. Nadie escribe "venia supletoria": escribe "permiso para salir del
+   país". Ahí está la mitad del valor de la herramienta.
+
+   Modelos inventados: es un prototipo. Regla del proyecto, el ejemplo se inventa. */
+const MODELOS=[
+ {n:"Autorización de viaje al exterior de menores", tr:"Autorizaciones", arch:"AUTORIZACION VIAJE MENOR - DEFINITIVO.docx",
+  q:"Para que un menor salga del país acompañado por un tercero o por uno solo de sus padres.",
+  busca:"salir del pais viaje menor permiso padres exterior migraciones venia",
+  vig:true, fecha:"12/03/2026", quien:"Escribanía General", notas:"Si viaja con uno solo de los progenitores igual hace falta la conformidad del otro."},
+ {n:"Autorización de viaje — versión 2024", tr:"Autorizaciones", arch:"autorizacion viaje (viejo).docx",
+  q:"Redacción anterior. No usar: no contempla el formato que pide Migraciones desde 2026.",
+  busca:"salir del pais viaje menor viejo anterior",
+  vig:false, reemplaza:"Autorización de viaje al exterior de menores", fecha:"08/05/2024", quien:"—"},
+ {n:"Acta de constatación", tr:"Actas", arch:"ACTA DE CONSTATACION - DEFINITIVO.docx",
+  q:"El escribano deja constancia de lo que percibe por sus sentidos, en el lugar y momento.",
+  busca:"constatar constatacion acta hechos estado obra presencia comprobar",
+  vig:true, fecha:"20/01/2026", quien:"Escribanía General",
+  notas:"Va en hoja de actuación notarial. El requirente tiene que tener interés legítimo."},
+ {n:"Acta de notificación", tr:"Actas", arch:"ACTA DE NOTIFICACION.docx",
+  q:"Para notificar fehacientemente a una persona por intermedio del escribano.",
+  busca:"notificar intimar carta documento fehaciente aviso",
+  vig:true, fecha:"20/01/2026", quien:"Escribanía General"},
+ {n:"Acta de apertura de sobre", tr:"Actas", arch:"ACTA APERTURA DE SOBRE.docx",
+  q:"Apertura de sobres en licitaciones y concursos, con constancia de lo que contenían.",
+  busca:"sobre licitacion apertura concurso oferta",
+  vig:true, fecha:"03/11/2025", quien:"Escribanía General"},
+ {n:"Poder general de administración y disposición", tr:"Poderes", arch:"PODER GENERAL - DEFINITIVO.docx",
+  q:"Amplio, para administrar y disponer. Se usa cuando el apoderado va a actuar en varios actos.",
+  busca:"poder general amplio administrar disponer apoderado representacion",
+  vig:true, fecha:"15/02/2026", quien:"Escribanía General"},
+ {n:"Poder especial", tr:"Poderes", arch:"PODER ESPECIAL - DEFINITIVO.docx",
+  q:"Para un acto puntual y determinado. Hay que describir el acto con precisión.",
+  busca:"poder especial puntual un acto determinado",
+  vig:true, fecha:"15/02/2026", quien:"Escribanía General"},
+ {n:"Revocación de poder", tr:"Poderes", arch:"REVOCACION DE PODER.docx",
+  q:"Deja sin efecto un poder anterior. Hay que notificar al apoderado.",
+  busca:"revocar dejar sin efecto poder anular",
+  vig:true, fecha:"15/02/2026", quien:"Escribanía General"},
+ {n:"Escritura de donación con reserva de usufructo", tr:"Transmisiones", arch:"DONACION CON USUFRUCTO - DEFINITIVO.docx",
+  q:"Donación de inmueble reservándose el donante el usufructo vitalicio.",
+  busca:"donacion donar usufructo reserva vitalicio padres hijos",
+  vig:true, fecha:"28/02/2026", quien:"Escribanía General",
+  notas:"Producto propio en preparación: cuando esté, este modelo sale del catálogo."},
+ {n:"Escritura de donación simple", tr:"Transmisiones", arch:"DONACION SIMPLE.docx",
+  q:"Donación sin reserva. La más corta de las dos.",
+  busca:"donacion donar simple sin usufructo",
+  vig:true, fecha:"28/02/2026", quien:"Escribanía General"},
+ {n:"Cesión de derechos hereditarios", tr:"Transmisiones", arch:"CESION DERECHOS HEREDITARIOS.docx",
+  q:"Un heredero cede su parte en la herencia, antes de la partición.",
+  busca:"cesion ceder herencia heredero derechos sucesion",
+  vig:true, fecha:"09/09/2025", quien:"Escribanía General"},
+ {n:"Compraventa de inmueble", tr:"Transmisiones", arch:"COMPRAVENTA - DEFINITIVO.docx",
+  q:"El modelo base de compraventa, para los casos que no entran en escrituras sociales.",
+  busca:"compraventa comprar vender venta inmueble",
+  vig:true, fecha:"04/04/2026", quien:"Escribanía General"},
+ {n:"Constitución de hipoteca", tr:"Garantías", arch:"HIPOTECA - DEFINITIVO.docx",
+  q:"Grava el inmueble en garantía de un crédito.",
+  busca:"hipoteca gravamen garantia credito prestamo",
+  vig:true, fecha:"17/06/2025", quien:"Escribanía General"},
+ {n:"Cancelación de hipoteca", tr:"Garantías", arch:"CANCELACION HIPOTECA.docx",
+  q:"Levanta la hipoteca una vez pagado el crédito. Va con la constancia de pago.",
+  busca:"cancelar cancelacion levantar hipoteca liberar",
+  vig:true, fecha:"17/06/2025", quien:"Escribanía General"},
+ {n:"Reglamento de propiedad horizontal", tr:"Propiedad horizontal", arch:"REGLAMENTO PH - DEFINITIVO.docx",
+  q:"Divide el edificio en unidades funcionales y fija las reglas del consorcio.",
+  busca:"propiedad horizontal ph reglamento consorcio unidades edificio departamentos",
+  vig:true, fecha:"22/07/2025", quien:"Escribanía General",
+  notas:"Va con el plano de PH visado. Es el modelo más largo del catálogo."},
+ {n:"Reglamento de PH — con expensas por metro", tr:"Propiedad horizontal", arch:"REGLAMENTO PH expensas m2.docx",
+  q:"Variante donde las expensas se prorratean por superficie en vez de por unidad.",
+  busca:"propiedad horizontal ph expensas metro cuadrado prorrateo",
+  vig:true, fecha:"22/07/2025", quien:"Escribanía General"},
+ {n:"Acta de asamblea de consorcio", tr:"Propiedad horizontal", arch:"ACTA ASAMBLEA CONSORCIO.docx",
+  q:"Deja constancia de lo resuelto en una asamblea de propietarios.",
+  busca:"asamblea consorcio propietarios acta reunion",
+  vig:true, fecha:"22/07/2025", quien:"Escribanía General"},
+ {n:"Protocolización de documento", tr:"Protocolizaciones", arch:"PROTOCOLIZACION - DEFINITIVO.docx",
+  q:"Incorpora un documento al protocolo para darle fecha cierta y conservarlo.",
+  busca:"protocolizar protocolizacion incorporar fecha cierta documento privado",
+  vig:true, fecha:"11/12/2025", quien:"Escribanía General"},
+ {n:"Carátula de carpeta — escrituras sociales", tr:"Escrituras sociales", arch:"Caratula_Expediente_MODELO.docx",
+  q:"La que se imprime y se pega en el expediente físico, con los tres informes.",
+  busca:"caratula carpeta expediente individual informes catastral notarial",
+  vig:true, fecha:"01/08/2026", quien:"Escribanía General",
+  notas:"La imprime SIGEC desde Escrituras sociales, con los datos ya cargados."},
+ {n:"Convenio de avenimiento", tr:"Expropiaciones", arch:"CONVENIO AVENIMIENTO - DEFINITIVO.docx",
+  q:"El acuerdo con el titular antes de la escritura de expropiación.",
+  busca:"avenimiento convenio expropiacion acuerdo indemnizacion",
+  vig:true, fecha:"30/05/2026", quien:"Escribanía General"}
+];
+
+const norm=s=>String(s||"").toLowerCase()
+  .normalize("NFD").replace(/[̀-ͯ]/g,"");
+
+function buscar(q){
+  const t=norm(q).split(/\s+/).filter(Boolean);
+  if(!t.length) return MODELOS;
+  return MODELOS.filter(m=>{
+    const heno=norm(m.n+" "+m.tr+" "+m.q+" "+m.busca+" "+m.arch);
+    return t.every(p=>heno.includes(p));
+  });
+}
+
+function pintar(){
+  const q=$("#q").value;
+  const r=buscar(q);
+  const vig=r.filter(m=>m.vig).length;
+  $("#cuenta").textContent = q.trim()
+    ? `${r.length} modelo${r.length===1?"":"s"} · ${vig} vigente${vig===1?"":"s"}`
+    : `${MODELOS.length} modelos en el catálogo`;
+
+  if(!r.length){
+    $("#lista").innerHTML=`<div class="vacio"><b>Ningún modelo con esas palabras.</b>
+      Probá con el nombre del trámite como lo diría el ciudadano: «salir del país», «constatar».</div>`;
+    return;
+  }
+  const grupos=[...new Set(r.map(m=>m.tr))];
+  $("#lista").innerHTML=grupos.map(g=>
+    `<div class="tramite">${esc(g)}</div>`+
+    r.filter(m=>m.tr===g).map((m,i)=>`
+      <div class="mod ${m.vig?"":"viejo"}" data-i="${MODELOS.indexOf(m)}">
+        <div class="txt">
+          <div class="n">${esc(m.n)}</div>
+          <div class="d">${esc(m.q)}</div>
+          <div class="arch">${esc(m.arch)}</div>
+        </div>
+        <span class="et ${m.vig?"ok":"no"}">${m.vig?"Vigente":"No usar"}</span>
+      </div>`).join("")
+  ).join("");
+}
+
+function abrir(i){
+  const m=MODELOS[i];
+  $("#cuerpo").innerHTML=`
+    <h2>${esc(m.n)}</h2>
+    <p class="quees">${esc(m.q)}</p>
+    ${m.vig?"":`<div class="aviso"><b>Este modelo no se usa más.</b><br>
+      El que va es <b>${esc(m.reemplaza||"otro del mismo trámite")}</b>.</div>`}
+    <div class="campo"><span class="k">Trámite</span><span class="v">${esc(m.tr)}</span></div>
+    <div class="campo"><span class="k">Archivo</span><span class="v mono">${esc(m.arch)}</span></div>
+    <div class="campo"><span class="k">Vigente desde</span><span class="v">${esc(m.fecha)}</span></div>
+    <div class="campo"><span class="k">Quién lo confirmó</span><span class="v">${esc(m.quien)}</span></div>
+    ${m.notas?`<div class="campo"><span class="k">Para tener en cuenta</span><span class="v">${esc(m.notas)}</span></div>`:""}
+    ${m.ruta
+      ? `<a class="p botonLink" href="${esc(m.ruta)}">Abrir en Word</a>
+         <p class="nota"><b>Se abre una copia, no el maestro.</b> El modelo del disco R queda en
+         solo lectura: así nadie lo pisa sin querer al guardar por costumbre, que es como el
+         archivo de alguien termina pareciendo el modelo bueno por tener la fecha más nueva.</p>`
+      : `<p class="nota"><b>Este catálogo es una muestra: los veinte modelos son inventados y
+         ninguno está enlazado a un archivo todavía.</b> Cuando cada uno apunte a su .docx del
+         disco R, acá va a haber un botón que lo abre en Word — una copia, nunca el maestro,
+         que queda en solo lectura para que nadie lo pise al guardar por costumbre.</p>`}`;
+  $("#panel").classList.add("on"); $("#fondo").classList.add("on");
+}
+const cerrar=()=>{ $("#panel").classList.remove("on"); $("#fondo").classList.remove("on"); };
+$("#cerrar").onclick=cerrar; $("#fondo").onclick=cerrar;
+document.addEventListener("keydown",e=>{ if(e.key==="Escape") cerrar(); });
+document.addEventListener("click",e=>{
+  const m=e.target.closest("[data-i]");
+  if(m) abrir(+m.dataset.i);
+});
+$("#q").addEventListener("input",pintar);
+pintar();
+</script>
+
+<!-- Volver a SIGEC. Solo aparece cuando la herramienta se abrio sola: adentro del menu no
+     hace falta, porque la barra lateral ya esta. Antes, si abrias una herramienta aparte,
+     no habia ninguna forma de volver. -->
+<script>
+(function(){
+  try{ if(window.self !== window.top) return; }catch(e){ return; }
+  var a=document.createElement('a');
+  a.href='../../index.html';
+  a.textContent='\u2190 Volver a SIGEC';
+  a.setAttribute('style','position:fixed;left:14px;bottom:14px;z-index:9999;'
+    +'font-family:Montserrat,system-ui,sans-serif;font-size:12.5px;font-weight:600;'
+    +'text-decoration:none;padding:8px 14px;border-radius:999px;'
+    +'background:#1B2F5E;color:#fff;box-shadow:0 2px 10px rgba(27,47,94,.28)');
+  function poner(){ if(document.body) document.body.appendChild(a); }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',poner);
+  else poner();
+})();
+</script>
+</body>
+</html>
