@@ -9,6 +9,26 @@ concordancia.
   oscuro. **El verde no es decorativo:** es el de la hoja de actuación notarial. Por el
   color el usuario se da cuenta de dónde está. No cambiarlo para "unificar".
 
+## La banda del logo estaba rota, y hacía 929 px de vacío
+
+Dos defectos encadenados, los dos invisibles como error y visibles como pantalla fea:
+
+1. **El logo apuntaba un nivel más arriba de donde está.** `src="../egg-logos.png"`, cuando
+   desde `sigec/productos/primer-testimonio/` hay que subir dos. Quedó así cuando las
+   herramientas bajaron de `sigec/herramientas/` a `sigec/productos/<producto>/`. Una imagen
+   que no carga no tira ningún error: simplemente no está.
+2. **Era el único archivo del proyecto sin `<!DOCTYPE html>`**, así que todo navegador lo
+   dibujaba en **modo quirks** (`document.compatMode === "BackCompat"`). Y en quirks la
+   imagen rota, con `width:100%;height:auto`, no se achica: se estira. La banda medía
+   **929 px**, o sea una pantalla entera en blanco arriba de todo, y la página completa
+   **2.956 px** en vez de 2.129.
+
+Arreglados los dos. Medido en Chromium, claro y oscuro, suelto y adentro del menú:
+`CSS1Compat`, el logo carga en 420×55, la banda mide 84 px y la página 2.129. Sin errores.
+
+Lo encontró el aviso de una publicación, no una prueba: **ninguna de las pruebas miraba si
+las imágenes cargan.** Conviene acordarse: una imagen rota no levanta la mano.
+
 ## Cómo guarda
 
 - `localStorage` — `sigec_escribanas`: los nombres de las escribanas, compartidos con el
