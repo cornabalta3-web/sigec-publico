@@ -106,6 +106,11 @@ html[data-theme="dark"] button.go:disabled{background:#2E4A43;color:#8AA69E}
   .loaded .fname{font-weight:600;font-size:14px;word-break:break-word}
   .loaded .meta{color:var(--muted);font-size:13px;margin-top:3px}
   .flag{display:none;margin-top:12px;background:var(--warn-bg);border:1px solid #E8D5A0;color:var(--warn);padding:10px 12px;border-radius:7px;font-size:13px}
+  /* el número que dice el Word, en grande: es lo que hay que comparar con la matriz */
+  .numero{display:none;margin-top:12px;padding:12px 14px;border-radius:7px;border:1.5px solid var(--line);background:var(--pap,#fff);font-size:13px;color:var(--muted)}
+  .numero b{display:block;font-size:22px;line-height:1.2;color:var(--tx,#1E2634);margin:2px 0 3px;font-variant-numeric:tabular-nums}
+  .numero.mal{border-color:#B3261E;background:#FBEAEA;color:#B3261E}
+  .numero.mal b{color:#B3261E}
   .detect{display:none;margin-top:14px;padding:12px 14px;background:var(--agua-pale);border:1px solid var(--line);border-radius:7px;font-size:13px;color:var(--verde-txt);line-height:1.55}
   .detect b{font-weight:600}
 
@@ -207,6 +212,7 @@ try{ if(window.self!==window.top) document.documentElement.classList.add('embebi
       <div class="fname" id="fname"></div>
       <div class="meta" id="fmeta"></div>
     </div>
+    <div class="numero" id="numero"></div>
     <div class="flag" id="flag"></div>
     <div class="detect" id="detect"></div>
 
@@ -217,9 +223,9 @@ try{ if(window.self!==window.top) document.documentElement.classList.add('embebi
         <p class="fieldnote">Obligatorio.</p>
       </div>
       <div class="field">
-        <label for="escNum">N° de escritura</label>
-        <input type="text" id="escNum" placeholder="12">
-        <p class="fieldnote">Se lee de la escritura. Va en el nombre del archivo.</p>
+        <label for="escNum">N° de escritura, como está en la matriz <span style="color:#B3261E">*</span></label>
+        <input type="text" id="escNum" placeholder="143" inputmode="numeric" autocomplete="off">
+        <p class="fieldnote">Escribilo vos, mirando la matriz. Es el control: si no coincide con lo que dice el Word, no se genera.</p>
       </div>
     </div>
   </div>
@@ -453,9 +459,53 @@ seiscientos:600,setecientos:700,ochocientos:800,novecientos:900,mil:1000};
 function palabrasANumero(txt){
   const pal=sinTildes(String(txt)).toLowerCase().split(/\s+/).filter(w=>w&&w!=='y');
   if(!pal.length) return null;
-  let total=0;
-  for(const w of pal){ if(!(w in NUMPAL)) return null; total+=NUMPAL[w]; }
-  return total||null;
+  /* «mil» multiplica lo que tiene adelante: «dos mil tres» es 2003, no 1005 */
+  let total=0, parcial=0;
+  for(const w of pal){
+    if(w==='mil'){ total+=(parcial||1)*1000; parcial=0; continue; }
+    if(!(w in NUMPAL)) return null;
+    parcial+=NUMPAL[w];
+  }
+  return (total+parcial)||null;
+}
+/* ================= el número de escritura: se lee, se muestra y se controla ================= */
+/* La herramienta nunca escribe el número en el cuerpo: copia el Word tal cual. Por eso el
+   peligro no es que lo cambie, es que el Word cargado no sea el protocolo definitivo —un
+   borrador con el número en blanco, o con el número viejo—. Pasó una vez y terminó en una
+   rectificadora. Entonces el número se lee del Word, se muestra en grande, y la persona lo
+   escribe mirando la matriz: si no coinciden, no se genera. */
+let NUM={estado:'sin',raw:'',n:null};
+function leerNumero(plano,xml){
+  if(/<w:(ins|del)\b/.test(xml)) return {estado:'cambios',raw:'',n:null};
+  const m=plano.match(/ESCRITURA\s+N[ÚU]MERO\s*:?\s*(.*?)\s*\.?\s*-?\s*SECCI[ÓO]N/i);
+  if(!m) return {estado:'noleido',raw:'',n:null};
+  const raw=m[1].replace(/[“”"]/g,'').trim();
+  if(!raw||/^[\s*_…x\-]+$/i.test(raw)) return {estado:'blanco',raw,n:null};
+  if(/^\d{1,5}$/.test(raw)) return {estado:'ok',raw,n:parseInt(raw,10)};
+  const n=palabrasANumero(raw);
+  return n!==null?{estado:'ok',raw,n}:{estado:'noleido',raw,n:null};
+}
+function pintarNumero(){
+  const e=document.getElementById('numero'); if(!e) return;
+  e.style.display='block';
+  const mal=NUM.estado!=='ok';
+  e.className='numero'+(mal?' mal':'');
+  if(NUM.estado==='ok') e.innerHTML='El Word dice <b>ESCRITURA NÚMERO '+esc(NUM.raw)+'</b>Es la escritura <b style="display:inline;font-size:18px">'+NUM.n+'</b>. Compará con la matriz y escribí el número abajo.';
+  else if(NUM.estado==='blanco') e.innerHTML='El Word tiene el número de escritura <b>en blanco</b>Dice «ESCRITURA NÚMERO '+esc(NUM.raw||'')+'»: es un borrador, no el protocolo definitivo. Con este archivo el testimonio saldría sin número, o con uno que no es. No se genera.';
+  else if(NUM.estado==='cambios') e.innerHTML='El Word tiene <b>control de cambios sin aceptar</b>No se puede saber qué número quedó. Aceptá los cambios en Word, guardá, y volvé a cargarlo.';
+  else e.innerHTML='<b>No pude leer el número de escritura</b>No encontré «ESCRITURA NÚMERO … SECCIÓN» al principio del Word. Revisá que sea el protocolo definitivo. No se genera hasta que se lea.';
+}
+function controlNumero(){
+  /* devuelve el mensaje de error, o '' si el número está bien */
+  if(NUM.estado==='blanco') return 'El Word tiene el número de escritura en blanco: es un borrador. Cargá el protocolo definitivo.';
+  if(NUM.estado==='cambios') return 'El Word tiene control de cambios sin aceptar. Aceptalos en Word y volvé a cargarlo.';
+  if(NUM.estado!=='ok') return 'No pude leer el número de escritura del Word. Revisá que sea el protocolo definitivo.';
+  const t=document.getElementById('escNum').value.trim();
+  if(!t) return 'Escribí el N° de escritura tal como está en la matriz: es el control.';
+  const n=/^\d+$/.test(t)?parseInt(t,10):palabrasANumero(t);
+  if(n===null) return 'No entiendo el número que escribiste: «'+t+'». Ponelo en cifras.';
+  if(n!==NUM.n) return 'El número que escribiste ('+n+') NO es el que dice el Word ('+NUM.n+', «'+NUM.raw+'»). Si la matriz dice '+n+', el Word está mal: corregilo en Word y volvé a cargarlo. No se genera.';
+  return '';
 }
 const CONECTOR=/^(de|del|la|las|los|von|van|di|da|dos|le)$/i;
 function apellidoPrimero(n){
@@ -647,7 +697,7 @@ function actualizar(){
   }else{
     pv.innerHTML=
       '<span class="ins">'+pintar(segmentosPrefijo())+'</span>'+
-      '<span class="body">ESCRITURA NÚMERO … <em>[cuerpo de la escritura, sin cambios]</em> … </span>'+
+      '<span class="body">ESCRITURA NÚMERO '+(NUM.estado==='ok'?'<b>'+esc(NUM.raw)+'</b>':'…')+' <em>[cuerpo de la escritura, sin cambios]</em> … </span>'+
       '<span class="body">'+medio+'</span>'+
       '<span class="ins editable" contenteditable="true" spellcheck="false">'+pintar(segmentosCierre())+'</span>';
   }
@@ -674,6 +724,7 @@ function actualizar(){
   document.getElementById(id).addEventListener('change',actualizar);
 });
 document.getElementById('folio').addEventListener('input',e=>{ e.target.style.borderColor=''; });
+document.getElementById('escNum').addEventListener('input',e=>{ e.target.style.borderColor=''; });
 document.getElementById('cantFojas').addEventListener('input',()=>{rebuildFojas(0);actualizar();});
 document.getElementById('foja1').addEventListener('input',()=>{rebuildFojas(0);actualizar();});
 
@@ -695,7 +746,7 @@ const RE_CAPS=/^[A-ZÁÉÍÓÚÑ]{2,}$/;
 /* "de", "del", "de la": partículas de apellido, no nombres propios. */
 const RE_NEXO=/^(de|del|la|las|los|y|e)$/i;
 /* Devuelve 'caps' si el apellido viene en mayúsculas, 'titulo' si el nombre entero viene
-   en capitalización normal —"Mariana Beatriz Ayala"—, o null si no parece un nombre.
+   en capitalización normal —"Fabiana Rosario Farias"—, o null si no parece un nombre.
    Antes exigía las mayúsculas y esas escrituras devolvían cero comparecientes, en
    silencio. La mayúscula del apellido es del documento que se produce, no del que se lee. */
 function tipoNombre(s){
@@ -760,14 +811,13 @@ async function cargar(file){
 
     document.getElementById('loaded').style.display='block';
     document.getElementById('fname').textContent=file.name;
-    const m=plano.match(/ESCRITURA\s+NÚMERO\s+([A-ZÁÉÍÓÚÑ\s]+?)\.?-?\s*SECCIÓN\s*["“]?\s*([A-Z])/i);
-    document.getElementById('fmeta').textContent = m
-      ? 'Escritura número '+m[1].trim().toLowerCase()+' · Sección '+m[2].toUpperCase()
-      : plano.trim().length.toLocaleString('es-AR')+' caracteres';
-    if(m){
-      const num=palabrasANumero(m[1]);
-      document.getElementById('escNum').value = num!==null ? String(num) : '';
-    }
+    const m=plano.match(/SECCI[ÓO]N\s*["“]?\s*([A-Z])\b/i);
+    document.getElementById('fmeta').textContent = plano.trim().length.toLocaleString('es-AR')+' caracteres'+(m?' · Sección '+m[1].toUpperCase():'');
+    /* el número NO se precarga: lo escribe la persona mirando la matriz, y se compara.
+       Y se vacía en cada carga, para que nunca quede el de la escritura anterior. */
+    NUM=leerNumero(plano,docXml);
+    document.getElementById('escNum').value='';
+    pintarNumero();
 
     const flag=document.getElementById('flag');
     if(/PRIMER\s+TESTIMONIO/i.test(plano)){
@@ -877,6 +927,12 @@ document.getElementById('go').addEventListener('click',async()=>{
     fol.style.borderColor='#B3261E'; fol.focus(); fol.scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
+  const errNum=controlNumero();
+  if(errNum){
+    st.className='status err'; st.textContent=errNum;
+    const en=document.getElementById('escNum'); en.style.borderColor='#B3261E'; en.focus(); en.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
   if(!benef.valores().length){st.className='status err';st.textContent='Falta al menos un beneficiario.';return;}
   if(!fojasVal.filter(Boolean).length){st.className='status err';st.textContent='Falta el número de la primera foja.';return;}
   try{
@@ -970,4 +1026,6 @@ actualizar();
   else poner();
 })();
 </script>
+<!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 05/10/2026</p>
 </html>

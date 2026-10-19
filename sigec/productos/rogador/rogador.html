@@ -394,6 +394,52 @@ const SRC_LOTE = "LOTE\\s+([A-ZÁÉÍÓÚÑ\\d\\s]{2,40}?)\\s*(?:,\\s*|\\s+(?:DE
 const SRC_SUP = "SUPERFICIE(?:\\s+TOTAL)?(?:\\s+DE\\s+TERRENO)?\\s+de\\s+([A-ZÁÉÍÓÚÑ\\s]{6,}?)\\s+(?:DEC[ÍI]METROS|CENT[ÍI]METROS|METROS)\\s+CUADRADOS"
   + "(?:\\s*,?\\s*(?:CON\\s+|con\\s+)?([A-ZÁÉÍÓÚÑ\\s]{4,60}?)\\s+(?:DEC[ÍI]METROS|CENT[ÍI]METROS)\\s+CUADRADOS)?";
 
+/* El encabezado se escribe de muchas maneras: "NÚMERO TRESCIENTOS UNO (301)", "NÚMERO:
+   TRESCIENTOS UNO", "N° 301", con Sección o sin ella. Antes solo se leía "NÚMERO …
+   SECCIÓN": cualquier otra forma dejaba sin número el encabezado de la rogación y el
+   renglón de Documentos. Se mira solo la primera aparición, que es el encabezado: más
+   abajo "Escritura Número" suele ser la del antecedente, y tomar ese número sería peor
+   que no tomar ninguno. */
+function numeroEscritura(T){
+  const m = T.match(/ESCRITURA\s+N(?:[ÚU]MERO|RO\.?|[°º]|\.)\s*[:.\-]?\s*/i);
+  if(!m) return { numero:"", seccion:"" };
+  const resto = T.slice(m.index + m[0].length, m.index + m[0].length + 160);
+  let numero = "";
+  const dig = resto.match(/^(\d[\d.]*)/);
+  if(dig) numero = dig[1].replace(/\./g,"");
+  if(!numero){
+    /* Solo las palabras de número del principio: w2n saltea las que no conoce, y si se le
+       pasa "TRESCIENTOS UNO En la Ciudad" sumaría cualquier "una" que encuentre después. */
+    const w = norm(resto).match(new RegExp("^((?:(?:"+PAL_NUM+")(?![a-z])\\s*)+)"));
+    const n = w ? w2n(w[1]) : null;
+    if(n) numero = String(n);
+  }
+  if(!numero){
+    const par = resto.match(/^[^()]{0,80}\((\d[\d.]*)\)/);
+    if(par) numero = par[1].replace(/\./g,"");
+  }
+  const s = resto.match(/^[^]{0,120}?SECCI[ÓO]N\s*[:"“”'«´\-–]*\s*([A-Z])(?![A-Za-zÁÉÍÓÚÑáéíóúñ])/i);
+  return { numero, seccion: s ? s[1].toUpperCase() : "" };
+}
+
+/* La fecha del encabezado. La forma de siempre es "a los doce días del mes de septiembre
+   del año dos mil veintiséis, ante mí"; si no aparece así, se prueba una más suelta: sin
+   "los", sin "del mes", "de dos mil…" en vez de "del año", o con otra cosa antes de "ante
+   mí". La suelta solo vale si da un día y un año posibles. */
+function fechaEscritura(T){
+  let m = T.match(/a\s+los\s+([\wáéíóúñ\s]+?)\s+d[íi]as?\s+del\s+mes\s+de\s+(\w+)\s+del\s+a[ñn]o\s+([\wáéíóúñ\s]+?)\s*,\s*ante\s+m[íi]/i);
+  if(m){ const f = fechaDe(m[1],m[2],m[3]); if(f) return f; }
+  /* El día va de una a tres palabras ("doce", "veintiún", "treinta y uno") y el año empieza
+     por "dos mil" o "mil novecientos": así no se lleva por delante el texto de antes. */
+  m = T.match(/(?:^|[\s,])al?\s+(?:los\s+)?([a-záéíóúñ]+(?:\s+y\s+[a-záéíóúñ]+)?)\s+d[íi]as?\s+(?:del\s+mes\s+)?de\s+([a-záéíóúñ]+)\s+(?:del\s+a[ñn]o\s+|de\s+)?((?:dos\s+mil|mil\s+novecientos)(?:\s+[a-záéíóúñ]+){0,3}?)(?=\s*[,.;(]|\s+ante\s|\s+comparec)/i);
+  if(!m) return "";
+  const dia = norm(m[1]).trim() === "primer" ? "primero" : m[1];
+  const f = fechaDe(dia, m[2], m[3]);
+  if(!f) return "";
+  const [d, , a] = f.split("/").map(Number);
+  return (d >= 1 && d <= 31 && a >= 1900 && a <= 2100) ? f : "";
+}
+
 function parse(T, R=""){
   const d = { notas: [], escribana:"", escritura_numero:"", seccion:"", fecha:"", negocio:"",
               titular_registral:{razon_social:"",cuit:"",domicilio:""}, adquirentes:[], inmuebles:[],
@@ -404,12 +450,11 @@ function parse(T, R=""){
   if(m) d.escribana = /sustituta/i.test(m[1]) ? "sustituta" : "titular";
   else nota("No se pudo identificar la escribana. Elegila a mano.");
 
-  m = T.match(/ESCRITURA\s+N[ÚU]MERO\s+([A-ZÁÉÍÓÚÑ\s]+?)[.\-,\s]*SECCI[ÓO]N\s*[^A-Z]{0,3}([A-Z])/i);
-  if(m){ const n=w2n(m[1]); if(n) d.escritura_numero=String(n); d.seccion=m[2].toUpperCase(); }
-  else nota("No se encontró el número de escritura.");
+  const enc = numeroEscritura(T);
+  d.escritura_numero = enc.numero; d.seccion = enc.seccion;
+  if(!d.escritura_numero) nota("No se encontró el número de escritura.");
 
-  m = T.match(/a\s+los\s+([\wáéíóúñ\s]+?)\s+d[íi]as?\s+del\s+mes\s+de\s+(\w+)\s+del\s+a[ñn]o\s+([\wáéíóúñ\s]+?)\s*,\s*ante\s+m[íi]/i);
-  if(m) d.fecha = fechaDe(m[1],m[2],m[3]);
+  d.fecha = fechaEscritura(T);
   if(!d.fecha) nota("No se pudo leer la fecha de la escritura.");
 
   const actos = [];
@@ -454,7 +499,10 @@ function parse(T, R=""){
 
   const enFavor = a => { const w = norm(a).replace(/[^a-z]/g,""); return w.length>=3 && new RegExp("\\b"+w+"\\b").test(favorN); };
   let adq = fichas.filter(x => x.apellidos.some(enFavor));
-  if(!adq.length && fichas.length){ adq = fichas.slice(1); nota("No se pudo confirmar quiénes son los adquirentes. Controlá el punto 4."); }
+  /* Si no se confirma quiénes aceptan, no se adivina: antes se tomaban las personas del
+     comparendo menos la primera, y en una escritura de la Ley 9811 eso son los que firman por
+     la comuna, que terminaban como adquirentes en un documento que va al Registro. Ahora
+     quedan en blanco y se cargan a mano (Baltasar, 15/10/2026). */
   /* El formulario del Registro tiene lugar para dos. Antes el tercero desaparecía sin
      que nadie se enterara, en un documento que va al Registro. */
   if(adq.length > 2) nota("La escritura tiene "+adq.length+" adquirentes y en la rogación entran dos: quedaron "+adq.slice(0,2).map(x=>x.nombre).join(" y ")+". Los demás van al anexo, a mano.");
@@ -468,7 +516,9 @@ function parse(T, R=""){
     delete a.apellidos; delete a.apellidoDudoso; delete a.nombreOriginal;
   });
   d.adquirentes = adq;
-  if(!adq.length) nota("No se detectaron adquirentes. Cargalos a mano.");
+  if(!adq.length) nota(fichas.length
+    ? "No se pudo confirmar quiénes son los adquirentes: quedan en blanco para que los cargues a mano en el punto 4."
+    : "No se detectaron adquirentes. Cargalos a mano en el punto 4.");
 
   const SRC_MAT  = "MATR[ÍI]CULA\\s+(?:N[°º]|N[ÚU]MERO)\\s*[°º]?\\s*([\\d.]+)";
   const nuevo = () => ({matricula:"",lote:"",manzana:"",superficie:"",cert_catastral:"",cuenta:"",
@@ -805,7 +855,7 @@ function fusionar(ia){
     .forEach(k=>{ if(!DATA[k] && ia[k]) DATA[k]=ia[k]; });
   cp(DATA.titular_registral, ia.titular_registral||{});
   if(!DATA.adquirentes.length) DATA.adquirentes = (ia.adquirentes||[]).slice(0,2);
-  else (ia.adquirentes||[]).forEach((a,i)=>{ if(DATA.adquirentes[i]) cp(DATA.adquirentes[i],a); });
+  else (ia.adquirentes||[]).slice(0,2).forEach((a,i)=>{ if(DATA.adquirentes[i]) cp(DATA.adquirentes[i],a); else DATA.adquirentes.push(Object.assign(adqVacio(),a)); });
   if(!DATA.inmuebles.length) DATA.inmuebles = (ia.inmuebles||[]).slice(0,3);
   else (ia.inmuebles||[]).forEach((m,i)=>{ if(DATA.inmuebles[i]) cp(DATA.inmuebles[i],m); });
   /* Antes esto era un reemplazo: DATA.notas = (ia.notas||[]).filter(Boolean).
@@ -821,11 +871,12 @@ function fusionar(ia){
 }
 
 /* ═════════ revisión ═════════ */
+const adqVacio = () => ({nombre:"",dni:"",cuil:"",fecha_nac:"",nacionalidad:"",estado_civil:"",domicilio:"",conyuge:""});
 function fld(p,label,val,req=true){
   const miss = req && !val ? "miss" : "";
   return `<div class="f"><label>${label}</label><input type="text" class="${miss}" data-p="${p}" data-req="${req}" value="${(val??"").toString().replace(/"/g,"&quot;")}"></div>`;
 }
-function render(){
+function render(quieto){
   const d = DATA;
   let h = d.notas.length
     ? `<div class="flag"><b>Revisar:</b><ul>${d.notas.map(n=>`<li>${n}</li>`).join("")}</ul></div>`
@@ -851,16 +902,24 @@ function render(){
     <div class="row">${fld("titular_registral.cuit","CUIT",t.cuit)}${fld("titular_registral.domicilio","Domicilio / sede social",t.domicilio)}</div>
     </div></fieldset>`;
 
-  if(!d.adquirentes.length) d.adquirentes.push({nombre:"",dni:"",cuil:"",fecha_nac:"",nacionalidad:"",estado_civil:"",domicilio:"",conyuge:""});
+  if(!d.adquirentes.length) d.adquirentes.push(adqVacio());
   h += `<fieldset><legend>4 · Adquirentes</legend><div class="in">`;
+  const nAdq = d.adquirentes.length;
   d.adquirentes.forEach((a,i)=>{
     h += `<div class="sub2">
       ${fld(`adquirentes.${i}.nombre`,`Apellido y nombres — ${i+1}`,a.nombre)}
       <div class="row">${fld(`adquirentes.${i}.dni`,"DNI",a.dni)}${fld(`adquirentes.${i}.cuil`,"CUIL / CUIT",a.cuil)}${fld(`adquirentes.${i}.fecha_nac`,"Fecha nac.",a.fecha_nac)}</div>
       <div class="row">${fld(`adquirentes.${i}.nacionalidad`,"Nacionalidad",a.nacionalidad)}${fld(`adquirentes.${i}.estado_civil`,"Estado de familia",a.estado_civil)}${fld(`adquirentes.${i}.conyuge`,"Cónyuge",a.conyuge,false)}</div>
       ${fld(`adquirentes.${i}.domicilio`,"Domicilio",a.domicilio)}
+      ${nAdq>1?`<div style="text-align:right;margin-top:8px"><button type="button" class="link" data-quitar-adq="${i}" aria-label="Quitar el adquirente ${i+1}">Quitar</button></div>`:""}
     </div>`;
   });
+  /* el que la lectura no encontró se agrega a mano; en la rogación entran dos. El botón está
+     siempre: con dos, apagado y diciendo por qué, para que nadie crea que la opción no existe
+     (con dos mal leídos —los que firman por la comuna— hay que quitar uno para agregar) */
+  h += `<div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap"><button type="button" class="ghost mini" id="masAdq"${nAdq<2?"":" disabled"}>+ Otro adquirente</button>`
+    + (nAdq<2?"":`<span class="hint" style="margin:0">En la rogación entran dos. Para cambiar uno, quitalo y agregá el otro; si la escritura tiene más, van al anexo, a mano.</span>`)
+    + `</div>`;
   h += `</div></fieldset>`;
 
   if(!d.inmuebles.length) d.inmuebles.push({matricula:"",lote:"",manzana:"",superficie:"",cert_catastral:"",cuenta:"",nomenclatura:{d:"",ped:"",pue:"",c:"",s:"",mza:"",parc:"",ph:"000"}});
@@ -912,8 +971,17 @@ function render(){
     pintarEscCorto();
   });
   d.inmuebles.forEach((_,i)=>drawNom(i));
+  const mas = $("#masAdq");
+  if(mas&&!mas.disabled) mas.onclick = ()=>{
+    DATA.adquirentes.push(adqVacio()); render(true);
+    const el = $("#review").querySelector(`input[data-p="adquirentes.${DATA.adquirentes.length-1}.nombre"]`); if(el) el.focus();
+  };
+  $("#review").querySelectorAll("[data-quitar-adq]").forEach(b=>b.onclick = ()=>{
+    DATA.adquirentes.splice(+b.dataset.quitarAdq,1); render(true);
+    const m = $("#masAdq"); if(m) m.focus();
+  });
   $("#gen").disabled = false; $("#prev").disabled = false;
-  $("#s3").scrollIntoView({behavior:"smooth",block:"start"});
+  if(!quieto) $("#s3").scrollIntoView({behavior:"smooth",block:"start"});
 }
 /* Se actualiza en su lugar: no se redibuja el formulario mientras alguien escribe. */
 function pintarEscCorto(){
@@ -988,8 +1056,11 @@ async function armarPdf(){
     T(f.cert,m.cert_catastral); T(f.cta,m.cuenta);
     if(nomenOk(m.nomenclatura)) T(f.nom, nomenclatura(m.nomenclatura)); });
 
-  if(d.escritura_numero && d.fecha)
-    T("Texto89", `Primer Testimonio de Escritura N°${d.escritura_numero} de Fecha ${d.fecha}`);
+  /* El renglón de Documentos lleva lo que se sepa. Antes, si faltaba la fecha se salteaba
+     entero aunque el número estuviera, y la sección 8 salía en blanco sin ningún aviso. */
+  T("Texto89", "Primer Testimonio de Escritura"
+    + (d.escritura_numero ? ` N°${d.escritura_numero}` : "")
+    + (d.fecha ? ` de Fecha ${d.fecha}` : ""));
   if(d.certificado_notarial)
     T("Texto91", "Certificado Notarial N°" + String(d.certificado_notarial).replace(/\s*y\s*/g," y N°"));
 
@@ -1009,15 +1080,23 @@ async function descargar(){
   setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
   /* a.click() no dice si el navegador aceptó la descarga: adentro de la copia publicada
      la bloquea y antes igual decíamos "Rogación descargada". */
-  if(fallos.length){
-    setStatus("La rogación se armó, PERO "+fallos.length+" campo"+(fallos.length===1?"":"s")
+  setStatus(advertencia("Rogación armada")
+    || "Rogación armada. Si no aparece la descarga, estás viendo la copia en línea: abriendo SIGEC desde la carpeta funciona.");
+}
+/* Lo que hay que saber antes de presentar el papel. Lo usan la descarga y la vista previa:
+   antes la vista previa decía "lista" aunque hubiera campos que no se pudieron escribir. */
+function advertencia(que){
+  if(fallos.length)
+    return que+", PERO "+fallos.length+" campo"+(fallos.length===1?"":"s")
       +" del formulario del Registro no se pudo completar ("+fallos.slice(0,4).join(", ")
-      +(fallos.length>4?", …":"")+"). Revisá el PDF antes de presentarlo.");
-  }else if(cpDudoso){
-    setStatus("Rogación armada. Ojo: el código postal salió 9000 (Córdoba capital) y el domicilio dice «"+cpDudoso+"». Si el inmueble es del interior, corregilo en el PDF.");
-  }else{
-    setStatus("Rogación armada. Si no aparece la descarga, estás viendo la copia en línea: abriendo SIGEC desde la carpeta funciona.");
-  }
+      +(fallos.length>4?", …":"")+"). Revisá el PDF antes de presentarlo.";
+  const falta = [!DATA.escritura_numero && "el número", !DATA.fecha && "la fecha"].filter(Boolean);
+  if(falta.length)
+    return que+", PERO falta"+(falta.length>1?"n ":" ")+falta.join(" y ")+" de la escritura: el "
+      +"encabezado y el renglón de Documentos salen incompletos. Completá "+(falta.length>1?"esos datos":"ese dato")+" en la revisión y volvé a generar.";
+  if(cpDudoso)
+    return que+". Ojo: el código postal salió 9000 (Córdoba capital) y el domicilio dice «"+cpDudoso+"». Si el inmueble es del interior, corregilo en el PDF.";
+  return "";
 }
 $("#gen").onclick = async () => {
   $("#gen").disabled = true; setStatus("Armando el PDF…");
@@ -1033,7 +1112,7 @@ $("#prev").onclick = async () => {
     $("#pv").src = PVURL + "#toolbar=0&view=FitH";
     $("#pvPanel").classList.remove("hidden");
     $("#pvPanel").scrollIntoView({behavior:"smooth",block:"start"});
-    setStatus("Vista previa lista.");
+    setStatus(advertencia("Vista previa lista") || "Vista previa lista.");
   }catch(e){ setStatus("No se pudo previsualizar: "+e.message); }
   $("#prev").disabled = false;
 };
@@ -1094,5 +1173,7 @@ $("#tplReset").onclick = async () => {
   else poner();
 })();
 </script>
+<!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 15/10/2026</p>
 </body>
 </html>
