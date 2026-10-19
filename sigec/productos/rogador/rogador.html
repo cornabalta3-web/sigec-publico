@@ -45,6 +45,12 @@ html[data-theme="dark"]{
 }
 html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea{background:#232D38;color:var(--ink)}
 html[data-theme="dark"] .drop{background:#1B232C}
+/* Estos tenían fondo claro fijo y, en oscuro, la letra también clara: no se leían. */
+html[data-theme="dark"] .frag{background:#232D38}
+html[data-theme="dark"] .frag.rojo{background:var(--miss)}
+html[data-theme="dark"] .frag mark{background:#6B5314;color:var(--ink)}
+html[data-theme="dark"] .nomprev{background:#232D38}
+html[data-theme="dark"] .flag{color:var(--ink)}
 /* Abierto desde SIGEC, la cascara ya dice de quien es y como se llama. */
 .embebido .sello{padding:10px 0}
 .embebido .sello small{display:none}
@@ -125,6 +131,12 @@ fieldset .in{padding:12px 14px 13px}
 .frag.falta{border-left-color:var(--warn);background:var(--warn-bg);color:var(--warn);font-style:italic}
 .fragbox{max-height:74vh;overflow:auto;padding-right:4px}
 @media(max-width:860px){.cols{grid-template-columns:1fr}}
+/* La revisión a la izquierda y, a la derecha, de dónde salió cada dato: se controla
+   mirando las dos cosas a la vez, sin ir y venir. La columna derecha queda fija al bajar. */
+.revcols{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:18px;align-items:start}
+.fuente{position:sticky;top:12px}
+.fuente .fragbox{max-height:calc(100vh - 110px)}
+@media(max-width:900px){.revcols{grid-template-columns:1fr}.fuente{position:static}.fuente .fragbox{max-height:none}}
 #pv{width:100%;height:78vh;border:1px solid var(--rule-hard);background:#fff}
 .pvbar{display:flex;gap:9px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
 .spin{display:inline-block;width:11px;height:11px;border:2px solid #fff6;border-top-color:#fff;border-radius:50%;animation:s .7s linear infinite;margin-right:7px;vertical-align:-1px}
@@ -167,10 +179,16 @@ fieldset .in{padding:12px 14px 13px}
   <h2>Revisión</h2>
   <div class="in">
     <div class="toolbar">
-      <button class="ghost" id="seeTxt">Ver texto y datos detectados</button>
+      <button class="ghost" id="seeTxt">Ver y corregir el texto</button>
       <button class="ghost" id="reset">Nueva rogación</button>
     </div>
-    <div id="review"></div>
+    <div class="revcols">
+      <div id="review"></div>
+      <aside class="fuente">
+        <label>De acá salieron los datos</label>
+        <div class="fragbox" id="frags"></div>
+      </aside>
+    </div>
   </div>
 </section>
 
@@ -189,18 +207,10 @@ fieldset .in{padding:12px 14px 13px}
 <section class="panel hidden" id="raw">
   <h2>Texto de la escritura <button class="link" id="rawClose">Cerrar</button></h2>
   <div class="in">
-    <div class="cols">
-      <div>
-        <label>Texto completo</label>
-        <textarea id="txt" rows="28"></textarea>
-        <p class="hint">Si corregís algo acá, apretá <b>Volver a leer</b>.</p>
-        <button class="mini ghost" id="reparse">Volver a leer</button>
-      </div>
-      <div>
-        <label>De acá salieron los datos</label>
-        <div class="fragbox" id="frags"></div>
-      </div>
-    </div>
+    <label>Texto completo</label>
+    <textarea id="txt" rows="28"></textarea>
+    <p class="hint">Si corregís algo acá, apretá <b>Volver a leer</b>.</p>
+    <button class="mini ghost" id="reparse">Volver a leer</button>
   </div>
 </section>
 
@@ -400,8 +410,9 @@ const SRC_SUP = "SUPERFICIE(?:\\s+TOTAL)?(?:\\s+DE\\s+TERRENO)?\\s+de\\s+([A-ZÁ
    renglón de Documentos. Se mira solo la primera aparición, que es el encabezado: más
    abajo "Escritura Número" suele ser la del antecedente, y tomar ese número sería peor
    que no tomar ninguno. */
+const RE_ENCABEZADO = /ESCRITURA\s+N(?:[ÚU]MERO|RO\.?|[°º]|\.)\s*[:.\-]?\s*/i;
 function numeroEscritura(T){
-  const m = T.match(/ESCRITURA\s+N(?:[ÚU]MERO|RO\.?|[°º]|\.)\s*[:.\-]?\s*/i);
+  const m = T.match(RE_ENCABEZADO);
   if(!m) return { numero:"", seccion:"" };
   const resto = T.slice(m.index + m[0].length, m.index + m[0].length + 160);
   let numero = "";
@@ -422,6 +433,9 @@ function numeroEscritura(T){
   return { numero, seccion: s ? s[1].toUpperCase() : "" };
 }
 
+/* El día va de una a tres palabras ("doce", "veintiún", "treinta y uno") y el año empieza
+   por "dos mil" o "mil novecientos": así no se lleva por delante el texto de antes. */
+const RE_FECHA_LIBRE = /(?:^|[\s,])al?\s+(?:los\s+)?([a-záéíóúñ]+(?:\s+y\s+[a-záéíóúñ]+)?)\s+d[íi]as?\s+(?:del\s+mes\s+)?de\s+([a-záéíóúñ]+)\s+(?:del\s+a[ñn]o\s+|de\s+)?((?:dos\s+mil|mil\s+novecientos)(?:\s+[a-záéíóúñ]+){0,3}?)(?=\s*[,.;(]|\s+ante\s|\s+comparec)/i;
 /* La fecha del encabezado. La forma de siempre es "a los doce días del mes de septiembre
    del año dos mil veintiséis, ante mí"; si no aparece así, se prueba una más suelta: sin
    "los", sin "del mes", "de dos mil…" en vez de "del año", o con otra cosa antes de "ante
@@ -429,9 +443,7 @@ function numeroEscritura(T){
 function fechaEscritura(T){
   let m = T.match(/a\s+los\s+([\wáéíóúñ\s]+?)\s+d[íi]as?\s+del\s+mes\s+de\s+(\w+)\s+del\s+a[ñn]o\s+([\wáéíóúñ\s]+?)\s*,\s*ante\s+m[íi]/i);
   if(m){ const f = fechaDe(m[1],m[2],m[3]); if(f) return f; }
-  /* El día va de una a tres palabras ("doce", "veintiún", "treinta y uno") y el año empieza
-     por "dos mil" o "mil novecientos": así no se lleva por delante el texto de antes. */
-  m = T.match(/(?:^|[\s,])al?\s+(?:los\s+)?([a-záéíóúñ]+(?:\s+y\s+[a-záéíóúñ]+)?)\s+d[íi]as?\s+(?:del\s+mes\s+)?de\s+([a-záéíóúñ]+)\s+(?:del\s+a[ñn]o\s+|de\s+)?((?:dos\s+mil|mil\s+novecientos)(?:\s+[a-záéíóúñ]+){0,3}?)(?=\s*[,.;(]|\s+ante\s|\s+comparec)/i);
+  m = T.match(RE_FECHA_LIBRE);
   if(!m) return "";
   const dia = norm(m[1]).trim() === "primer" ? "primero" : m[1];
   const f = fechaDe(dia, m[2], m[3]);
@@ -638,10 +650,10 @@ const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>
 
 function fragmentos(T, R=""){
   const out = [];
-  const buscar = (label, re, src) => {
+  const buscar = (label, re, src, max=8) => {
     const rx = new RegExp(re.source, re.flags.includes("g") ? re.flags : re.flags+"g");
     const hits = []; let m, n = 0;
-    while((m = rx.exec(src)) !== null && n < 8){
+    while((m = rx.exec(src)) !== null && n < max){
       let html = esc(m[0].replace(/\s+/g," ").trim());
       const v = m.slice(1).filter(Boolean).sort((a,b)=>b.length-a.length)[0];
       if(v){ const e = esc(String(v).replace(/\s+/g," ").trim());
@@ -652,17 +664,18 @@ function fragmentos(T, R=""){
     return hits;
   };
   /* los registrales se buscan primero en el texto rojo */
-  const add = (label, re, soloTexto=false) => {
+  const add = (label, re, soloTexto=false, max=8) => {
     let hits = [], rojo = false;
-    if(!soloTexto && R){ hits = buscar(label, re, R); rojo = hits.length > 0; }
-    if(!hits.length) hits = buscar(label, re, T);
+    if(!soloTexto && R){ hits = buscar(label, re, R, max); rojo = hits.length > 0; }
+    if(!hits.length) hits = buscar(label, re, T, max);
     if(!hits.length) out.push({label, html:"— no encontrado —", falta:true});
     else hits.forEach(h => out.push({label, html:h, rojo}));
   };
 
   add("Escribana", /ante\s+m[íi]\s+Escribana?\s+(General|Sustituta)[^,.;]{0,70}/i, true);
-  add("Escritura y sección", /ESCRITURA\s+N[ÚU]MERO\s+([A-ZÁÉÍÓÚÑ\s]+?)[.\-,\s]*SECCI[ÓO]N\s*[^A-Z]{0,3}[A-Z]/i, true);
-  add("Fecha", /a\s+los\s+([\wáéíóúñ\s]+?\s+d[íi]as?\s+del\s+mes\s+de\s+\w+\s+del\s+a[ñn]o\s+[\wáéíóúñ\s]+?)\s*,\s*ante\s+m[íi]/i, true);
+  add("Escritura y sección", new RegExp(RE_ENCABEZADO.source
+      + "([^.;]{0,80})(?:[.;][.;\\-–\\s]*SECCI[ÓO]N\\s*[:\"“”'«´\\-–]*\\s*[A-Z](?![a-záéíóúñ]))?", "i"), true, 1);
+  add("Fecha", RE_FECHA_LIBRE, true, 1);
   add("Negocio jurídico", /t[íi]tulo\s+de\s+(ADJUDICACI[ÓO]N\s+DIRECTA)[^.]{0,120}/i, true);
   add("Afectación a vivienda", /(AFECTACI[ÓO]N\s+AL\s+R[ÉE]GIMEN\s+DE\s+VIVIENDA)/i, true);
   add("Titular registral", /en\s+nombre\s+y\s+representaci[óo]n\s+(?:de\s+la\s+|del\s+|de\s+)?([^,]{5,90})\s*,\s*C\.?\s*U\.?\s*I\.?\s*T[^]{0,260}?en\s+(?:su|el)\s+car[áa]cter/i, true);
@@ -758,7 +771,7 @@ document.addEventListener("paste", e=>{
   const t = e.clipboardData.getData("text");
   if(t && t.length > 400){ $("#txt").value = t.trim(); ROJO = ""; $("#docTxt").textContent = "Texto pegado"; procesar(); }
 });
-$("#reparse").onclick = () => { procesar(); pintarFrags(); };
+$("#reparse").onclick = () => procesar();
 function pintarFrags(){
   const fs = fragmentos($("#txt").value, ROJO);
   $("#frags").innerHTML = fs.map(f=>
@@ -767,7 +780,7 @@ function pintarFrags(){
 $("#seeTxt").onclick = () => {
   const r = $("#raw");
   r.classList.toggle("hidden");
-  if(!r.classList.contains("hidden")){ pintarFrags(); r.scrollIntoView({behavior:"smooth",block:"start"}); }
+  if(!r.classList.contains("hidden")) r.scrollIntoView({behavior:"smooth",block:"start"});
 };
 $("#rawClose").onclick = () => { $("#raw").classList.add("hidden");
   $("#s3").scrollIntoView({behavior:"smooth",block:"start"}); };
@@ -787,7 +800,7 @@ function procesar(){
   const T = $("#txt").value;
   if(T.trim().length < 400){ setStatus("El texto es muy corto."); return; }
   DATA = parse(T, ROJO);
-  render();
+  render(); pintarFrags();
   const n = DATA.notas.length;
   setStatus(n ? `Leída, con ${n} punto${n>1?"s":""} a revisar.` : "Leída sin observaciones.");
   $("#ai").classList.toggle("hidden", !$("#key").value.trim());
@@ -1023,7 +1036,27 @@ async function armarPdf(){
      cualquier error: si un campo del PDF cambiaba de nombre, salía en blanco y nadie se
      enteraba hasta tener el papel en la mano. Ahora se juntan y se avisan. */
   fallos.length = 0; cpDudoso = "";
-  const T=(n,v)=>{ if(v==null||v==="") return; try{ form.getTextField(n).setText(String(v)); }catch(e){ fallos.push(n); } };
+  /* pdf-lib dibuja cada campo con el tamaño fijo del formulario (10 o 9 pt) y recorta lo
+     que no entra: un domicilio o un estado civil largo salían cortados en el papel. Ahora
+     se mide el texto con la misma fuente con la que se dibuja y, si no entra, se achica la
+     letra lo justo para que entre entero. */
+  const fuente = form.getDefaultFont();
+  const entrar = (campo, s) => {
+    const da = campo.acroField.getDefaultAppearance() || "";
+    const tam = parseFloat((da.match(/([\d.]+)\s+Tf/) || [])[1]) || 10;
+    const ws = campo.acroField.getWidgets();
+    const disp = Math.min(...ws.map(w => w.getRectangle().width - 2*((w.getBorderStyle()?.getWidth() ?? 0) + 1)));
+    const ancho = fuente.widthOfTextAtSize(s, tam);
+    if(ancho <= disp) return;
+    const nuevo = Math.floor(tam * disp / ancho * 10) / 10;
+    campo.setFontSize(nuevo);
+    /* si el formulario trae el tamaño también en cada recuadro, se cambia ahí */
+    ws.forEach(w => { const d = w.dict !== campo.acroField.dict && w.getDefaultAppearance();
+      if(d) w.setDefaultAppearance(d.replace(/[\d.]+(\s+Tf)/, nuevo + "$1")); });
+  };
+  const T=(n,v)=>{ if(v==null||v==="") return;
+    try{ const campo = form.getTextField(n), s = String(v); campo.setText(s); entrar(campo, s); }
+    catch(e){ fallos.push(n); } };
   const C=n=>{ try{ form.getCheckBox(n).check(); }catch(e){ fallos.push(n); } };
   const d = DATA, rolEsc = escRol() || "titular";
   const esc = { nombre: escNombre(rolEsc), corto: escCorto(rolEsc) };
@@ -1174,6 +1207,6 @@ $("#tplReset").onclick = async () => {
 })();
 </script>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 15/10/2026</p>
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 19/10/2026</p>
 </body>
 </html>
