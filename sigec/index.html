@@ -273,7 +273,7 @@ function pintarNav(){
   HERRAMIENTAS.filter(h=>h.grupo===g).map(h=>
    `<a data-h="${h.id}" class="${abrible(h)?"":"prep"}" style="--c:${colorDe(h)}" title="${est(h).ayuda}"><span class="pt"></span><span class="txt"><span class="nm">${h.n}</span><span class="pp ${est(h).cls}">${est(h).corto}</span></span></a>`).join("")
  ).join("")
- +`<div class="pie">Los datos quedan guardados en esta computadora.<br>Las minutas base se comparten por archivo.<br><span class="sigec-version">Versión del 15/10/2026</span></div>`;
+ +`<div class="pie">Los datos quedan guardados en esta computadora.<br>Las minutas base se comparten por archivo.<br><span class="sigec-version">Versión del 22/10/2026</span></div>`;
  $$("[data-h]").forEach(a=>a.addEventListener("click",()=>abrir(a.dataset.h)));
 }
 

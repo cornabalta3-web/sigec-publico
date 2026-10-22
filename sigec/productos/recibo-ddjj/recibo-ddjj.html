@@ -485,15 +485,14 @@ html[data-theme="dark"]{
    Para cambiarlas se edita aca y nada mas.
 
    FIRMA        quien firma el recibo, tal cual sale impreso debajo del filete.
-                OJO: si el recibo lo firma la Escribana Sustituta, esta linea queda
-                mal. Si eso pasa seguido, conviene volver a la formula institucional
-                ("Fiscalia de Estado" / "Escribania General de Gobierno"), que es
-                cierta siempre, o pedir un selector en el panel.
+                Nombra a la ESCRIBANIA y no al cargo de quien firma: asi la linea es
+                cierta tanto si firma la Escribana General como la Sustituta. No poner
+                "Escribana" aca: se probo y hubo que corregirlo.
    PIE_CONTACTO domicilio, telefono y correo de la Escribania, para la banda del pie.
                 Vacio hasta que se tengan los datos reales: mientras tanto la banda
                 muestra solo el organismo. No inventar nada aca, se imprime.
    LUGAR        la ciudad de emision.                                              */
-var FIRMA = ["Escribana General de Gobierno", "Fiscalía de Estado"];
+var FIRMA = ["Escribanía General de Gobierno", "Fiscalía de Estado"];
 var PIE_CONTACTO = "";
 var LUGAR = "Córdoba";
 /* ───────────────────────────────────────────────────────────────────────────────── */
@@ -543,6 +542,21 @@ function inferSexo(nombres) {
   if (EXC_F.indexOf(N) >= 0) return "F";
   if (EXC_M.indexOf(N) >= 0) return "M";
   return N.slice(-1) === "A" ? "F" : "M";
+}
+
+/* Nombres de pila con la inicial en mayuscula, aunque se escriban todo en minuscula.
+   Las particulas de union quedan en minuscula —"Maria de los Angeles"— salvo cuando
+   abren el nombre. Separa por espacios y por guiones, asi "ana-maria" sale "Ana-Maria". */
+var NEXOS = ["de", "del", "la", "las", "los", "y", "da", "das", "do", "dos"];
+function capitalizar(s) {
+  var primera = true;
+  return String(s || "").toLocaleLowerCase("es-AR").replace(/[^\s-]+/g, function (p) {
+    var r = (!primera && NEXOS.indexOf(p) >= 0)
+      ? p
+      : p.charAt(0).toLocaleUpperCase("es-AR") + p.slice(1);
+    primera = false;
+    return r;
+  });
 }
 
 var MESES = ["enero","febrero","marzo","abril","mayo","junio",
@@ -608,9 +622,12 @@ function actualizar() {
   var fe = partesFecha(fEl.value);
   var tr = (genero === "femenino") ? "la Se\u00f1ora" : "el Se\u00f1or";
 
-  /* El apellido va en mayuscula, como en todo el sistema. Se pasa solo: quien carga
-     escribe normal. */
+  /* El apellido va en mayuscula y los nombres con la inicial en mayuscula. Las dos
+     cosas se acomodan solas: quien carga tipea corrido, sin tocar el Shift.
+     Se acomoda lo que sale impreso y NO el campo: asi escribir nunca pelea con el
+     cursor, que es la regla de no romper el foco. */
   if (ap) ap = ap.toLocaleUpperCase("es-AR");
+  if (no) no = capitalizar(no);
   var quien = [no, ap].filter(Boolean).join(" ");
 
   var pista = document.getElementById("pistaFecha");
