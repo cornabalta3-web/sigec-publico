@@ -39,6 +39,8 @@ html[data-theme="dark"] .nav a{color:#C2CCD8}
 html[data-theme="dark"] .nav a.on{color:#DCE7F5}
 html[data-theme="dark"] .nav a.prep{color:#6B7684}
 html[data-theme="dark"] .nav .pie{color:#7C8794}
+html[data-theme="dark"] .nav .otros{color:#8D98A6}
+html[data-theme="dark"] .nav .otros:hover,html[data-theme="dark"] .nav .otros[aria-expanded="true"]{color:#C2CCD8;background:rgba(255,255,255,.06)}
 html[data-theme="dark"] .barra{background:#1B232C}
 html[data-theme="dark"] .barra button{background:#232D38;color:#C2CCD8;border-color:var(--line)}
 html[data-theme="dark"] .tj{background:#1B232C}
@@ -110,6 +112,13 @@ body{font-family:Montserrat,system-ui,sans-serif;background:var(--bone);color:#1
 .nav a.on{background:var(--cel-s);color:var(--navy);font-weight:700}
 .nav a.prep{color:#A3AEC0;cursor:default}
 .nav a.prep:hover{background:transparent}
+/* «Otros»: lo que todavía no ven todos. Un botón chico debajo del último producto, que
+   despliega los que tienen oculto:true (Baltasar, 23/10/2026). */
+.nav .otros{display:inline-flex;align-items:center;gap:5px;margin:12px 0 0 8px;padding:3px 7px;border:0;
+ border-radius:5px;background:none;font-family:inherit;font-size:10.5px;font-weight:600;color:#9AA6B8;cursor:pointer}
+.nav .otros:hover,.nav .otros[aria-expanded="true"]{color:#41506B;background:var(--bone)}
+.nav .otros .fl{font-size:9px}
+.nav .otras{margin-top:4px}
 .nav .pie{margin-top:22px;padding:11px 9px 0;border-top:1px solid var(--line);font-size:11px;color:#9AA6B8;line-height:1.5}
 
 /* panel */
@@ -266,18 +275,24 @@ pintarTema();
 
 /* ---------- navegación lateral ---------- */
 function colorDe(h){ return (SIGEC_TEMA.actual()==="oscuro" && h.colorOsc) ? h.colorOsc : h.color; }
-/* Una herramienta con oculto:true no figura en el menú ni en el inicio: se abre con su archivo
-   o con el menú terminado en #<id> (por ejemplo «SIGEC, APP.html#cotejo»). */
+/* Una herramienta con oculto:true no figura entre las demás ni en el inicio: queda detrás de
+   «Otros», el botón chico del pie del menú. También se abre con su archivo o con el menú
+   terminado en #<id> (por ejemplo «SIGEC, APP.html#cotejo»). */
 const VISIBLES=()=>HERRAMIENTAS.filter(h=>!h.oculto);
+const OCULTAS=()=>HERRAMIENTAS.filter(h=>h.oculto);
+let OTROS=false;   // «Otros» desplegado; empieza cerrado cada vez que se abre el menú
+const enlace=h=>`<a data-h="${h.id}" class="${abrible(h)?"":"prep"}${ACTUAL&&ACTUAL.id===h.id?" on":""}" style="--c:${colorDe(h)}" title="${est(h).ayuda}"><span class="pt"></span><span class="txt"><span class="nm">${h.n}</span><span class="pp ${est(h).cls}">${est(h).corto}</span></span></a>`;
 function pintarNav(){
  const grupos=[...new Set(VISIBLES().map(h=>h.grupo))];
  $("#nav").innerHTML=grupos.map(g=>
   `<div class="grupo">${g}</div>`+
-  VISIBLES().filter(h=>h.grupo===g).map(h=>
-   `<a data-h="${h.id}" class="${abrible(h)?"":"prep"}" style="--c:${colorDe(h)}" title="${est(h).ayuda}"><span class="pt"></span><span class="txt"><span class="nm">${h.n}</span><span class="pp ${est(h).cls}">${est(h).corto}</span></span></a>`).join("")
+  VISIBLES().filter(h=>h.grupo===g).map(enlace).join("")
  ).join("")
+ +(OCULTAS().length?`<button type="button" class="otros" id="btnOtros" aria-expanded="${OTROS}" title="Herramientas que todavía no son para todos">Otros <span class="fl" aria-hidden="true">${OTROS?"▾":"▸"}</span></button>`
+   +(OTROS?`<div class="otras">${OCULTAS().map(enlace).join("")}</div>`:""):"")
  +`<div class="pie">Los datos quedan guardados en esta computadora.<br>Las minutas base se comparten por archivo.<br><span class="sigec-version">Versión del 23/10/2026</span></div>`;
  $$("[data-h]").forEach(a=>a.addEventListener("click",()=>abrir(a.dataset.h)));
+ const o=$("#btnOtros"); if(o) o.addEventListener("click",()=>{ OTROS=!OTROS; pintarNav(); });
 }
 
 /* ---------- tarjetas del inicio ---------- */
@@ -299,6 +314,8 @@ function abrir(id){
  const h=HERRAMIENTAS.find(x=>x.id===id);
  if(!h||!abrible(h)) return;
  ACTUAL=h;
+ /* Abierta desde #cotejo, se despliega «Otros» para que se vea dónde está. */
+ if(h.oculto&&!OTROS){ OTROS=true; pintarNav(); }
  $("#marco").src=h.url;
  $("#marco").style.display="";
  $("#inicio").style.display="none";
