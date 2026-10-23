@@ -266,23 +266,26 @@ pintarTema();
 
 /* ---------- navegación lateral ---------- */
 function colorDe(h){ return (SIGEC_TEMA.actual()==="oscuro" && h.colorOsc) ? h.colorOsc : h.color; }
+/* Una herramienta con oculto:true no figura en el menú ni en el inicio: se abre con su archivo
+   o con el menú terminado en #<id> (por ejemplo «SIGEC, APP.html#cotejo»). */
+const VISIBLES=()=>HERRAMIENTAS.filter(h=>!h.oculto);
 function pintarNav(){
- const grupos=[...new Set(HERRAMIENTAS.map(h=>h.grupo))];
+ const grupos=[...new Set(VISIBLES().map(h=>h.grupo))];
  $("#nav").innerHTML=grupos.map(g=>
   `<div class="grupo">${g}</div>`+
-  HERRAMIENTAS.filter(h=>h.grupo===g).map(h=>
+  VISIBLES().filter(h=>h.grupo===g).map(h=>
    `<a data-h="${h.id}" class="${abrible(h)?"":"prep"}" style="--c:${colorDe(h)}" title="${est(h).ayuda}"><span class="pt"></span><span class="txt"><span class="nm">${h.n}</span><span class="pp ${est(h).cls}">${est(h).corto}</span></span></a>`).join("")
  ).join("")
- +`<div class="pie">Los datos quedan guardados en esta computadora.<br>Las minutas base se comparten por archivo.<br><span class="sigec-version">Versión del 22/10/2026</span></div>`;
+ +`<div class="pie">Los datos quedan guardados en esta computadora.<br>Las minutas base se comparten por archivo.<br><span class="sigec-version">Versión del 23/10/2026</span></div>`;
  $$("[data-h]").forEach(a=>a.addEventListener("click",()=>abrir(a.dataset.h)));
 }
 
 /* ---------- tarjetas del inicio ---------- */
 function pintarTarjetas(){
- const grupos=[...new Set(HERRAMIENTAS.map(h=>h.grupo))];
+ const grupos=[...new Set(VISIBLES().map(h=>h.grupo))];
  $("#tarjetas").innerHTML=grupos.map(g=>
   `<div class="grupo">${g}</div><div class="tarjetas">`+
-  HERRAMIENTAS.filter(h=>h.grupo===g).map(h=>
+  VISIBLES().filter(h=>h.grupo===g).map(h=>
    `<div class="tj ${abrible(h)?"":"prep"}" style="--c:${colorDe(h)}" ${abrible(h)?`data-t="${h.id}"`:""}>
      <div class="n">${h.n}</div><div class="d">${h.d}</div>
      <div class="et ${est(h).cls}">${est(h).et}</div></div>`).join("")
@@ -326,6 +329,9 @@ $("#btnMenu").addEventListener("click",()=>{
 });
 
 pintarNav(); pintarTarjetas();
+/* «SIGEC, APP.html#cotejo» abre esa herramienta, también una que no figura en el menú. */
+const pedida=()=>{ const id=decodeURIComponent(location.hash.slice(1)); if(id&&HERRAMIENTAS.some(h=>h.id===id)) abrir(id); };
+window.addEventListener("hashchange",pedida); pedida();
 </script>
 </body>
 </html>
