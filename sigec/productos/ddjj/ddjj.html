@@ -115,10 +115,11 @@
   section.panel.active{display:block;}
   .card{background:var(--paper-raised); border:1px solid var(--line); border-radius:6px; padding:22px 24px; margin-bottom:18px;}
   label.field-label{display:block; font-size:13px; color:var(--ink-soft); margin-bottom:6px;}
-  .inciso{display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin:0 0 12px;
+  .inciso, .afip{display:flex; align-items:center; gap:18px; flex-wrap:wrap; margin:0 0 12px;
     padding:10px 13px; border:1px solid var(--line); border-radius:8px; background:var(--paper-raised);}
-  .inciso label{display:flex; align-items:center; gap:7px; font-size:13.5px; cursor:pointer;}
+  .inciso label, .afip label{display:flex; align-items:center; gap:7px; font-size:13.5px; cursor:pointer;}
   .inciso input{margin:0;}
+  .afip select{font-family:inherit; font-size:13px; padding:3px 6px;}
   textarea, input[type=text], input[type=password]{
     width:100%; font-family:var(--font-sans); font-size:14px; padding:9px 11px;
     border:1px solid var(--line); border-radius:4px; background:#fff; color:var(--ink); resize:vertical;
@@ -277,6 +278,26 @@ try{ if(window.self!==window.top) document.documentElement.classList.add('embebi
           <span class="field-label" style="margin:0 10px 0 0">Identificación del compareciente</span>
           <label><input type="radio" name="inciso" value="a" checked> artículo 306 inciso <b>“a”</b> — identifico con el documento idóneo que me exhibe, y su copia certificada se agrega a la escritura</label>
           <label><input type="radio" name="inciso" value="b"> artículo 306 inciso <b>“b”</b> — persona de mi conocimiento</label>
+        </div>
+        <!-- Lo que el modelo lee de una tilde escaneada se equivoca, y en el listado es una
+             linea mas entre seiscientas. Aca es una eleccion visible, como el inciso: lo que
+             diga este selector es lo que va a la escritura, aunque el listado diga otra cosa. -->
+        <div class="afip">
+          <span class="field-label" style="margin:0 10px 0 0">Declaraciones ante la A.F.I.P. — manda lo que diga acá</span>
+          <label>Ganancias
+            <select id="afip-ganancias">
+              <option value="PRESENTO">presentó</option>
+              <option value="NO PRESENTO">no presentó</option>
+              <option value="NO CONSTA" selected>no consta en el formulario</option>
+            </select>
+          </label>
+          <label>Bienes personales
+            <select id="afip-bienes">
+              <option value="PRESENTO">presentó</option>
+              <option value="NO PRESENTO">no presentó</option>
+              <option value="NO CONSTA" selected>no consta en el formulario</option>
+            </select>
+          </label>
         </div>
         <div class="compare-header" id="compare-header-2"><label class="field-label" for="listado-edit">Datos leídos del formulario — revisá y corregí lo que haga falta antes de redactar (esto es lo único que se va a usar):</label></div>
         <textarea id="listado-edit" style="min-height:640px; font-size:15px; line-height:1.6;"></textarea>
@@ -501,7 +522,7 @@ const REGLAS_COMUNES = [
 "- GANANCIALIDAD - REGLA ABSOLUTA: consignar 'es bien ganancial' / 'no es bien ganancial' UNICAMENTE si el formulario marca EXPRESAMENTE SI o NO para ese item puntual. Si el casillero esta en blanco o sin marcar, NO PONER NADA - ni 'es' ni 'no es'. Nunca asumas 'no es bien ganancial' como valor por defecto cuando simplemente no hay dato marcado.",
 "- Solo incluir los items que el declarante completo con datos. Los items vacios, en $0 o sin informacion se omiten (salvo SI/NO expreso). Varios sub-items vacios de una misma categoria pueden consolidarse en una sola mencion de 'no posee' SOLO si el declarante lo escribio.",
 "- Las explicaciones y aclaraciones escritas por el propio declarante se transcriben textualmente, nunca resumidas ni omitidas.",
-"- Respetar el orden exacto en que aparecen los bienes en el formulario.",
+"- EL ORDEN NO SE TOCA NUNCA: los bienes, las deudas y los ingresos van en el MISMO orden en que estan en el formulario, renglon por renglon dentro de cada rubro, y los rubros en el orden del formulario. No se reordenan por importe, ni por tipo, ni por importancia, ni alfabeticamente; no se juntan los parecidos; no se mueve un item a otro rubro aunque parezca que encaja mejor ahi; no se pone primero el mas caro ni el mas completo. Los renglones vacios se omiten, y los que quedan conservan entre si el orden que traian. Al redactar manda el orden del LISTADO CONFIRMADO: la numeracion 1), 2), 3) sigue ese orden y ningun otro.",
 "- APELLIDO Y NOMBRES - NO LO ADIVINES POR LA POSICION NI POR LAS MAYUSCULAS: muchos formularios traen una sola linea del tipo 'El que suscribe: Martin Sebastian Facundo, Soda', y el orden cambia de un formulario a otro: a veces la coma separa Nombres de Apellido y a veces al reves. Las mayusculas, negritas o subrayados del formulario NO son indicio de nada: la mayuscula del apellido es del documento que se produce, no del que se lee. Resolvelo por el sentido -cual de las partes es un nombre de pila habitual y cual es un apellido- y cruzalo con cualquier otro lugar del formulario donde figure la persona. Si despues de eso queda duda razonable, NO elijas en silencio: dejalo escrito con una nota expresa '(DUDA: verificar cual es el apellido)' para que lo resuelva el escribano.",
 "- NUNCA REPETIR UN BIEN: cada bien del formulario aparece UNA sola vez. Dos items con el mismo dominio, la misma matricula o la misma descripcion son el MISMO bien, no dos. Ojo con la grilla de BIENES MUEBLES REGISTRABLES: el importe de 'Valor Estimado Mercado' suele imprimirse en el renglon de ARRIBA de la descripcion a la que pertenece, asi que es facil pegarle a un vehiculo el importe del otro y de paso duplicar la descripcion. Cada importe pertenece a UN solo bien y no se reutiliza. Contá cuantas DESCRIPCIONES distintas hay: esa, y no otra, es la cantidad de bienes. Si te sobra o te falta un importe, desalineaste la grilla y hay que volver a leerla.",
 "- ABREVIATURAS: en la escritura todo va escrito entero, nunca abreviado. 'DPTO.' o 'Dto.' va 'Departamento'; 'B°' o 'Bo.' va 'Barrio'; 'Av.' va 'Avenida'; 'Pje.' va 'Pasaje'; 'Bvd.' va 'Boulevard'; 'Mza.' va 'Manzana'; 'Gral.' va 'General'; 'Bco.' va 'Banco'; 'esq.' va 'esquina'; 'Pcia.' va 'Provincia'. Lo que NO se desarma ni se toca: las formas societarias (S.A., S.R.L., S.A.S.), los dominios y patentes, las matriculas, los numeros de cuenta y los nombres propios tal como se llaman.",
@@ -592,12 +613,35 @@ const FORMULA_INCISO = {
   b: 'persona de mi conocimiento seg\u00fan el art\u00edculo 306 inciso \u201cb\u201d del C\u00f3digo Civil y Comercial de la Naci\u00f3n, doy fe.-',
   a: 'persona a quien identifico conforme el art\u00edculo 306 inciso \u201ca\u201d del C\u00f3digo Civil y Comercial de la Naci\u00f3n con el documento id\u00f3neo mencionado que me exhibe y cuya copia certificada agrego a la presente, doy fe.-'
 };
+/* Lo que el modelo leyo del papel queda PROPUESTO en los dos selectores; lo que la
+   escribana deje elegido es lo que se redacta. "NO PRESENTO" se prueba antes que
+   "PRESENTO" porque lo contiene. */
+function afipDelListado(listado, campo){
+  const m = new RegExp("AFIP\\s+" + campo + "\\s*:\\s*(.+)", "i").exec(listado || "");
+  if(!m) return "NO CONSTA";
+  const v = m[1].toUpperCase();
+  if(v.includes("NO PRESENTO") || v.includes("NO PRESENTÓ")) return "NO PRESENTO";
+  if(v.includes("PRESENTO") || v.includes("PRESENTÓ")) return "PRESENTO";
+  return "NO CONSTA";
+}
+function proponerAfip(listado){
+  document.getElementById("afip-ganancias").value = afipDelListado(listado, "Ganancias");
+  document.getElementById("afip-bienes").value = afipDelListado(listado, "Bienes Personales");
+}
+function afipElegido(){
+  const t = {"PRESENTO":"PRESENTO","NO PRESENTO":"NO PRESENTO","NO CONSTA":"NO CONSTA"};
+  return {
+    ganancias: t[document.getElementById("afip-ganancias").value] || "NO CONSTA",
+    bienes:    t[document.getElementById("afip-bienes").value]    || "NO CONSTA"
+  };
+}
 function incisoElegido(){
   const r = document.querySelector('input[name="inciso"]:checked');
   return (r && r.value === 'b') ? 'b' : 'a';   // por defecto, el inciso "a"
 }
 function buildComposeSystem(){
   const inc = incisoElegido();
+  const afip = afipElegido();
   const anioActual = new Date().getFullYear();
   const anioEnLetras = numeroATextoAnio(anioActual);
   const systemText = [
@@ -639,7 +683,9 @@ MODELO_EJEMPLO_2,
 "4-QUINQUIES. TRANSCRIPCION DE ACLARACIONES DEL DECLARANTE: si el declarante escribió una aclaración a mano en un campo del formulario (por ejemplo 'no poseo usufructo del mismo', o cualquier nota similar), SI hay que incluirla, redactada en tercera persona notarial ('manifiesta no poseer usufructo del mismo'). Esto NO es 'inventar': es transcribir algo que el declarante realmente escribió. Lo que nunca se debe hacer es agregar una aclaración de este tipo que el declarante NO escribió.",
 "5. Seccion II (solo si corresponde - hay conyuge o conviviente con datos propios; omitir si es soltero/a): empezar directo con el titulo <b><u data-mode=\\\"words\\\">DESCRIPCIÓN PATRIMONIAL DE BIENES PROPIOS E INGRESOS DEL CÓNYUGE, CONVIVIENTE, SUJETOS A PATRIA POTESTAD, TUTELA O CURATELA NO INCLUIDOS EN DETALLE PRECEDENTE:</u></b> (adaptar 'CÓNYUGE' o 'CONVIVIENTE' segun corresponda). NUNCA agregar la frase 'Asimismo declara que en relación a su cónyuge [nombre]... lo siguiente:'. El titulo de la Seccion II va generico, sin el nombre ni el DNI del conyuge: el nombre aparece una sola vez en toda la escritura, en el estado civil de la introduccion (punto 2-TER). Misma logica de rubros, numeracion y ganancialidad que en la Sección I.",
 "5-BIS. INFORMACION ADICIONAL Y PATRIMONIO TOTAL (es lo que mas se olvida): si el listado trae el PUNTO 4 (INFORMACION ADICIONAL PARA UNA CORRECTA DETERMINACION DEL PATRIMONIO) o el PUNTO 3 (DERECHOS O DEUDAS LITIGIOSAS) con algun dato -el caso tipico es el 'Patrimonio Total'-, NO se omiten. Van despues de cerrar las comillas de la declaracion patrimonial y antes del 'Asimismo el/la declarante solicita...', con el titulo tal como lo trae el formulario y el dato a continuacion, asi: 'INFORMACIÓN ADICIONAL PARA UNA CORRECTA DETERMINACIÓN DEL PATRIMONIO (Propio, de cónyuge, Sociedad Conyugal, Conviviente, Sujetos a Patria Potestad, Tutela o Curatela) Patrimonio Total: $ 12.345.678.' Si esos dos puntos estan vacios, se omiten por completo.",
-"6. Cierre: frase de ejercicio fiscal SOLO si el listado la trae; comillas de cierre; 'Asimismo el/la declarante solicita se incorpore a la presente Anexo I, Formulario A (o Anexo II, Formulario B) Declaración Jurada'; mencion AFIP segun los TRES estados posibles del listado, sin excepcion: (a) si el listado dice PRESENTO -> 'y manifiesta haber presentado sus declaraciones juradas ante la A.F.I.P.'; (b) si dice NO PRESENTO -> 'y no manifiesta haber presentado sus declaraciones juradas ante la A.F.I.P.'; (c) si dice EL FORMULARIO NO LO ACLARA -> OMITI POR COMPLETO la mencion AFIP de la escritura: no escribas ni que presento ni que no presento. Es un error grave afirmar cualquiera de las dos cosas cuando el formulario no lo aclara, porque el documento estaria dando fe de un hecho que no consta. Combina ganancias y bienes personales en la formula habitual ('...correspondiente al impuesto a las ganancias y sí/no la de bienes personales') solo cuando AMBOS tengan estado (a) o (b); si uno solo de los dos no consta, redacta la frase mencionando unicamente el que si consta. Si hay una aclaracion manuscrita adicional del declarante sobre AFIP, agregala tal cual despues); y la formula final 'Que es todo cuanto tiene que declarar, dándose por terminado el presente acto, previa lectura y ratificación firma el/la compareciente, por ante mí, doy fe.-'",
+"6. Cierre: frase de ejercicio fiscal SOLO si el listado la trae; comillas de cierre; 'Asimismo el/la declarante solicita se incorpore a la presente Anexo I, Formulario A (o Anexo II, Formulario B) Declaración Jurada'; mencion AFIP segun los TRES estados posibles QUE TE DIO LA ESCRIBANA mas arriba (no los del listado, que son solo la lectura previa), sin excepcion: (a) si es PRESENTO -> 'y manifiesta haber presentado sus declaraciones juradas ante la A.F.I.P.'; (b) si es NO PRESENTO -> 'y no manifiesta haber presentado sus declaraciones juradas ante la A.F.I.P.'; (c) si es NO CONSTA -> OMITI POR COMPLETO la mencion AFIP de la escritura: no escribas ni que presento ni que no presento. Es un error grave afirmar cualquiera de las dos cosas cuando el formulario no lo aclara, porque el documento estaria dando fe de un hecho que no consta. Combina ganancias y bienes personales en la formula habitual ('...correspondiente al impuesto a las ganancias y sí/no la de bienes personales') solo cuando AMBOS tengan estado (a) o (b); si uno solo de los dos no consta, redacta la frase mencionando unicamente el que si consta. Si hay una aclaracion manuscrita adicional del declarante sobre AFIP, agregala tal cual despues); y la formula final 'Que es todo cuanto tiene que declarar, dándose por terminado el presente acto, previa lectura y ratificación firma el/la compareciente, por ante mí, doy fe.-'",
+"",
+"LAS DECLARACIONES AFIP YA ESTAN VERIFICADAS, NO LAS VUELVAS A LEER: para esta escritura, impuesto a las ganancias = " + afip.ganancias + " y bienes personales = " + afip.bienes + ". Esos dos estados los confirmo la escribana mirando el papel, asi que mandan sobre el PDF y sobre el listado: usalos tal cual aunque el PDF o el listado parezcan decir otra cosa. Redacta la mencion con la regla 6, donde NO CONSTA equivale a 'EL FORMULARIO NO LO ACLARA' y por lo tanto se omite la mencion.",
 "",
 "LA FORMULA DE IDENTIFICACION LA ELIGE LA ESCRIBANA, NO VOS: usa la del punto 2 aunque el PDF de referencia muestre otra. Es una decision del escribano sobre como conocio al compareciente, no un dato que se lea del formulario.",
 "",
@@ -746,6 +792,7 @@ document.getElementById("btn-retry-sonnet").addEventListener("click", async () =
     if(!nuevoListado){ throw new Error("La respuesta vino vacía."); }
     state.listado = nuevoListado;
     document.getElementById("listado-edit").value = nuevoListado;
+    proponerAfip(nuevoListado);
     checkListadoQuality(nuevoListado, true);
   }catch(e){
     setError("error-2", "No se pudo releer con Sonnet: " + e.message);
@@ -938,6 +985,8 @@ document.getElementById("btn-new").addEventListener("click", () => {
   document.getElementById("drop-empty").style.display = "block";
   document.getElementById("drop-filled").style.display = "none";
   document.getElementById("listado-edit").value = "";
+  document.getElementById("afip-ganancias").value = "NO CONSTA";
+  document.getElementById("afip-bienes").value = "NO CONSTA";
   document.getElementById("doc-preview").innerHTML = "";
   document.getElementById("filename-input").value = "";
   document.getElementById("warn-2").classList.remove("show");
@@ -1049,6 +1098,7 @@ document.getElementById("btn-extract").addEventListener("click", async () => {
     state.listado = out.trim();
     if(!state.listado){ throw new Error("La respuesta vino vacía. Volvé a intentar."); }
     document.getElementById("listado-edit").value = state.listado;
+    proponerAfip(state.listado);
     checkListadoQuality(state.listado);
     showPanel(2);
   }catch(e){
@@ -1238,6 +1288,6 @@ showPanel(1);
 })();
 </script>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 07/10/2026</p>
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 22/10/2026</p>
 </body>
 </html>

@@ -173,6 +173,12 @@ html[data-theme="dark"]{
   .trato > span { font-size: 12px; font-weight: 500; color: var(--texto-2); }
 
   .pista { font-size: 11.5px; line-height: 1.4; color: var(--texto-2); min-height: 16px; }
+  .pista button {
+    appearance: none; border: 1px solid var(--campo-borde); background: var(--campo-bg);
+    cursor: pointer; font-family: inherit; font-size: 11px; font-weight: 600;
+    color: var(--texto); padding: 2px 8px; border-radius: 999px; margin-left: 4px;
+  }
+  .pista button:hover { border-color: var(--foco); }
   .pista.mal { color: var(--mal); }
 
   .acciones { margin-top: auto; display: flex; flex-direction: column; gap: 9px; }
@@ -435,6 +441,7 @@ html[data-theme="dark"]{
       <label class="campo-lbl"><span>N.º de escritura</span>
         <input id="escritura" class="num" type="text" inputmode="numeric" placeholder="247" oninput="actualizar()"></label>
     </div>
+    <p class="pista" id="pistaEscritura"></p>
     <label class="campo-lbl"><span>Fecha de la escritura</span>
       <input id="fecha" class="num" type="text" inputmode="numeric" maxlength="10" placeholder="dd/mm/aaaa" oninput="actualizar()"></label>
     <p class="pista" id="pistaFecha"></p>
@@ -455,7 +462,7 @@ html[data-theme="dark"]{
     <button class="btn-clear" onclick="limpiar()">Limpiar campos</button>
   </div>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:24px 0 0;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 15/10/2026</p>
+<p class="sigec-version" style="margin:24px 0 0;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 22/10/2026</p>
 </div>
 
 <div class="preview-area">
@@ -665,6 +672,75 @@ function actualizar() {
     ' del a\u00f1o ' + c(fe ? String(fe.a) : "", "a\u00f1o") + '.-</p>';
 }
 
+/* ── LA MEMORIA DEL ULTIMO NUMERO ────────────────────────────────────────────────
+   Guarda el ultimo numero de escritura que se imprimio EN ESTA MAQUINA, con la hora.
+   La Seccion "B" lleva solo declaraciones juradas (Baltasar, 22/10/2026), asi que el
+   que sigue es el ultimo mas uno.
+
+   Por que no lo rellena siempre: el dato vive en el navegador de cada computadora, asi
+   que una maquina que no se uso en dos dias tiene un numero viejo. Rellenarlo igual
+   pondria un numero equivocado en un documento que se entrega firmado, y nadie lo
+   miraria porque el campo ya estaria lleno.
+
+   Entonces: si el ultimo se imprimio HOY en esta maquina, lo propone solo —es la tanda
+   del dia, el caso de todos los dias—. Si es de otro dia, no toca el campo: muestra cual
+   fue y cuando, y deja un boton para usarlo. El que decide es el que imprime.
+
+   Entre maquinas todavia no se comparte: para eso hace falta algo que pueda ESCRIBIR en
+   el disco R, y una pagina file:// adentro del marco de SIGEC no puede. Esta anotado en
+   el NOTAS con los dos caminos posibles. */
+var CLAVE_ULTIMA = "recibo_ultima_escritura";
+
+function leerUltima() {
+  try {
+    var v = JSON.parse(localStorage.getItem(CLAVE_ULTIMA) || "null");
+    return (v && typeof v.n === "number" && v.n > 0) ? v : null;
+  } catch (e) { return null; }
+}
+
+function recordarUltima(n) {
+  try { localStorage.setItem(CLAVE_ULTIMA, JSON.stringify({ n: n, ts: Date.now() })); }
+  catch (e) { /* almacenamiento lleno o bloqueado: no proponer es molesto, no grave */ }
+}
+
+function proponerEscritura() {
+  var pista = document.getElementById("pistaEscritura");
+  var campo = document.getElementById("escritura");
+  if (!pista || !campo) return;
+  pista.textContent = "";
+
+  var u = leerUltima();
+  if (!u) return;
+
+  var d = new Date(u.ts), h = new Date();
+  var mismoDia = d.getDate() === h.getDate() && d.getMonth() === h.getMonth() &&
+                 d.getFullYear() === h.getFullYear();
+  var hora = String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0");
+  var cuando = mismoDia ? "hoy a las " + hora
+    : String(d.getDate()).padStart(2, "0") + "/" + String(d.getMonth() + 1).padStart(2, "0") +
+      "/" + d.getFullYear();
+
+  if (mismoDia) {
+    campo.value = String(u.n + 1);
+    pista.textContent = "Sigue al " + u.n + ", que se imprimió " + cuando +
+                        ". Cambialo si no es el que va.";
+    actualizar();
+    return;
+  }
+
+  pista.textContent = "El último en esta máquina fue el " + u.n + ", el " + cuando + ". ";
+  var b = document.createElement("button");
+  b.type = "button";
+  b.textContent = "Usar " + (u.n + 1);
+  b.onclick = function () {
+    campo.value = String(u.n + 1);
+    pista.textContent = "Sigue al " + u.n + ", el último de esta máquina.";
+    actualizar();
+    campo.focus();
+  };
+  pista.appendChild(b);
+}
+
 function imprimir() {
   actualizar();
   var huecos = document.querySelectorAll(".recibo .campo.vacio").length;
@@ -677,6 +753,9 @@ function imprimir() {
   } else {
     av.style.display = "none";
   }
+  /* Se anota al imprimir y no al tipear: el numero se gasta cuando sale el papel. */
+  var n = parseInt(document.getElementById("escritura").value.replace(/\D/g, ""), 10);
+  if (n > 0) recordarUltima(n);
   window.print();
 }
 
@@ -693,6 +772,9 @@ function limpiar() {
   pintarSeg(document.getElementById("segFormulario"), formulario);
   document.getElementById("avisoHuecos").style.display = "none";
   actualizar();
+  /* Despues de imprimir uno se aprieta Limpiar y viene el siguiente de la tanda: es
+     justo el momento en que proponer el numero que sigue sirve. */
+  proponerEscritura();
 }
 
 /* Firma y banda del pie: salen de las constantes de arriba y no cambian nunca.
@@ -728,6 +810,8 @@ function limpiar() {
   document.getElementById("fecha").value = hoy;
   document.getElementById("fechaRecibo").value = hoy;
 })();
+
+proponerEscritura();
 
 actualizar();
 </script>
