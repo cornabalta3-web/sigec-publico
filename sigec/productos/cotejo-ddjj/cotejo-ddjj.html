@@ -3030,7 +3030,8 @@ async function unaVuelta(n){
   // Si falta, puede ser una lectura atrasada (recién creado): se vuelve a leer. Si sigue faltando y el repositorio
   // responde, se está volviendo a crear con otra llave, y esta es la del anterior. Si el repositorio tampoco responde
   // (404), la llave de GitHub perdió el acceso
-  if(!a){ if(i<5) continue; const r=await gh("GET",""); if(r.status===404) throw errN("acceso"); if(!r.ok) throw errN("http"); if(n!==NUBE) return; throw errN("otroCotejo"); }
+  if(!a){ if(!i){ const r=await gh("GET",""); if(r.status===404) throw errN("acceso"); if(!r.ok) throw errN("http"); }
+   if(n!==NUBE) return; if(i<5) continue; throw errN("otroCotejo"); }
   if(a&&a.sha===n.sha&&n.base){ rem=n.base; v=n.vuelta||0; }
   else if(a){ const o=await abrirSello(a.b,n.llave); if(!estadoValido(o)) throw errN("danado"); if(o.vuelta<(n.vuelta||0)) continue; rem=o.meta; v=o.vuelta; cuentas=o.cuentas; }
   if(n!==NUBE) return;
@@ -3119,7 +3120,7 @@ function pasoToken(){ if(WEB){ if(!NUBE) return pasoEntrarWeb(); return formNube
   ${campoN("nTok","Llave de GitHub","password","off")}<p class="ayuda" style="margin:0">Lo que se sube va cifrado: GitHub guarda los datos sin poder leerlos. Después, cada persona entra con su usuario y su clave.</p>`,"Seguir"); }
 async function pasoUsuario(){ formNube("buscando","Compartir con el equipo",`<p style="margin:0" role="status">Buscando el cotejo compartido…</p>`,"");
  // con una llave que perdió el acceso, GitHub contesta 404 a todo: sin esto, parecería que el repositorio está vacío
- let us; try{ const r=await gh("GET",""); if(r.status===404) throw errN("acceso"); if(!r.ok) throw errN("http"); us=await leerUsuarios(); }catch(e){ return formNube("error","No se pudo entrar",`<p style="margin:0">${esc(txtDlg(e))}</p>`,"",`<button class="btn lnk sm" type="button" data-acc="nubeToken">Cambiar la llave de GitHub</button>`); }
+ let us; try{ const r=await gh("GET",""); if(r.status===404) throw errN("acceso"); if(!r.ok) throw errN("http"); us=await leerUsuarios(); }catch(e){ if(NUBE_PASO!=="buscando"||!dlg.open) return; return formNube("error","No se pudo entrar",`<p style="margin:0">${esc(txtDlg(e))}</p>`,"",`<button class="btn lnk sm" type="button" data-acc="nubeToken">Cambiar la llave de GitHub</button>`); }
  if(NUBE_PASO!=="buscando"||!dlg.open) return;
  if(!us) return formCrear();
  formNube("entrar","Entrar al cotejo compartido",`<p style="margin:0">Entrá con tu usuario y tu clave del cotejo compartido. Si tu cuenta es de Ley Pierri, son el mismo usuario y la misma clave de allá.</p>${campoN("nU","Usuario","text","username",usuarioGuardado())}${campoN("nC","Clave","password","current-password")}
@@ -3282,7 +3283,7 @@ function pasoAgregar(){ formNube("agregar","Agregar a alguien",`<p style="margin
 function pasoClave(){ if(NUBE.pierri) return formNube("claveP","Tu clave de Ley Pierri",`<p style="margin:0">Entrás con tu clave de Ley Pierri, así que se cambia allá. Si ya la cambiaste, escribí acá la nueva: el cotejo la toma, y desde una computadora nueva vas a entrar con ella. Conviene hacerlo con el cotejo abierto: cambiarla en Ley Pierri y enseguida tocar acá «Actualizar».</p>${campoN("nC","Tu clave de Ley Pierri, la de ahora","password","current-password")}`,"Actualizar");
  formNube("clave","Cambiar mi clave",`<p style="margin:0">Cambia la clave con que entrás vos, <b>${esc(NUBE.u)}</b>.</p>${campoN("nA","Tu clave de ahora","password","current-password")}${campoN("nC","La clave nueva, de al menos 8 caracteres","password","new-password")}${campoN("nC2","La clave nueva, otra vez","password","new-password")}`,"Cambiar la clave"); }
 async function pasoUsuarios(){ formNube("buscando","Usuarios",`<p style="margin:0" role="status">Buscando los usuarios…</p>`,"");
- let us; try{ us=await leerUsuarios(); }catch(e){ return formNube("error","Usuarios",`<p style="margin:0">${esc(txtDlg(e))}</p>`,""); }
+ let us; try{ us=await leerUsuarios(); }catch(e){ if(NUBE_PASO!=="buscando"||!dlg.open||!NUBE) return; return formNube("error","Usuarios",`<p style="margin:0">${esc(txtDlg(e))}</p>`,""); }
  if(NUBE_PASO!=="buscando"||!dlg.open||!NUBE) return; const L=us?us.o.usuarios.filter(esObj):[];
  formNube("usuarios","Usuarios",`<p style="margin:0">Quienes pueden entrar al cotejo compartido con su usuario y su clave.</p>
   <ul class="lista-u">${L.map(v=>`<li><span><b>${esc(v.n||v.u)}</b><span class="ayuda" style="margin:0"> · ${v.pierri?`cuenta de Ley Pierri «${esc(v.u)}»${ROLES_P[v.rol]?` (${ROLES_P[v.rol]})`:""}${v.por?`, la trajo ${esc(v.por)}`:""}`:v.por&&normU(v.por)!==normU(v.u)?`lo agregó ${esc(v.por)}`:"creó el compartido"}${v.t?`, el ${fechaDe(new Date(v.t))}`:""}</span></span>${normU(v.u)===normU(NUBE.u)?`<span class="ayuda" style="margin:0">vos</span>`:`<button class="btn lnk sm" type="button" data-sacar="${esc(v.u)}">Sacar</button>`}</li>`).join("")}</ul>
@@ -3337,7 +3338,8 @@ async function enviarTraer(P,f){ const vivo=()=>dlg.open&&f.isConnected, malNube
   const yoP=T.cs.find(c=>c.u===normP(NUBE.u)); if(yoP&&marc.has(yoP.u)){ Object.assign(NUBE,{pierri:true,n:yoP.n}); await guardarNubeLocal(); pintarNube(); }
   TRAER=null; if(!vivo()) return;
   return dialogoAviso("Listo",`En el cotejo hay ${n===1?"una cuenta":nf(n)+" cuentas"} de Ley Pierri. Cada una entra con su usuario y su clave de Ley Pierri; desde una computadora nueva necesita además la llave de GitHub, una sola vez. Si alguien cambia la clave en Ley Pierri, en una computadora donde ya entró toca «Cambiar mi clave»; si no, se vuelven a traer.`); } }
-const sinSubir=()=>!!NUBE&&(!!SYNC||pendiente()||[...LISTAS.keys()].some(id=>!NUBE.subidas.has(id)&&referenciada(id)));
+// una vuelta en curso no cuenta por sí sola: si sube algo, pendiente() ya da verdadero (lo de acá difiere de la base)
+const sinSubir=()=>!!NUBE&&(pendiente()||[...LISTAS.keys()].some(id=>!NUBE.subidas.has(id)&&referenciada(id)));
 function pasoSalir(){ const pend=WEB?sinSubir():pendiente();
  if(WEB){ $("#dlgCont").innerHTML=`<div class="dlg-cab"><h2 id="dlgTit">Salir del cotejo</h2></div><div class="dlg-cuerpo"><p style="margin:0">Se cierra la sesión y se borra de esta página lo que se bajó. Para volver, se entra de nuevo con el usuario y la clave.</p>${pend?`<p class="aviso" style="margin:0">Hay cambios que todavía no subieron a GitHub: si salís ahora, se pierden. Tocá «Actualizar ahora» y esperá a que diga «al día».</p>`:""}</div>
    <div class="dlg-pie"><span></span><div class="row"><button class="btn" type="button" data-acc="cerrarDlg">Cancelar</button><button class="btn ${pend?"":"pri"}" type="button" data-acc="nubeSalirSi">${pend?"Salir igual":"Salir"}</button></div></div>`;
