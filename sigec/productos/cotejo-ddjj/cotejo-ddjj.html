@@ -3027,8 +3027,10 @@ async function unaVuelta(n){
   if(i) await esperar(400*i);
   const a=await leerGH(R_ESTADO); let rem=null, v=0, cuentas=null; if(n!==NUBE) return;
   // sin estado en GitHub, una sesión no lo escribe de cero: eso es sólo de quien crea el compartido (crearCompartido).
-  // Si falta, se está volviendo a crear con otra llave, y esta es la del anterior
-  if(!a) throw errN("otroCotejo");
+  // Si falta, puede ser una lectura atrasada (recién creado): se vuelve a leer. Si sigue faltando y el repositorio
+  // responde, se está volviendo a crear con otra llave, y esta es la del anterior. Si el repositorio tampoco responde
+  // (404), la llave de GitHub perdió el acceso
+  if(!a){ if(i<5) continue; const r=await gh("GET",""); if(r.status===404) throw errN("acceso"); if(!r.ok) throw errN("http"); if(n!==NUBE) return; throw errN("otroCotejo"); }
   if(a&&a.sha===n.sha&&n.base){ rem=n.base; v=n.vuelta||0; }
   else if(a){ const o=await abrirSello(a.b,n.llave); if(!estadoValido(o)) throw errN("danado"); if(o.vuelta<(n.vuelta||0)) continue; rem=o.meta; v=o.vuelta; cuentas=o.cuentas; }
   if(n!==NUBE) return;
@@ -3116,7 +3118,8 @@ function pasoToken(){ if(WEB){ if(!NUBE) return pasoEntrarWeb(); return formNube
  formNube("token","Compartir con el equipo",`<p style="margin:0">El cotejo compartido vive en un repositorio privado de GitHub, <b>cotejo-ddjj-datos</b>. Para que esta computadora entre, se pega una sola vez su llave de GitHub (un «token»), que da quien administra el repositorio. Queda guardada en esta computadora.</p>
   ${campoN("nTok","Llave de GitHub","password","off")}<p class="ayuda" style="margin:0">Lo que se sube va cifrado: GitHub guarda los datos sin poder leerlos. Después, cada persona entra con su usuario y su clave.</p>`,"Seguir"); }
 async function pasoUsuario(){ formNube("buscando","Compartir con el equipo",`<p style="margin:0" role="status">Buscando el cotejo compartido…</p>`,"");
- let us; try{ us=await leerUsuarios(); }catch(e){ return formNube("error","No se pudo entrar",`<p style="margin:0">${esc(txtDlg(e))}</p>`,"",`<button class="btn lnk sm" type="button" data-acc="nubeToken">Cambiar la llave de GitHub</button>`); }
+ // con una llave que perdió el acceso, GitHub contesta 404 a todo: sin esto, parecería que el repositorio está vacío
+ let us; try{ const r=await gh("GET",""); if(r.status===404) throw errN("acceso"); if(!r.ok) throw errN("http"); us=await leerUsuarios(); }catch(e){ return formNube("error","No se pudo entrar",`<p style="margin:0">${esc(txtDlg(e))}</p>`,"",`<button class="btn lnk sm" type="button" data-acc="nubeToken">Cambiar la llave de GitHub</button>`); }
  if(NUBE_PASO!=="buscando"||!dlg.open) return;
  if(!us) return formCrear();
  formNube("entrar","Entrar al cotejo compartido",`<p style="margin:0">Entrá con tu usuario y tu clave del cotejo compartido. Si tu cuenta es de Ley Pierri, son el mismo usuario y la misma clave de allá.</p>${campoN("nU","Usuario","text","username",usuarioGuardado())}${campoN("nC","Clave","password","current-password")}
