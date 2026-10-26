@@ -945,7 +945,10 @@ function guardarMeta(silencioso,opt){ opt=opt||{}; if(DEMO) return Promise.resol
   t.onabort=()=>{ META.rev=REV; if(pisada&&(silencioso||opt.blando)){ ok(false); setTimeout(revisarOtraVentana); return; } if(pisada) conflicto=true; else errorGuardar=(t.error&&t.error.name)||"error"; pintarBandas(); ok(false); }; }); }
 /* Si otra ventana guardó, al volver a esta se toma lo nuevo (si no hay nada a medio hacer). */
 async function revisarOtraVentana(){ if(DEMO||!db||conflicto||dlg.open) return;
- try{ const m=await pedir("meta","readonly",s=>s.get("estado")); if(m&&Array.isArray(m.semanas)&&(m.rev||0)!==REV){ META=Object.assign(metaVacia(),m); REV=m.rev||0; await cargarNube(); VER++; MEMO.clear(); await pintar(); } }catch(e){} }
+ try{ const m=await pedir("meta","readonly",s=>s.get("estado")); if(m&&Array.isArray(m.semanas)&&(m.rev||0)!==REV){ META=Object.assign(metaVacia(),m); REV=m.rev||0; await cargarNube(); VER++; MEMO.clear(); await pintar(); }
+  // otra ventana creó el compartido sin tocar lo cargado: esta lo toma. (Al revés no: con NUBE puesto, puede ser esta
+  // misma ventana creándolo, antes de guardar la sesión)
+  else if(!NUBE){ const x=await pedir("meta","readonly",s=>s.get("nube")); if(x&&x.u){ await cargarNube(); if(NUBE){ VER++; MEMO.clear(); await pintar(); sincronizar(); } } } }catch(e){} }
 async function guardarLista(l){ LS().set(l.id,l); if(DEMO||!db) return; await pedir("listas","readwrite",s=>s.put(l)); }
 async function borrarLista(id){ LS().delete(id); if(DEMO||!db) return; try{ await pedir("listas","readwrite",s=>s.delete(id)); }catch(e){} }
 /* Borra lo que ya no usa ninguna semana. Sólo después de guardar META: si se guardara
@@ -2687,7 +2690,8 @@ function validarCopia(o){ const mal=t=>{ throw new Error(t); };
  catch(e){ mal("La copia está dañada: no se puede cotejar con ella."); } finally{ DEMO=antes; }
  return o; }
 let COPIA=null;
-async function abrirCopia(fl){ if(WEB&&!NUBE) return pasoEntrarWeb(); if(NUBE&&NUBE.estado==="error"&&!META.semanas.length) return dialogoAviso("No se abrió la copia",SIN_COMPROBAR()); if(NUBE?!compartidoVacio():(db&&await pedir("meta","readonly",s=>s.get("nube")).catch(()=>null))) return dialogoAviso("Con el cotejo compartido no se abre una copia","Abrirla pisaría lo que decidieron los demás. Lo de todos ya está en el compartido."); let o; try{ o=validarCopia(JSON.parse(decodificar(await fl.arrayBuffer()))); }catch(e){ dialogoAviso("No se puede abrir esa copia",e instanceof SyntaxError||!(e&&e.message)?"El archivo no es una copia del cotejo.":e.message); return; }
+const COPIA_CONFLICTO=()=>dialogoAviso("No se abrió la copia","Otra ventana del cotejo guardó cambios después de que se abrió esta. Recargá para tomar lo más nuevo y después abrí la copia.",'<button class="btn" type="button" data-acc="recargar">Recargar</button> ');
+async function abrirCopia(fl){ if(WEB&&!NUBE) return pasoEntrarWeb(); if(conflicto) return COPIA_CONFLICTO(); if(NUBE&&NUBE.estado==="error"&&!META.semanas.length) return dialogoAviso("No se abrió la copia",SIN_COMPROBAR()); if(NUBE?!compartidoVacio():(db&&await pedir("meta","readonly",s=>s.get("nube")).catch(()=>null))) return dialogoAviso("Con el cotejo compartido no se abre una copia","Abrirla pisaría lo que decidieron los demás. Lo de todos ya está en el compartido."); let o; try{ o=validarCopia(JSON.parse(decodificar(await fl.arrayBuffer()))); }catch(e){ dialogoAviso("No se puede abrir esa copia",e instanceof SyntaxError||!(e&&e.message)?"El archivo no es una copia del cotejo.":e.message); return; }
  COPIA=o; const ns=o.meta.semanas.length, ult=o.meta.semanas[ns-1], mias=META.semanas.length;
  $("#dlgCont").innerHTML=`<div class="dlg-cab"><h2 id="dlgTit">Abrir la copia</h2></div><div class="dlg-cuerpo"><p style="margin:0">La copia se guardó el <b>${fechaHora(o.guardada)}</b> y tiene ${ns===1?"una semana":nf(ns)+" semanas"}${ult?`, la última del ${isoAFecha(ult.s)}`:""}.</p>
   <p style="margin:0">${NUBE?"<b>El cotejo compartido está vacío</b>: lo de la copia se sube a GitHub y lo ven todos.":mias?`<b>Reemplaza lo que hay en esta computadora</b> (${mias===1?"una semana":nf(mias)+" semanas"}, la última del ${isoAFecha(META.semanas[mias-1].s)}). Si no estás seguro, guardá antes una copia de lo de acá.`:"En esta computadora no hay nada cargado todavía."}</p></div>
@@ -2718,7 +2722,7 @@ async function reemplazar(){ const o=COPIA; if(!o) return;
     t.oncomplete=()=>ok(); t.onerror=()=>{ if(!otra) mal(t.error); }; t.onabort=()=>mal(otra?errN("otraVentana"):(t.error||new Error("abortada"))); }); }
   LISTAS.clear(); o.listas.forEach(l=>LISTAS.set(l.id,l)); META=meta; REV=meta.rev||0; conflicto=false;
   VISTA=null; TAB=null; VER++; MEMO.clear(); dlg.close(); await pintar(); if(NUBE) programarSubida(); }
- catch(e){ if(e&&e.c==="otraVentana"){ dlg.close(); await revisarOtraVentana(); return dialogoAviso("No se abrió la copia","Mientras el cuadro estaba abierto, en otra ventana de esta computadora se entró al cotejo compartido o se cambió lo cargado: abrirla lo pisaría. Mirá lo que hay ahora y, si hace falta, volvé a abrirla."); }
+ catch(e){ if(e&&e.c==="otraVentana"){ dlg.close(); if(conflicto) return COPIA_CONFLICTO(); await revisarOtraVentana(); return dialogoAviso("No se abrió la copia","Mientras el cuadro estaba abierto, en otra ventana de esta computadora se entró al cotejo compartido o se cambió lo cargado: abrirla lo pisaría. Mirá lo que hay ahora y, si hace falta, volvé a abrirla."); }
   dialogoAviso("No se pudo abrir la copia","No se pudo guardar en esta computadora ("+((e&&e.name)||"error")+"). Lo que había quedó como estaba."); } }
 function dialogoAviso(t,txt,extra){ $("#dlgCont").innerHTML=`<div class="dlg-cab"><h2 id="dlgTit">${esc(t)}</h2></div><div class="dlg-cuerpo"><p style="margin:0">${esc(txt)}</p></div><div class="dlg-pie"><span></span><div class="row">${extra||""}<button class="btn pri" type="button" data-acc="cerrarDlg">Entendido</button></div></div>`; if(!dlg.open) dlg.showModal(); }
 
@@ -3022,6 +3026,9 @@ async function unaVuelta(n){
  for(let i=0;i<6;i++){
   if(i) await esperar(400*i);
   const a=await leerGH(R_ESTADO); let rem=null, v=0, cuentas=null; if(n!==NUBE) return;
+  // sin estado en GitHub, una sesión no lo escribe de cero: eso es sólo de quien crea el compartido (crearCompartido).
+  // Si falta, se está volviendo a crear con otra llave, y esta es la del anterior
+  if(!a) throw errN("otroCotejo");
   if(a&&a.sha===n.sha&&n.base){ rem=n.base; v=n.vuelta||0; }
   else if(a){ const o=await abrirSello(a.b,n.llave); if(!estadoValido(o)) throw errN("danado"); if(o.vuelta<(n.vuelta||0)) continue; rem=o.meta; v=o.vuelta; cuentas=o.cuentas; }
   if(n!==NUBE) return;
