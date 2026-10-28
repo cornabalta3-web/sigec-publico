@@ -185,6 +185,36 @@ html[data-theme="dark"] button.go:disabled{background:#2E4A43;color:#8AA69E}
 
   .cfg{border-color:#E4F1EB;background:#FAFDFC}
   .cfg h2{font-size:15px}
+
+  /* los comparecientes: una fila por persona, con dos tildes */
+  .comps-head,.comp{display:grid;grid-template-columns:minmax(0,1fr) 52px 52px 34px;gap:8px;align-items:center}
+  .comps-head{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;font-weight:700;color:var(--muted);padding:0 0 6px;border-bottom:1px solid var(--line);margin-bottom:8px}
+  .comps-head span:nth-child(2),.comps-head span:nth-child(3){text-align:center}
+  .comp{margin-bottom:8px;align-items:start}
+  .comp .cn{min-width:0}
+  .comp .cnota{font-size:12px;color:var(--warn);margin-top:3px;line-height:1.35}
+  .comp .ct{display:flex;justify-content:center;align-items:center;height:35px;margin:0;cursor:pointer}
+  .comp .ct input{width:20px;height:20px;accent-color:var(--verde);cursor:pointer;margin:0}
+  .comp.mano .cn input{border-color:var(--acento)}
+
+  /* las fojas: qué páginas lleva cada una, y las ya usadas */
+  .fojaline .pag{flex:0 0 auto;font-size:12px;color:var(--muted);min-width:78px}
+  .fojaline.usada input{border-color:#B3261E;background:#FBEAEA;color:#B3261E}
+  .info{margin:0 0 14px;padding:10px 12px;border-radius:7px;background:var(--agua-pale);border:1px solid var(--line);color:var(--verde-txt);font-size:13px;line-height:1.5}
+  .err-caja{margin-top:10px;padding:10px 12px;border-radius:7px;border:1.5px solid #B3261E;background:#FBEAEA;color:#B3261E;font-size:13px;line-height:1.5}
+  details.registro{margin-top:14px;font-size:13px}
+  details.registro summary{cursor:pointer;color:var(--verde-txt);font-weight:600}
+  .regfila{display:flex;gap:10px;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--line);font-size:12.5px}
+  .regfila span{font-variant-numeric:tabular-nums;min-width:0;overflow-wrap:anywhere}
+  .regfila button{font:inherit;font-size:12px;background:none;border:1px solid var(--line);border-radius:6px;padding:4px 9px;cursor:pointer;color:var(--muted);flex:0 0 auto}
+
+  /* la vista previa: el texto de la escritura en su propio recuadro, que no se toca */
+  .intacto{margin:0 0 12px;padding:11px 13px;border-radius:8px;background:#F1F4F7;border:1.5px solid #8E9BAA;color:#1E2634;font-size:13px;line-height:1.5}
+  html[data-theme="dark"] .intacto{background:#232D38;border-color:#4A5868;color:#E4E9EE}
+  .preview .esc{display:block;border:1.5px dashed #8E9BAA;background:#F7F9FA;border-radius:6px;padding:6px 10px 8px;margin:6px 0;color:#1a1a1a}
+  .preview .esc .candado{display:block;font-family:Montserrat,system-ui,sans-serif;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:#4A5568}
+  .preview .esc .corte{display:block;text-align:center;font-family:Montserrat,system-ui,sans-serif;font-size:11px;letter-spacing:.08em;color:#65748C;margin:4px 0}
+  .swatch.esc{background:#F7F9FA;border:1.5px dashed #8E9BAA}
 </style>
 
 <header class="top">
@@ -248,33 +278,56 @@ try{ if(window.self!==window.top) document.documentElement.classList.add('embebi
         </div>
       </div>
 
+      <!-- Una sola lista: cada compareciente con dos tildes, «Firma» y «Para». Antes eran dos
+           listas con los mismos nombres, y la segunda salía de suponer que el primero
+           representa al Estado. Se puede agregar a quien falte, corregir y quitar (23/10/2026). -->
       <div class="card">
-        <span class="step">Paso 3 — opcional</span>
-        <label class="toggle">
-          <input type="checkbox" id="openEsp">
-          <span class="tt">
-            <h2>Firmas y casos especiales</h2>
-            <p id="espResumen">Las firmas ya se cargan solas. Tildá para revisarlas o para agregar una firma a ruego.</p>
-          </span>
-        </label>
-
-        <div class="fold" id="espBody" hidden>
-          <div class="field">
-            <label>“Hay una firma de …”</label>
-            <div id="firmas"></div>
-            <button class="add" id="addFirma">+ Agregar firma</button>
-            <p class="fieldnote">Comparecientes, cónyuges y firmantes a ruego, en orden. Salen en negrita.</p>
-          </div>
-
-          <div class="field">
-            <label for="firmantes">Quiénes firman, dentro de “firman los comparecientes ___”</label>
-            <input type="text" id="firmantes" placeholder="Guillermo Luis de RIVAS y José Francisco AGUILERA">
-            <p class="fieldnote">Solo cuando alguno no firma. Vacío = la frase queda como está.</p>
-          </div>
-
+        <span class="step">Paso 3</span>
+        <h2>Los comparecientes</h2>
+        <p class="hint">Se leen de la escritura. Tildá quién firma y para quién se expide. Podés agregar a alguien —el firmante a ruego, alguien que no se leyó—, corregir un nombre o quitarlo.</p>
+        <div class="comps-head" aria-hidden="true"><span>Compareciente</span><span>Firma</span><span>Para</span><span></span></div>
+        <div id="comps"></div>
+        <button class="add" id="addComp" type="button">+ Agregar a alguien</button>
+        <div class="auto" id="autoTrato" style="display:none"></div>
+        <div class="row" style="margin-top:14px">
           <div class="field" style="margin-bottom:0">
-            <label for="clausula">Cláusula previa (firma a ruego, impresión digital)</label>
-            <textarea id="clausula" placeholder="La señora … manifiesta no saber firmar y estampa su impresión dígito pulgar derecho, firmando a ruego …"></textarea>
+            <label for="trato">Tratamiento</label>
+            <select id="trato">
+              <option value="auto" selected>Automático, según los nombres</option>
+              <option value="el señor">el señor</option>
+              <option value="la señora">la señora</option>
+              <option value="los señores">los señores</option>
+              <option value="las señoras">las señoras</option>
+              <option value="">(sin tratamiento)</option>
+            </select>
+          </div>
+          <div class="field" style="margin-bottom:0">
+            <label for="benefNegrita" style="margin-bottom:9px">Estilo de «Para»</label>
+            <label class="toggle" style="font-size:13px;font-weight:400;color:var(--ink)">
+              <input type="checkbox" id="benefNegrita" checked>
+              <span class="tt" style="padding-top:1px">En negrita</span>
+            </label>
+          </div>
+        </div>
+
+        <div style="margin-top:18px">
+          <label class="toggle">
+            <input type="checkbox" id="openEsp">
+            <span class="tt">
+              <h2 style="font-size:14.5px">Firma a ruego y otros casos</h2>
+              <p id="espResumen">Sólo cuando alguno no firma.</p>
+            </span>
+          </label>
+          <div class="fold" id="espBody" hidden>
+            <div class="field">
+              <label for="firmantes">Quiénes firman, dentro de “firman los comparecientes ___”</label>
+              <input type="text" id="firmantes" placeholder="Guillermo Luis de RIVAS y José Francisco AGUILERA">
+              <p class="fieldnote">Solo cuando alguno no firma. Vacío = la frase queda como está.</p>
+            </div>
+            <div class="field" style="margin-bottom:0">
+              <label for="clausula">Cláusula previa (firma a ruego, impresión digital)</label>
+              <textarea id="clausula" placeholder="La señora … manifiesta no saber firmar y estampa su impresión dígito pulgar derecho, firmando a ruego …"></textarea>
+            </div>
           </div>
         </div>
       </div>
@@ -302,53 +355,28 @@ try{ if(window.self!==window.top) document.documentElement.classList.add('embebi
     </div>
 
     <div>
+      <!-- Una foja es una hoja impresa de los dos lados, con un solo número: dos páginas
+           (Baltasar, 20/10/2026). Cualquiera se puede cambiar, no sólo la primera, porque
+           pueden no ser correlativas (23/10/2026). -->
       <div class="card">
         <span class="step">Paso 4</span>
-        <h2>Para quién se expide</h2>
-        <p class="hint">Se cargan solos. Sacá el que no corresponda.</p>
-        <div class="field">
-          <label>Beneficiarios</label>
-          <div id="benef"></div>
-          <button class="add" id="addBenef">+ Agregar beneficiario</button>
-          <div class="auto" id="autoTrato" style="display:none"></div>
-        </div>
-        <div class="row">
-          <div class="field" style="margin-bottom:0">
-            <label for="trato">Tratamiento</label>
-            <select id="trato">
-              <option value="auto" selected>Automático, según los nombres</option>
-              <option value="el señor">el señor</option>
-              <option value="la señora">la señora</option>
-              <option value="los señores">los señores</option>
-              <option value="las señoras">las señoras</option>
-              <option value="">(sin tratamiento)</option>
-            </select>
-          </div>
-          <div class="field" style="margin-bottom:0">
-            <label for="benefNegrita" style="margin-bottom:9px">Estilo</label>
-            <label class="toggle" style="font-size:13px;font-weight:400;color:var(--ink)">
-              <input type="checkbox" id="benefNegrita" checked>
-              <span class="tt" style="padding-top:1px">En negrita</span>
-            </label>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <span class="step">Paso 5</span>
         <h2>Fojas de actuación notarial</h2>
-        <p class="hint">Escribí la primera y las siguientes se completan solas.</p>
+        <p class="hint">Cada foja va impresa de los dos lados: dos páginas. Escribí la primera y las siguientes se completan solas; cualquiera se puede cambiar, porque pueden no ser correlativas.</p>
+        <div class="info" id="pagInfo" style="display:none"></div>
         <div class="row">
           <div class="field">
             <label for="cantFojas">Cantidad</label>
-            <input type="number" id="cantFojas" min="1" max="40" value="4">
+            <input type="number" id="cantFojas" min="1" max="40" value="">
           </div>
           <div class="field">
             <label for="foja1">Primera foja</label>
             <input type="text" id="foja1" placeholder="A 021729505">
+            <p class="fieldnote">pág. 1 y 2</p>
           </div>
         </div>
         <div id="fojas"></div>
+        <p class="fieldnote" style="margin-top:2px">Al cambiar una foja, las de abajo siguen desde esa.</p>
+        <div id="fojaEst" style="display:none"></div>
         <div class="field" style="margin-top:14px;margin-bottom:0">
           <label for="fojaFmt">Cómo se entrecomillan</label>
           <select id="fojaFmt">
@@ -356,19 +384,24 @@ try{ if(window.self!==window.top) document.documentElement.classList.add('embebi
             <option value="grp">Todas juntas — “A021533745; A021533762”</option>
           </select>
         </div>
-        <p class="fieldnote">Al editar una foja se recalculan solo las de abajo, así podés cortar la correlatividad.</p>
+        <details class="registro" id="regBox">
+          <summary id="regTit">Fojas que salieron de esta computadora</summary>
+          <div id="regLista"></div>
+          <p class="fieldnote">Cada uno usa en su computadora las fojas que le dieron, así que la lista ve todas las suyas. Si una quedó anotada sin imprimirse, se quita acá.</p>
+        </details>
       </div>
 
       <div class="card">
         <h2>Cómo va a quedar</h2>
-        <p class="hint">En gris, el cuerpo de la escritura que no se toca. <b>El cierre se puede
-        editar acá mismo</b>: escribí encima y, si necesitás negrita, marcá el texto y usá Ctrl+B.</p>
+        <div class="intacto"><b>El texto de la escritura no se toca.</b> Sale igual que en el Word: las mismas palabras, la misma fuente, los mismos márgenes y el mismo interlineado. La app sólo agrega lo verde: el folio adelante y el cierre atrás. <b>El cierre se puede editar acá mismo</b>: escribí encima y, si necesitás negrita, marcá el texto y usá Ctrl+B.</div>
         <div class="preview" id="preview"></div>
         <div class="barrita">
-          <span class="swatch"></span><span class="legend" style="margin:0">Texto que agrega la app</span>
+          <span class="swatch esc"></span><span class="legend" style="margin:0">Texto de la escritura: no se toca</span>
+          <span class="swatch"></span><span class="legend" style="margin:0">Lo que agrega la app</span>
           <span class="ed" id="edAviso" style="display:none;margin-left:auto">Cierre editado a mano</span>
           <button id="btnRehacer" style="display:none">Volver a generarlo</button>
         </div>
+        <div class="nota" id="frAviso" style="display:none"></div>
       </div>
 
       <div class="actions">
@@ -610,9 +643,15 @@ function siguienteFoja(s){
   const num=(BigInt(m[2])+1n).toString().padStart(m[2].length,'0');
   return m[1]+num+m[3];
 }
+/* Las páginas del Word, como las guardó Word en docProps/app.xml. Una foja de actuación
+   notarial es una hoja impresa de los dos lados, con un solo número: lleva dos páginas.
+   El cierre que se agrega puede sumar una página, así que se dice el rango. */
+let PAGINAS=null;
+function fojasNecesarias(){ return PAGINAS?{min:Math.ceil(PAGINAS/2),max:Math.ceil((PAGINAS+1)/2)}:null; }
+function cantidadFojas(){ const n=parseInt(document.getElementById('cantFojas').value,10); return n>0?Math.min(40,n):0; }
 let fojasVal=[];
 function rebuildFojas(desde){
-  const cant=Math.max(1,Math.min(40,parseInt(document.getElementById('cantFojas').value||'1',10)));
+  const cant=Math.max(1,cantidadFojas()||1);
   const base=document.getElementById('foja1').value.trim();
   if(!fojasVal.length) fojasVal=[base];
   fojasVal[0]=base;
@@ -627,34 +666,130 @@ function renderFojas(){
     if(i===0) return;
     const d=document.createElement('div'); d.className='fojaline';
     d.innerHTML='<span class="n">'+(i+1)+'</span>';
-    const inp=document.createElement('input'); inp.type='text'; inp.value=v||'';
-    inp.addEventListener('input',()=>{fojasVal[i]=inp.value.trim();});
+    const inp=document.createElement('input'); inp.type='text'; inp.value=v||''; inp.setAttribute('aria-label','Foja '+(i+1));
+    inp.addEventListener('input',()=>{fojasVal[i]=inp.value.trim(); pintarFojas();});
     inp.addEventListener('change',()=>{fojasVal[i]=inp.value.trim();rebuildFojas(i);actualizar();});
-    d.appendChild(inp); c.appendChild(d);
+    const pg=document.createElement('span'); pg.className='pag'; pg.textContent='pág. '+(2*i+1)+' y '+(2*i+2);
+    d.appendChild(inp); d.appendChild(pg); c.appendChild(d);
   });
 }
 
-/* ================= listas ================= */
-function listaEditable(contId,placeholder){
-  const cont=document.getElementById(contId);
-  return {
-    valores(){ return [...cont.querySelectorAll('input')].map(i=>i.value.trim()).filter(Boolean); },
-    vaciar(){ cont.innerHTML=''; },
-    agregar(v){
-      const d=document.createElement('div'); d.className='rowitem';
-      const inp=document.createElement('input'); inp.type='text'; inp.placeholder=placeholder; inp.value=v||'';
-      inp.addEventListener('input',actualizar);
-      const b=document.createElement('button'); b.className='del'; b.type='button'; b.textContent='×'; b.title='Quitar';
-      b.addEventListener('click',()=>{d.remove();actualizar();});
-      d.appendChild(inp); d.appendChild(b); cont.appendChild(d); actualizar();
-      return inp;
-    }
-  };
+/* ================= las fojas que ya salieron de esta computadora ================= */
+/* Cada hoja de actuación notarial se usa una sola vez. Se anota qué fojas llevó cada
+   testimonio generado acá y, si una vuelve a aparecer en otro, no se genera. Rehacer el mismo
+   testimonio —mismo folio y misma escritura— no cuenta como repetir. Cada uno usa en su
+   computadora las fojas que le dieron, así que la lista ve todas las suyas. */
+const REG_KEY='sigec_testimonio_fojas';
+const normFoja=s=>String(s).replace(/\s+/g,'').toUpperCase();
+function leerReg(){ try{ const r=JSON.parse(localStorage.getItem(REG_KEY)||'[]'); return Array.isArray(r)?r:[]; }catch(e){ return []; } }
+function guardarReg(r){ try{ localStorage.setItem(REG_KEY,JSON.stringify(r.slice(-300))); }catch(e){} }
+function escrituraDelTestimonio(){
+  return NUM.estado==='ok'?String(NUM.n):(document.getElementById('escNum').value.trim()||'sin número');
 }
-const firmas=listaEditable('firmas','Nombre y APELLIDO');
-const benef=listaEditable('benef','Nombre y APELLIDO');
-document.getElementById('addFirma').addEventListener('click',()=>firmas.agregar().focus());
-document.getElementById('addBenef').addEventListener('click',()=>benef.agregar().focus());
+function claveTestimonio(){
+  return document.getElementById('folio').value.trim()+'|'+(NUM.estado==='ok'?String(NUM.n):(document.getElementById('escNum').value.trim()||origName));
+}
+function fojasRepetidas(){
+  const clave=claveTestimonio(), reg=leerReg(), out=[];
+  fojasVal.filter(Boolean).forEach(f=>{
+    const r=reg.find(x=>x.clave!==clave&&(x.fojas||[]).some(y=>normFoja(y)===normFoja(f)));
+    if(r) out.push({f,r});
+  });
+  return out;
+}
+function anotarFojas(){
+  const clave=claveTestimonio(), d=new Date();
+  const reg=leerReg().filter(x=>x.clave!==clave);
+  reg.push({clave,
+    fecha:String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0')+'/'+d.getFullYear(),
+    esc:escrituraDelTestimonio(), folio:document.getElementById('folio').value.trim(), fojas:fojasVal.filter(Boolean)});
+  guardarReg(reg); pintarRegistro();
+}
+function pintarRegistro(){
+  const reg=leerReg(), l=document.getElementById('regLista');
+  document.getElementById('regTit').textContent='Fojas que salieron de esta computadora ('+reg.length+')';
+  l.innerHTML='';
+  if(!reg.length){ l.innerHTML='<p class="fieldnote">Todavía ninguna.</p>'; return; }
+  reg.slice(-12).reverse().forEach(r=>{
+    const d=document.createElement('div'); d.className='regfila';
+    const s=document.createElement('span'), fs=r.fojas||[];
+    s.textContent=r.fecha+' · escritura '+r.esc+' · folio '+r.folio+' · '+(fs.length>1?fs[0]+' a '+fs[fs.length-1]:(fs[0]||''));
+    const b=document.createElement('button'); b.type='button'; b.textContent='Quitar';
+    b.setAttribute('aria-label','Quitar de la lista las fojas de la escritura '+r.esc);
+    b.addEventListener('click',()=>{ guardarReg(leerReg().filter(x=>x.clave!==r.clave)); pintarRegistro(); pintarFojas(); });
+    d.appendChild(s); d.appendChild(b); l.appendChild(d);
+  });
+}
+/* Las páginas, si la cantidad alcanza o sobra, y las fojas ya usadas. No redibuja los campos:
+   sólo marca, así no se pierde el foco al escribir. */
+function pintarFojas(){
+  const nec=fojasNecesarias(), info=document.getElementById('pagInfo'), est=document.getElementById('fojaEst');
+  if(nec){
+    info.style.display='block';
+    info.innerHTML='El Word tiene <b>'+PAGINAS+' página'+(PAGINAS===1?'':'s')+'</b>: son <b>'+nec.min+' foja'+(nec.min===1?'':'s')+'</b>.'+
+      (nec.max>nec.min?' Si el cierre pasa a la página '+(PAGINAS+1)+', son '+nec.max+'.':'');
+  }else if(zip){ info.style.display='block'; info.textContent='No sé cuántas páginas tiene el Word: Word no lo guardó. Contalas al imprimir; cada foja lleva dos.'; }
+  else info.style.display='none';
+  const rep=fojasRepetidas(), cant=cantidadFojas();
+  document.querySelectorAll('#fojas .fojaline').forEach((d,k)=>{ const f=fojasVal[k+1]; d.classList.toggle('usada',!!f&&rep.some(x=>x.f===f)); });
+  document.getElementById('foja1').style.borderColor=rep.some(x=>x.f===fojasVal[0])?'#B3261E':'';
+  let html='', cls='';
+  if(rep.length){
+    const r=rep[0].r;
+    html=(rep.length===1?'La foja <b>'+esc(rep[0].f)+'</b> ya se usó':'Las fojas <b>'+rep.map(x=>esc(x.f)).join('</b>, <b>')+'</b> ya se usaron')+
+      ' en el testimonio de la escritura '+esc(r.esc)+' (folio '+esc(r.folio||'')+'), el '+esc(r.fecha)+
+      '. Revisá las hojas que te dieron para esta escritura. No se genera con una foja repetida.';
+    cls='err-caja';
+  }else if(nec&&cant&&cant<nec.min){
+    html='Con '+cant+' no alcanza: el Word tiene '+PAGINAS+' páginas y cada foja lleva dos. Hacen falta '+nec.min+'.'; cls='nota';
+  }else if(nec&&cant>nec.max){
+    html='Con '+cant+' sobran: el testimonio ocupa '+nec.min+(nec.max>nec.min?' o '+nec.max:'')+'. Diría «'+enLetras(cant)+' fojas» y alguna quedaría en blanco.'; cls='nota';
+  }
+  est.style.display=html?'block':'none'; est.className=cls; est.innerHTML=html;
+}
+
+/* ================= los comparecientes ================= */
+/* Una sola lista: cada uno con «Firma» y «Para». Se edita en el lugar —sin redibujar la
+   lista al escribir— y sólo se redibuja al agregar o quitar. */
+let COMPS=[];
+const firmas={valores:()=>COMPS.filter(c=>c.firma&&c.nombre.trim()).map(c=>c.nombre.trim())};
+const benef={valores:()=>COMPS.filter(c=>c.para&&c.nombre.trim()).map(c=>c.nombre.trim())};
+function renderComps(foco){
+  const cont=document.getElementById('comps'); cont.innerHTML='';
+  COMPS.forEach((c,i)=>{
+    const d=document.createElement('div'); d.className='comp'+(c.mano?' mano':'');
+    const cn=document.createElement('div'); cn.className='cn';
+    const inp=document.createElement('input'); inp.type='text'; inp.placeholder='Nombre y APELLIDO'; inp.value=c.nombre;
+    inp.setAttribute('aria-label','Compareciente '+(i+1));
+    inp.addEventListener('input',()=>{ c.nombre=inp.value; actualizar(); });
+    cn.appendChild(inp);
+    if(c.nota){ const n=document.createElement('div'); n.className='cnota'; n.textContent=c.nota; cn.appendChild(n); }
+    const tilde=(k,et)=>{
+      const l=document.createElement('label'); l.className='ct';
+      const x=document.createElement('input'); x.type='checkbox'; x.checked=!!c[k]; x.setAttribute('aria-label',et+' — compareciente '+(i+1));
+      x.addEventListener('change',()=>{ c[k]=x.checked; actualizar(); });
+      l.appendChild(x); return l;
+    };
+    const b=document.createElement('button'); b.type='button'; b.className='del'; b.textContent='×'; b.title='Quitar';
+    b.setAttribute('aria-label','Quitar al compareciente '+(i+1));
+    b.addEventListener('click',()=>{ COMPS.splice(i,1); renderComps(); actualizar(); });
+    d.appendChild(cn); d.appendChild(tilde('firma','Firma')); d.appendChild(tilde('para','Se expide para')); d.appendChild(b);
+    cont.appendChild(d);
+    if(foco===i) inp.focus();
+  });
+}
+document.getElementById('addComp').addEventListener('click',()=>{
+  COMPS.push({nombre:'',firma:true,para:false,nota:'Agregado a mano',mano:true});
+  renderComps(COMPS.length-1); actualizar();
+});
+/* «en nombre y representación de…» después del nombre: a ése no se le expide */
+function representaA(plano,nombre,siguiente){
+  const i=plano.indexOf(nombre); if(i<0) return null;
+  let fin=siguiente?plano.indexOf(siguiente,i+nombre.length):-1;
+  if(fin<0||fin-i>900) fin=i+900;
+  const m=plano.slice(i+nombre.length,fin).match(/en\s+(?:su\s+)?(?:nombre\s+y\s+)?representaci[óo]n\s+(?:de\s+)?(?:la\s+|el\s+|los\s+|las\s+)?([^,;.]{3,80})/i);
+  return m?m[1].trim():null;
+}
 
 /* ================= armado del texto ================= */
 function segmentosPrefijo(){
@@ -709,36 +844,61 @@ function segsDeDom(el){
   })(el,false);
   return out.filter(x=>x.t!=='');
 }
+/* La vista previa muestra el principio y el final reales del Word, en su propio recuadro:
+   el texto de la escritura no se toca (Baltasar, 23/10/2026). Antes el final era un texto fijo,
+   igual para cualquier Word. */
+const FRASES=['firman los comparecientes','firman los otorgantes','firma el compareciente'];
+let VISTA=null;
+function armarVista(doc){
+  const todo=parrafosConTexto(doc).map(texto).join(' ').replace(/\s+/g,' ').trim();
+  if(todo.length<=600) return {todo,inicio:'',final:todo,corto:true};
+  const ini=todo.slice(0,260), fin=todo.slice(-320);
+  return {todo, corto:false,
+    inicio:ini.slice(0,Math.max(ini.lastIndexOf(' '),200))+'…',
+    final:'…'+fin.slice(Math.max(fin.indexOf(' '),0)).trim()};
+}
+function cuerpoVista(fr){
+  if(!VISTA) return '<span class="body">ESCRITURA NÚMERO … <em>[cuerpo de la escritura, sin cambios]</em> …PREVIA LECTURA Y RATIFICACIÓN, firman los comparecientes por ante mí que doy fe. </span>';
+  let fin=esc(VISTA.final);
+  if(fr) for(const fz of FRASES){
+    const k=VISTA.final.lastIndexOf(fz);
+    if(k>=0){ fin=esc(VISTA.final.slice(0,k+fz.length))+'<span class="ins"> '+esc(fr)+'</span>'+esc(VISTA.final.slice(k+fz.length)); break; }
+  }
+  return '<span class="esc"><span class="candado">Texto de la escritura · no se toca</span>'+
+    (VISTA.corto?'':esc(VISTA.inicio)+'<span class="corte">— '+(PAGINAS?'el resto de las '+PAGINAS+' páginas':'el resto de la escritura')+', sin cambios —</span>')+
+    fin+'</span>';
+}
 function actualizar(){
   const fr=document.getElementById('firmantes').value.trim();
-  const medio = fr
-    ? '…PREVIA LECTURA Y RATIFICACIÓN, firman los comparecientes<span class="ins"> '+esc(fr)+'</span> por ante mí que doy fe. '
-    : '…PREVIA LECTURA Y RATIFICACIÓN, firman los comparecientes por ante mí que doy fe. ';
   const pv=document.getElementById('preview');
   if(cierreTocado){
     /* Solo se redibuja lo de arriba; el cierre editado queda como está. */
     const previo=pv.querySelector('.ins.editable');
     const guardado=previo?previo.innerHTML:'';
     pv.innerHTML=
-      '<span class="ins">'+pintar(segmentosPrefijo())+'</span>'+
-      '<span class="body">ESCRITURA NÚMERO … <em>[cuerpo de la escritura, sin cambios]</em> … </span>'+
-      '<span class="body">'+medio+'</span>'+
+      '<span class="ins">'+pintar(segmentosPrefijo())+'</span>'+cuerpoVista(fr)+
       '<span class="ins editable" contenteditable="true" spellcheck="false">'+guardado+'</span>';
   }else{
     pv.innerHTML=
-      '<span class="ins">'+pintar(segmentosPrefijo())+'</span>'+
-      '<span class="body">ESCRITURA NÚMERO '+(NUM.estado==='ok'?'<b>'+esc(NUM.raw)+'</b>':NUM.estado==='blanco'?esc(NUM.raw||'')+' <em>[sin número todavía]</em>':'…')+' <em>[cuerpo de la escritura, sin cambios]</em> … </span>'+
-      '<span class="body">'+medio+'</span>'+
+      '<span class="ins">'+pintar(segmentosPrefijo())+'</span>'+cuerpoVista(fr)+
       '<span class="ins editable" contenteditable="true" spellcheck="false">'+pintar(segmentosCierre())+'</span>';
   }
   pv.classList.toggle('tocado',cierreTocado);
   document.getElementById('edAviso').style.display=cierreTocado?'':'none';
   document.getElementById('btnRehacer').style.display=cierreTocado?'':'none';
+  /* «Quiénes firman» sin dónde ir: se dice antes de generar, no después */
+  const fa=document.getElementById('frAviso');
+  if(fr&&VISTA&&!FRASES.some(fz=>VISTA.todo.includes(fz))){
+    fa.style.display='block';
+    fa.textContent='Este Word no dice «firman los comparecientes», «firman los otorgantes» ni «firma el compareciente»: lo que cargaste en «Quiénes firman» («'+fr+'») no tiene dónde ir. Escribilo en Word, o borralo si no hace falta.';
+  }else fa.style.display='none';
 
-  const n=firmas.valores().length;
-  document.getElementById('espResumen').textContent = n
-    ? n+(n===1?' firma cargada':' firmas cargadas')+'. Tildá para revisarlas o agregar una firma a ruego.'
-    : 'Las firmas ya se cargan solas. Tildá para revisarlas o para agregar una firma a ruego.';
+  const sinFirma=COMPS.filter(c=>c.nombre.trim()&&!c.firma).length;
+  document.getElementById('espResumen').textContent = sinFirma
+    ? (sinFirma===1?'Uno no firma':'Hay '+sinFirma+' que no firman')+': escribí acá quiénes firman y la cláusula.'
+    : 'Sólo cuando alguno no firma.';
+  if(sinFirma){ const ob=document.getElementById('espBody'); if(ob.hidden){ ob.hidden=false; document.getElementById('openEsp').checked=true; } }
+  pintarFojas();
 
   const at=document.getElementById('autoTrato');
   if(document.getElementById('trato').value==='auto' && benef.valores().length){
@@ -871,25 +1031,37 @@ async function cargar(file){
       autoEsc.textContent='No pude leer el cargo en la escritura. Elegila a mano.';
     }
 
-    firmas.vaciar(); benef.vaciar();
+    /* Todos firman. «Para» va a todos, menos a quien comparece «en representación de…». Si
+       nadie lo dice y son varios, al primero no, como antes, pero con la nota a la vista. */
+    const repres=nombres.map((n,i)=>representaA(plano,n,nombres[i+1]));
+    const hayRep=repres.some(Boolean);
+    COMPS=nombres.map((n,i)=>repres[i]
+      ? {nombre:n,firma:true,para:false,nota:'«en representación de '+repres[i]+'»: no se tilda «Para»'}
+      : (!hayRep&&nombres.length>1&&i===0)
+        ? {nombre:n,firma:true,para:false,nota:'Figura primero: suele ser quien representa al Estado. Revisá.'}
+        : {nombre:n,firma:true,para:true,nota:''});
+    if(!COMPS.length) COMPS=[{nombre:'',firma:true,para:true,nota:'',mano:true}];
+    renderComps();
     const det=document.getElementById('detect');
+    det.style.display='block';
     if(nombres.length){
-      nombres.forEach(n=>firmas.agregar(n));
-      const b = nombres.length>1 ? nombres.slice(1) : nombres.slice();
-      b.forEach(n=>benef.agregar(n));
-      det.style.display='block';
-      det.innerHTML='Comparecientes: <b>'+nombres.map(esc).join('</b>, <b>')+'</b>.'+
-        (nombres.length>1
-          ? ' Cargué a todos en las firmas y, como beneficiarios, a todos menos <b>'+esc(nombres[0])+'</b>, que figura primero y suele ser quien representa al Estado.'
-          : ' Lo cargué en firmas y como beneficiario.')+
+      det.innerHTML='Comparecientes: <b>'+nombres.map(esc).join('</b>, <b>')+'</b>. Están abajo, en «Los comparecientes»: revisá quién firma y para quién se expide.'+
         (detectado.dudoso
           ? '<div class="nota">⚑ En esta escritura los apellidos no vienen en mayúscula, así que los tomé por la forma del nombre. Revisá que estén completos y bien escritos antes de generar.</div>'
           : '');
     }else{
-      det.style.display='block';
-      det.textContent='No encontré nombres en negrita después de “COMPARECEN”. Cargá las firmas y los beneficiarios a mano.';
-      firmas.agregar(); benef.agregar();
+      det.textContent='No encontré nombres en negrita después de “COMPARECEN”. Cargalos a mano en «Los comparecientes».';
     }
+
+    VISTA=roto?null:armarVista(dTmp);
+    /* las páginas del Word, para la cantidad de fojas: dos por foja */
+    PAGINAS=null;
+    const app=zip.file('docProps/app.xml');
+    if(app){ const pm=(await app.async('string')).match(/<Pages>(\d+)<\/Pages>/); if(pm&&+pm[1]>0) PAGINAS=+pm[1]; }
+    const nec=fojasNecesarias();
+    /* sin páginas guardadas, la cantidad se vacía: que no quede la del Word anterior */
+    document.getElementById('cantFojas').value=nec?nec.min:'';
+    rebuildFojas(0);
 
     actualizar();
     document.getElementById('go').disabled=false;
@@ -963,8 +1135,20 @@ document.getElementById('go').addEventListener('click',async()=>{
     const en=document.getElementById('escNum'); en.style.borderColor='#B3261E'; en.focus(); en.scrollIntoView({behavior:'smooth',block:'center'});
     return;
   }
-  if(!benef.valores().length){st.className='status err';st.textContent='Falta al menos un beneficiario.';return;}
+  if(!benef.valores().length){st.className='status err';st.textContent='Falta para quién se expide: tildá «Para» en al menos un compareciente.';return;}
+  if(!cantidadFojas()){
+    st.className='status err'; st.textContent='Falta cuántas fojas.';
+    const cf=document.getElementById('cantFojas'); cf.focus(); cf.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
   if(!fojasVal.filter(Boolean).length){st.className='status err';st.textContent='Falta el número de la primera foja.';return;}
+  const rep=fojasRepetidas();
+  if(rep.length){
+    st.className='status err';
+    st.textContent='La foja '+rep[0].f+' ya se usó en el testimonio de la escritura '+rep[0].r.esc+' ('+rep[0].r.fecha+'). No se genera con una foja repetida.';
+    pintarFojas(); document.getElementById('fojaEst').scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
   try{
     st.className='status'; st.textContent='Generando…';
     const doc=new DOMParser().parseFromString(docXml,'application/xml');
@@ -989,7 +1173,7 @@ document.getElementById('go').addEventListener('click',async()=>{
     let firmantesPuestos=true;
     if(fr){
       firmantesPuestos=false;
-      for(const frase of ['firman los comparecientes','firman los otorgantes','firma el compareciente']){
+      for(const frase of FRASES){
         for(const p of ps.slice().reverse()) if(insertarDespuesDe(doc,p,frase,[{t:' '+fr,b:false}])){firmantesPuestos=true;break;}
         if(firmantesPuestos) break;
       }
@@ -1009,6 +1193,7 @@ document.getElementById('go').addEventListener('click',async()=>{
     a.download=nombreArchivo();
     document.body.appendChild(a); a.click();
     setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},2000);
+    anotarFojas();
     if(!firmantesPuestos){
       st.className='status err';
       st.textContent='El testimonio se generó, PERO no pude insertar «'+fr+'»: esta escritura no dice '
@@ -1041,6 +1226,7 @@ document.getElementById('preview').addEventListener('input',e=>{
 document.getElementById('btnRehacer').addEventListener('click',()=>{ cierreTocado=false; actualizar(); });
 
 rebuildFojas(0);
+pintarRegistro();
 actualizar();
 </script>
 
@@ -1063,5 +1249,5 @@ actualizar();
 })();
 </script>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 27/10/2026</p>
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 28/10/2026</p>
 </html>
