@@ -290,7 +290,7 @@ function pintarNav(){
  ).join("")
  +(OCULTAS().length?`<button type="button" class="otros" id="btnOtros" aria-expanded="${OTROS}" title="Herramientas que todavía no son para todos">Otros <span class="fl" aria-hidden="true">${OTROS?"▾":"▸"}</span></button>`
    +(OTROS?`<div class="otras">${OCULTAS().map(enlace).join("")}</div>`:""):"")
- +`<div class="pie">Los datos quedan guardados en esta computadora.<br>Las minutas base se comparten por archivo.<br><span class="sigec-version">Versión del 23/10/2026</span></div>`;
+ +`<div class="pie">Los datos quedan guardados en esta computadora.<br>Las minutas base se comparten por archivo.<br><span class="sigec-version">Versión del 26/10/2026</span></div>`;
  $$("[data-h]").forEach(a=>a.addEventListener("click",()=>abrir(a.dataset.h)));
  const o=$("#btnOtros"); if(o) o.addEventListener("click",()=>{ OTROS=!OTROS; pintarNav(); });
 }
@@ -310,9 +310,13 @@ function pintarTarjetas(){
 
 /* ---------- abrir una herramienta ---------- */
 let ACTUAL=null;
-function abrir(id){
+function abrir(id,desdeDireccion){
  const h=HERRAMIENTAS.find(x=>x.id===id);
  if(!h||!abrible(h)) return;
+ /* Una herramienta que vive en GitHub (externo) se abre en otra pestaña, no en el marco (Baltasar, 26/10/2026: el cotejo,
+    «que el original y el único sea el de GitHub»). Pedida por la dirección (#cotejo) no hay clic que habilite otra
+    pestaña: se va directo. */
+ if(h.externo){ if(desdeDireccion) location.href=h.url; else window.open(h.url,"_blank","noopener"); return; }
  ACTUAL=h;
  /* Abierta desde #cotejo, se despliega «Otros» para que se vea dónde está. */
  if(h.oculto&&!OTROS){ OTROS=true; pintarNav(); }
@@ -347,7 +351,7 @@ $("#btnMenu").addEventListener("click",()=>{
 
 pintarNav(); pintarTarjetas();
 /* «SIGEC, APP.html#cotejo» abre esa herramienta, también una que no figura en el menú. */
-const pedida=()=>{ const id=decodeURIComponent(location.hash.slice(1)); if(id&&HERRAMIENTAS.some(h=>h.id===id)) abrir(id); };
+const pedida=()=>{ const id=decodeURIComponent(location.hash.slice(1)); if(id&&HERRAMIENTAS.some(h=>h.id===id)) abrir(id,true); };
 window.addEventListener("hashchange",pedida); pedida();
 </script>
 </body>

@@ -443,7 +443,7 @@ function pintarEscribanas(sel){
 function avisarEscribana(){
   const a=document.getElementById('escFalta'); if(!a) return;
   const cual=document.getElementById('escribana').value==='titular'?'titular':'sustituta';
-  if(CFG[cual]){ a.style.display='none'; a.textContent=''; return; }
+  if(CFG[cual]){ a.style.display=''; a.textContent='En el cierre: «Ante mí '+conApellido(CFG[cual])+'».'; return; }
   a.style.display='';
   a.textContent='Falta el nombre de la '+ESC_CARGO[cual]+'. Cargalo en “Las escribanas”, abajo, o el testimonio sale sin firma.';
 }
@@ -482,8 +482,18 @@ function guardarCfg(){
   // se espera a que el resto del script termine de declararse antes de armar el texto
   setTimeout(actualizar,0);
 })();
+/* El apellido va en mayúscula: «María Amelia ASSAAD», no «María Amelia Assaad». Si el
+   nombre guardado ya trae una palabra en mayúscula se deja como está; si no, se pasa a
+   mayúscula la última. Lo que sale se muestra en «Ante mí». */
+function conApellido(n){
+  n=String(n||'').trim(); if(!n) return n;
+  const pal=n.split(/\s+/);
+  if(pal.length<2||pal.some(x=>/^[A-ZÁÉÍÓÚÑÜ]{2,}\.?$/.test(x))) return n;
+  pal[pal.length-1]=pal[pal.length-1].toLocaleUpperCase('es-AR');
+  return pal.join(' ');
+}
 function nombreEscribana(){
-  return document.getElementById('escribana').value==='titular' ? CFG.titular : CFG.sustituta;
+  return conApellido(document.getElementById('escribana').value==='titular' ? CFG.titular : CFG.sustituta);
 }
 
 /* ================= nombre del archivo ================= */
@@ -822,7 +832,11 @@ function segmentosCierre(){
   const lista=document.getElementById('fojaFmt').value==='grp'
     ? '“'+fs.join('; ')+'”'
     : fs.map(x=>'“'+x+'”').join('; ');
-  s.push({t:' expido este PRIMER TESTIMONIO en '+enLetras(fs.length)+' foja'+(fs.length===1?'':'s')+
+  /* «expido este PRIMER TESTIMONIO»: el PRIMER TESTIMONIO va en negrita, como el de arriba
+     (Baltasar, 28/10/2026). CONCUERDA también sigue en negrita. */
+  s.push({t:' expido este ',b:false});
+  s.push({t:'PRIMER TESTIMONIO',b:true});
+  s.push({t:' en '+enLetras(fs.length)+' foja'+(fs.length===1?'':'s')+
           ' de Actuación Notarial '+lista+' que firmo y sello en el lugar y fecha de su otorgamiento.-',b:false});
   return s;
 }
