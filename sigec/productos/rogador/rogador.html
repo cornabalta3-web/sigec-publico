@@ -391,9 +391,18 @@ function domicilioCorto(raw){
    El apellido puede venir en mayúsculas (lo normal) o no (se avisa). */
 const TOK_NOM  = "[A-ZÁÉÍÓÚÑ][A-Za-zÁÉÍÓÚÑáéíóúñÜü'’]+";
 const NOMBRE   = "(" + TOK_NOM + "(?:\\s+(?:(?:de|del|la|las|los)\\s+)*" + TOK_NOM + "){1,6})";
-/* persona: nombre, nacionalidad (cualquiera, con o sin "de nacionalidad"), nacimiento y DNI ("Número", "N°", "Nro.", "D.N.I.") */
-const SRC_PERSONA = NOMBRE + "\\s*,\\s*(?:de\\s+nacionalidad\\s+)?([A-Za-zÁÉÍÓÚÑáéíóúñ]+)\\s*,\\s*[Nn]acid[ao]\\s+el\\s+([^,]{5,90})\\s*,\\s*(?:[Dd]ocumento\\s+[Nn]acional\\s+de\\s+[Ii]dentidad|D\\.?\\s*N\\.?\\s*I\\.?)\\s*(?:[Nn][úu]mero|[Nn]ro\\.?|[Nn]\\.?\\s*[º°])?\\s*[\"“”'´]*\\s*([\\d.]+)";
-const RE_FAVOR = /ADJUDICACI[ÓO]N\s+DIRECTA[^.]{0,240}?a\s+favor\s+de\s+(?:l[oa]s?\s+)?(?:se[ñn]or(?:es|as|a)?\s+)?([^,;]{3,140}?)\s*,?\s*(?:el|los)\s+siguientes?\s+inmuebles?/i;
+/* persona: nombre, nacionalidad (cualquiera, con o sin "de nacionalidad"), nacimiento y DNI ("Número", "N°", "Nro.", "D.N.I.").
+   La coma después del nombre puede faltar («Claudio CHAMORRO argentino, nacido…») y el
+   nacimiento se escribe «nacido el …» o «nacido con fecha …»: en escrituras reales de
+   octubre las dos cosas dejaban sin reconocer a uno o a los dos adquirentes de una pareja. */
+const SRC_PERSONA = NOMBRE + "\\s*,?\\s*(?:de\\s+nacionalidad\\s+)?([A-Za-zÁÉÍÓÚÑáéíóúñ]+)\\s*,\\s*[Nn]acid[ao]\\s+(?:el(?:\\s+d[íi]a)?|con\\s+fecha(?:\\s+del?)?)\\s+([^,]{5,90})\\s*,\\s*(?:[Dd]ocumento\\s+[Nn]acional\\s+de\\s+[Ii]dentidad|D\\.?\\s*N\\.?\\s*I\\.?)\\s*(?:[Nn][úu]mero|[Nn]ro\\.?|[Nn]\\.?\\s*[º°])?\\s*[\"“”'´]*\\s*([\\d.]+)";
+/* «a favor de la señora…», «a favor de los señores…» y «a favor del señor…». Antes el «del»
+   no entraba: con un adjudicatario varón no se confirmaba a nadie, y el respaldo de abajo
+   terminaba eligiendo a otra persona (ver «ACEPTA»). */
+const RE_FAVOR = /ADJUDICACI[ÓO]N\s+DIRECTA[^.]{0,240}?a\s+favor\s+(?:del?|de\s+l[oa]s?)\s+(?:se[ñn]or(?:es|as|a)?\s+)?([^,;]{3,140}?)\s*,?\s*(?:el|los)\s+siguientes?\s+inmuebles?/i;
+/* En el comparendo de la Ley 9811 los que firman por la comuna van «Por una parte» y el
+   adjudicatario «Y por otra parte»: es la otra fuente para saber quién adquiere. */
+const RE_OTRA_PARTE = /por\s+otra\s+parte\s+(?:(?:el|la|los|las)\s+)?(?:c[óo]nyuges\s+en\s+\w+\s+nupcias\s+|se[ñn]or(?:es|as|a)?\s+)?([^.]{3,300}?)(?:,\s*(?:de\s+nacionalidad\s+)?[a-záéíóúñ]+\s*,\s*nacid|\.)/i;
 /* "LOTE SIETE DE LA MANZANA TREINTA", "LOTE SIETE DEL MANZANA…" o "LOTE SIETE, MANZANA TREINTA" */
 const SRC_LOTE = "LOTE\\s+([A-ZÁÉÍÓÚÑ\\d\\s]{2,40}?)\\s*(?:,\\s*|\\s+(?:DE\\s+LA|de\\s+la|DEL|del)\\s+)MANZANA\\s+(?:OFICIAL\\s+)?([A-ZÁÉÍÓÚÑ\\d\\s]{2,40}?)\\s*[,.(;:]";
 /* La superficie viene en letras y puede traer los decímetros en dos formas:
@@ -401,7 +410,7 @@ const SRC_LOTE = "LOTE\\s+([A-ZÁÉÍÓÚÑ\\d\\s]{2,40}?)\\s*(?:,\\s*|\\s+(?:DE
    quedan dentro del primer tramo) y "… VEINTICUATRO METROS CUADRADOS, OCHENTA Y
    CUATRO DECÍMETROS CUADRADOS" (quedan afuera). La segunda forma se perdía entera:
    224,84 salía 224,00 en la rogación, sin aviso. El segundo grupo la recupera. */
-const SRC_SUP = "SUPERFICIE(?:\\s+TOTAL)?(?:\\s+DE\\s+TERRENO)?\\s+de\\s+([A-ZÁÉÍÓÚÑ\\s]{6,}?)\\s+(?:DEC[ÍI]METROS|CENT[ÍI]METROS|METROS)\\s+CUADRADOS"
+const SRC_SUP = "SUPERFICIE(?:\\s+TOTAL)?(?:\\s+DE\\s+TERRENO)?\\s+(?:de\\s+)?([A-ZÁÉÍÓÚÑ\\s]{6,}?)\\s+(?:DEC[ÍI]METROS|CENT[ÍI]METROS|METROS)\\s+CUADRADOS"
   + "(?:\\s*,?\\s*(?:CON\\s+|con\\s+)?([A-ZÁÉÍÓÚÑ\\s]{4,60}?)\\s+(?:DEC[ÍI]METROS|CENT[ÍI]METROS)\\s+CUADRADOS)?";
 
 /* El encabezado se escribe de muchas maneras: "NÚMERO TRESCIENTOS UNO (301)", "NÚMERO:
@@ -481,14 +490,17 @@ function fechaEscritura(T){
   return (d >= 1 && d <= 31 && a >= 1900 && a <= 2100) ? f : "";
 }
 
+/* El renglón «Código de Registración» del formulario. Pedido de Baltasar (28/10/2026): va
+   «DOM - BF». Sale precargado y se puede cambiar en la revisión si una rogación lleva otro. */
+const CODIGO_REG = "DOM - BF";
 function parse(T, R=""){
   T = limpiarTexto(T); R = limpiarTexto(R);
   const d = { notas: [], escribana:"", escritura_numero:"", seccion:"", fecha:"", negocio:"",
               titular_registral:{razon_social:"",cuit:"",domicilio:""}, adquirentes:[], inmuebles:[],
-              certificado_notarial:"" };
+              certificado_notarial:"", codigo_registracion:CODIGO_REG };
   const nota = s => d.notas.push(s);
 
-  let m = T.match(/ante\s+m[íi]\s+Escribana?\s+(General|Sustituta)/i);
+  let m = T.match(/ante\s+m[íi]\s*,?\s+Escribana?\s+(General|Sustituta)/i);
   if(m) d.escribana = /sustituta/i.test(m[1]) ? "sustituta" : "titular";
   else nota("No se pudo identificar la escribana. Elegila a mano.");
 
@@ -518,7 +530,12 @@ function parse(T, R=""){
   let favor = "";
   m = T.match(RE_FAVOR);
   if(m) favor = m[1];
-  else { const a = T.match(/(?:ACEPTA|ACEPTAN)[^.]{0,300}/i); if(a) favor = a[0]; }
+  const op = T.match(RE_OTRA_PARTE);
+  if(op) favor += " " + op[1];
+  /* ACEPTA como palabra entera: antes se encontraba adentro de «aceptación de la señora …
+     como Titular de la Comisión», y esa persona —la secretaria de la comuna— salía como
+     adquirente en la rogación. */
+  if(!favor.trim()){ const a = T.match(/(?<![a-záéíóúñ])ACEPTAN?(?![a-záéíóúñ])[^.]{0,300}/i); if(a) favor = a[0]; }
   const favorN = norm(favor);
 
   const reP = new RegExp(SRC_PERSONA,"g");
@@ -526,8 +543,18 @@ function parse(T, R=""){
   while((f = reP.exec(T)) !== null){
     const [, nombre, nac, fnacTxt, dni] = f;
     const cola = T.slice(f.index, f.index + 1400);
-    const cuil = (cola.match(/C\.?\s*U\.?\s*I\.?\s*T[\/\s.]*C\.?\s*U\.?\s*I\.?\s*L\s*N?[º°]?\s*([\d]{2}-?[\d]{8}-?[\d])/i)||[])[1] || "";
-    let ec = (cola.match(/estado\s+civil\s+([a-záéíóúñ]+)/i)||[])[1] || "";
+    /* Lo de cada persona se busca sólo en su tramo, hasta donde empieza la siguiente. En una
+       pareja, si el CUIL de la primera no se reconocía, se tomaba el de la segunda: pasó con
+       «C.U.I.T./C.U.I.L. N°. 27-…», y la rogación salía con el CUIL del cónyuge. */
+    const sig = new RegExp(SRC_PERSONA, "g"); sig.lastIndex = f.index + f[0].length;
+    const prox = sig.exec(T);
+    const propio = T.slice(f.index, prox ? Math.min(prox.index, f.index + 1400) : f.index + 1400);
+    /* «CUIT/CUIL N°», y también una sola sigla: minuta-social escribe «C.U.I.L N°» y otras
+       minutas «C.U.I.T N°». Antes sólo entraba la primera forma. Se busca antes del
+       domicilio, para no tomar el de la persona siguiente. */
+    const hastaDom = propio.split(/con\s+domicilio|domiciliad[oa]s?\s+en/i)[0];
+    const cuil = (hastaDom.match(/C\.?\s*U\.?\s*I\.?\s*[TL]\.?(?:\s*[\/\-]\s*C\.?\s*U\.?\s*I\.?\s*[TL]\.?)?\s*(?:N(?:ro|[º°])?\.?|N[úu]mero)?\s*:?\s*(\d{2}-?\d{8}-?\d)/i)||[])[1] || "";
+    let ec = (propio.match(/estado\s+civil\s+([a-záéíóúñ]+)/i)||[])[1] || "";
     if(!ec && /c[óo]nyuges\s+en\s+primeras\s+nupcias/i.test(T.slice(Math.max(0,f.index-160), f.index)))
       ec = /a$/i.test(nac.trim()) ? "casada" : "casado";
     let fn = "";
@@ -557,6 +584,11 @@ function parse(T, R=""){
     adq.forEach(a=>{ if(!a.estado_civil) a.estado_civil = /a$/i.test(a.nacionalidad) ? "Casada" : "Casado"; });
   }
   adq.forEach(a=>{
+    /* El CUIL lleva adentro el DNI: si no coincide, uno de los dos está mal o es de otra
+       persona. Con este control se habría visto el CUIL del cónyuge puesto en la otra. */
+    const dg = String(a.dni||"").replace(/\D/g,""), cg = String(a.cuil||"").replace(/\D/g,"");
+    if(dg && cg.length===11 && cg.slice(2,10) !== dg.padStart(8,"0"))
+      nota(`El CUIL de ${a.nombre} (${a.cuil}) no corresponde a su DNI (${a.dni}). Controlalos contra la escritura.`);
     if(a.apellidoDudoso) nota(`El apellido de ${a.nombreOriginal} no está en mayúsculas en la escritura: se tomó "${a.nombre.split(",")[0]}" como apellido. Controlá el nombre.`);
     delete a.apellidos; delete a.apellidoDudoso; delete a.nombreOriginal;
   });
@@ -565,6 +597,11 @@ function parse(T, R=""){
     ? "No se pudo confirmar quiénes son los adquirentes: quedan en blanco para que los cargues a mano en el punto 4."
     : "No se detectaron adquirentes. Cargalos a mano en el punto 4.");
 
+  /* Los inmuebles se buscan sólo en la descripción, antes del CORRESPONDE: ahí aparecen las
+     matrículas y los lotes de los títulos anteriores —la mayor superficie, el plano de
+     subdivisión—, y cada uno salía como un inmueble más de la rogación. */
+  const finDesc = T.search(/LE\s+CORRESPONDE/i);
+  const TD = finDesc > 0 ? T.slice(0, finDesc) : T;
   const SRC_MAT  = "MATR[ÍI]CULA\\s+(?:N[°º]|N[ÚU]MERO)\\s*[°º]?\\s*([\\d.]+)";
   const nuevo = () => ({matricula:"",lote:"",manzana:"",superficie:"",cert_catastral:"",cuenta:"",
                         nomenclatura:{d:"",ped:"",pue:"",c:"",s:"",mza:"",parc:"",ph:"000"}});
@@ -581,23 +618,23 @@ function parse(T, R=""){
 
   const reS = new RegExp(SRC_SUP,"gi");
   let s;
-  while((s = reS.exec(T)) !== null){
-    const im = conLote(nuevo(), T.slice(Math.max(0, s.index-2600), s.index));
+  while((s = reS.exec(TD)) !== null){
+    const im = conLote(nuevo(), TD.slice(Math.max(0, s.index-2600), s.index));
     im.superficie = superficieDe(s[2] ? s[1]+" METROS CON "+s[2] : s[1]);
-    d.inmuebles.push(conMat(im, T.slice(s.index, s.index+700)));
+    d.inmuebles.push(conMat(im, TD.slice(s.index, s.index+700)));
   }
   if(!d.inmuebles.length){
-    const reD = /SUPERFICIE(?:\s+TOTAL)?(?:\s+DE\s+TERRENO)?\s+de\s+([\d.]+[,.]?\d*)\s*(?:m2|mts?\.?\s*2|metros\s+cuadrados)/gi;
+    const reD = /SUPERFICIE(?:\s+TOTAL)?(?:\s+DE\s+TERRENO)?\s+(?:de\s+)?([\d.]+[,.]?\d*)\s*(?:m2|mts?\.?\s*2|metros\s+cuadrados)/gi;
     let x;
-    while((x = reD.exec(T)) !== null){
-      const im = conLote(nuevo(), T.slice(Math.max(0, x.index-2600), x.index));
+    while((x = reD.exec(TD)) !== null){
+      const im = conLote(nuevo(), TD.slice(Math.max(0, x.index-2600), x.index));
       im.superficie = x[1].replace(".",",") + " mts 2";
-      d.inmuebles.push(conMat(im, T.slice(x.index, x.index+700)));
+      d.inmuebles.push(conMat(im, TD.slice(x.index, x.index+700)));
     }
     if(d.inmuebles.length) nota("La superficie venía en cifras: controlá el formato.");
   }
   if(!d.inmuebles.length){
-    const fuente = new RegExp(SRC_MAT,"gi").test(R) ? R : T;
+    const fuente = new RegExp(SRC_MAT,"gi").test(R) ? R : TD;
     [...fuente.matchAll(new RegExp(SRC_MAT,"gi"))].forEach(x=>{
       const im = conLote(nuevo(), fuente.slice(Math.max(0, x.index-2600), x.index));
       im.matricula = x[1];
@@ -606,10 +643,10 @@ function parse(T, R=""){
     if(d.inmuebles.length) nota("No se encontró la cláusula de superficie: cargala a mano y controlá lote y manzana.");
   }
   if(!d.inmuebles.length){
-    const lm = T.match(new RegExp(SRC_LOTE,"i"));
+    const lm = TD.match(new RegExp(SRC_LOTE,"i"));
     if(lm){
       const im = nuevo(); im.lote = String(w2n(lm[1])||""); im.manzana = String(w2n(lm[2])||"");
-      d.inmuebles.push(conMat(im, T.slice(lm.index, lm.index+2600)));
+      d.inmuebles.push(conMat(im, TD.slice(lm.index, lm.index+2600)));
       nota("No se encontraron la superficie ni la matrícula: se tomó el lote que menciona la escritura. Controlá el inmueble.");
     }
   }
@@ -633,12 +670,12 @@ function parse(T, R=""){
 
   if(rMat.length===n) d.inmuebles.forEach((im,i)=>{ im.matricula = rMat[i]; });
 
-  const cuentas = (rCta.length===n ? rCta : all(RE_CTA,T).map(x=>x[1]));
-  const nomsA   = (rNomA.length===n ? rNomA : all(RE_NOMA,T));
-  const nomsB   = (rNomB.length===n ? rNomB : all(RE_NOMB,T));
+  const cuentas = (rCta.length===n ? rCta : all(RE_CTA,TD).map(x=>x[1]));
+  const nomsA   = (rNomA.length===n ? rNomA : all(RE_NOMA,TD));
+  const nomsB   = (rNomB.length===n ? rNomB : all(RE_NOMB,TD));
   const certs   = rCert.length===n ? rCert
-    : all(RE_CERT,T)
-        .filter(c => !/se\s+emiti[óo]|Observaciones\s+formales/i.test(T.slice(Math.max(0,c.index-140), c.index)))
+    : all(RE_CERT,TD)
+        .filter(c => !/se\s+emiti[óo]|Observaciones\s+formales/i.test(TD.slice(Math.max(0,c.index-140), c.index)))
         .map(c => c[1].replace(/\./g,""));
 
   d.inmuebles.forEach((im,i)=>{
@@ -660,8 +697,11 @@ function parse(T, R=""){
   const im0 = d.inmuebles[0];
   d.adquirentes.forEach(a=>{
     const raw = a.domRaw || "";
-    const bar = (raw.match(/[Bb]arrio\s*["“”«]?\s*([^,"“”»;]+)/i)||[])[1];
-    const loc = (raw.match(/(?:ciudad|localidad)\s+de\s+([^,;]+)/i)||[])[1];
+    /* El barrio termina donde empieza «de la Localidad…»: si no, «Barrio Cancha de la
+       Localidad de Toro Pujio» salía «Cancha de la Localidad de Toro Pujio, Toro Pujio». Y la
+       localidad viene también sin «de» («Localidad Toro Pujio»). */
+    const bar = (raw.match(/[Bb]arrio\s*["“”«]?\s*([^,"“”»;]+?)(?=\s+de\s+la\s+(?:localidad|ciudad)|\s*[,"“”»;]|$)/i)||[])[1];
+    const loc = (raw.match(/(?:ciudad|localidad)\s+(?:de\s+)?([^,;]+)/i)||[])[1];
     if(im0 && im0.lote && im0.manzana){
       const cola = [bar&&bar.trim(), loc&&loc.trim(), "Córdoba"].filter(Boolean);
       a.domicilio = `Lote ${im0.lote} Mza ${im0.manzana}` + (cola.length ? " - " + cola.join(", ") : "");
@@ -706,7 +746,7 @@ function fragmentos(T, R=""){
     else hits.forEach(h => out.push({label, html:h, rojo}));
   };
 
-  add("Escribana", /ante\s+m[íi]\s+Escribana?\s+(General|Sustituta)[^,.;]{0,70}/i, true);
+  add("Escribana", /ante\s+m[íi]\s*,?\s+Escribana?\s+(General|Sustituta)[^,.;]{0,70}/i, true);
   add("Escritura y sección", new RegExp(RE_ENCABEZADO.source
       + "([^.;]{0,80})(?:[.;][.;\\-–\\s]*SECCI[ÓO]N\\s*[:\"“”'«´\\-–]*\\s*[A-Z](?![a-záéíóúñ]))?", "i"), true, 1);
   add("Fecha", RE_FECHA_LIBRE, true, 1);
@@ -945,6 +985,7 @@ function render(quieto){
 
   h += `<fieldset><legend>1 · Negocio jurídico</legend><div class="in">
     ${fld("negocio","Negocio o causa jurídica",d.negocio)}
+    ${fld("codigo_registracion","Código de registración",d.codigo_registracion)}
     <div class="row">${fld("escritura_numero","Escritura N°",d.escritura_numero)}${fld("seccion","Sección",d.seccion)}${fld("fecha","Fecha",d.fecha)}
     <div class="f"><label>Escribana</label><select data-p="escribana">
       <option value="">— elegir —</option>
@@ -1111,6 +1152,7 @@ async function armarPdf(){
   if(!esc.nombre) fallos.push("el nombre de la escribana (cargalo en el punto 1)");
 
   T("undefined.Texto1", d.negocio);
+  T("undefined.Texto11", d.codigo_registracion);
   T("undefined.Texto2", d.seccion ? `${d.escritura_numero} "${d.seccion}"` : d.escritura_numero);
   T("undefined.Texto3", d.fecha);
   T("undefined.Texto4", esc.nombre);
