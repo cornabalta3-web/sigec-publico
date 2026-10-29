@@ -234,8 +234,8 @@ const HERRAMIENTAS=[
  {id:"ddjj",grupo:"Declaraciones juradas",n:"DDJJ",estado:"uso",color:"#144D83",colorOsc:"#5BA3E0",
   d:"Escritura de declaración jurada patrimonial de funcionarios, a partir del PDF presentado.",
   url:"productos/ddjj/ddjj.html"},
- {id:"recibo",grupo:"Declaraciones juradas",n:"Recibo DDJJ",estado:"uso",color:"#1A2744",colorOsc:"#8FA8D4",
-  d:"Constancia de recepción de la declaración jurada patrimonial.",
+ {id:"recibo",grupo:"Declaraciones juradas",n:"Recibo",estado:"uso",color:"#1A2744",colorOsc:"#8FA8D4",
+  d:"La constancia de recepción de la DDJJ, y el recibí de un testimonio o una copia.",
   url:"productos/recibo-ddjj/recibo-ddjj.html"},
  {id:"testimonio",grupo:"Escrituración",n:"Primer testimonio",estado:"uso",color:"#3E9480",colorOsc:"#5FB8A1",
   d:"Convierte la escritura de protocolo en primer testimonio, con folio, cierre y concordancia.",
@@ -290,7 +290,7 @@ function pintarNav(){
  ).join("")
  +(OCULTAS().length?`<button type="button" class="otros" id="btnOtros" aria-expanded="${OTROS}" title="Herramientas que todavía no son para todos">Otros <span class="fl" aria-hidden="true">${OTROS?"▾":"▸"}</span></button>`
    +(OTROS?`<div class="otras">${OCULTAS().map(enlace).join("")}</div>`:""):"")
- +`<div class="pie">Los datos quedan guardados en esta computadora.<br>Las minutas base se comparten por archivo.<br><span class="sigec-version">Versión del 26/10/2026</span></div>`;
+ +`<div class="pie">Los datos quedan guardados en esta computadora.<br>Las minutas base se comparten por archivo.<br><span class="sigec-version">Versión del 29/10/2026</span></div>`;
  $$("[data-h]").forEach(a=>a.addEventListener("click",()=>abrir(a.dataset.h)));
  const o=$("#btnOtros"); if(o) o.addEventListener("click",()=>{ OTROS=!OTROS; pintarNav(); });
 }

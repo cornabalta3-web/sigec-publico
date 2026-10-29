@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Recibo DDJJ — Escribanía General de Gobierno</title>
+<title>Recibo — Escribanía General de Gobierno</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <script>
 /* Modo oscuro de SIGEC. Una sola preferencia, sigec.tema, que vale para la cáscara y para
@@ -157,6 +157,10 @@ html[data-theme="dark"]{
   .seg { display: inline-flex; background: var(--campo-bg); border: 1px solid var(--campo-borde); border-radius: 7px; overflow: hidden; }
   .seg.ancho { display: flex; width: 100%; }
   .seg.ancho button { flex: 1; }
+  /* El selector de tipo es hijo directo del panel, que es una columna flexible de alto
+     fijo. El `overflow: hidden` de arriba le anula la altura minima automatica, asi que
+     sin esto el control se encoge a dos pixeles —los bordes— y no se puede apretar. */
+  .panel > .seg { flex: none; }
   .seg button {
     appearance: none; border: 0; background: transparent; cursor: pointer;
     font-family: inherit; font-size: 13px; font-weight: 500; color: var(--texto-2);
@@ -171,6 +175,19 @@ html[data-theme="dark"]{
      del nombre del que se deduce, no arriba de todo. */
   .trato { display: flex; align-items: center; gap: 11px; flex-wrap: wrap; }
   .trato > span { font-size: 12px; font-weight: 500; color: var(--texto-2); }
+
+  /* Los campos que solo valen para un tipo de recibo. La clase la pone el selector
+     de arriba, sobre el <body>. */
+  body.tipo-otros .solo-ddjj,
+  body:not(.tipo-otros) .solo-otros { display: none; }
+  body.tipo-otros .row-acto { grid-template-columns: 1fr; }
+
+  .panel select {
+    font-family: inherit; font-size: 14px; color: var(--texto);
+    background: var(--campo-bg); border: 1px solid var(--campo-borde);
+    border-radius: 7px; padding: 9px 11px; width: 100%; outline: none;
+  }
+  .panel select:focus { border-color: var(--foco); box-shadow: 0 0 0 3px var(--foco-halo); }
 
   .pista { font-size: 11.5px; line-height: 1.4; color: var(--texto-2); min-height: 16px; }
   .pista button {
@@ -253,6 +270,7 @@ html[data-theme="dark"]{
   .recibo-titulo { text-align: center; margin-bottom: 6%; }
   .recibo-titulo h2 { font-size: 1.18em; font-weight: bold; letter-spacing: .14em; line-height: 1.3; }
   .recibo-titulo span { display: block; margin-top: 3px; font-size: .84em; letter-spacing: .05em; }
+  .recibo-titulo span:empty { display: none; }
   .recibo-body { text-align: justify; }
   .recibo-body p { margin-bottom: 0; }
   .lbl { font-weight: bold; text-decoration: underline; }
@@ -282,7 +300,10 @@ html[data-theme="dark"]{
   /* El filete mide lo mismo que el bloque que firma y el texto va centrado abajo. Antes
      el renglon y las dos lineas estaban alineados a la derecha por separado, asi que los
      bordes no coincidian. */
-  .recibo-footer { margin-top: 9%; display: flex; justify-content: flex-end; }
+  /* Con un solo firmante va a la derecha; con dos, uno en cada punta. */
+  .recibo-footer { margin-top: 9%; display: flex; justify-content: flex-end; gap: 18px; }
+  body.tipo-otros .recibo-footer { justify-content: space-between; }
+  body:not(.tipo-otros) #firmaRecibe { display: none; }
   .firma {
     width: 250px;
     text-align: center;
@@ -402,9 +423,16 @@ html[data-theme="dark"]{
 <div class="panel">
   <header class="marca">
     <span class="filete"></span>
-    <h1>Recibo de DDJJ</h1>
-    <p>Declaración Jurada Patrimonial</p>
+    <h1>Recibo</h1>
+    <p>Declaración jurada patrimonial y entrega de documentos</p>
   </header>
+
+  <!-- Dos recibos distintos, no dos herramientas: el de DDJJ lo firma la Escribania
+       certificando que alguien presento algo; el otro lo firma quien recibe. -->
+  <div class="seg ancho" id="segTipo">
+    <button type="button" data-v="ddjj" aria-pressed="true">DDJJ</button>
+    <button type="button" data-v="otros" aria-pressed="false">Otros recibos</button>
+  </div>
 
   <section class="grupo">
     <h2>La persona</h2>
@@ -417,22 +445,30 @@ html[data-theme="dark"]{
     </div>
     <!-- El trato se deduce del nombre, asi que va al lado del nombre y no arriba de todo:
          era el primer campo del formulario y es el unico que no hay que tocar. -->
-    <div class="trato">
+    <div class="trato solo-ddjj">
       <span>Trato</span>
       <div class="seg" id="segGenero">
         <button type="button" data-v="masculino" aria-pressed="true">el Señor</button>
         <button type="button" data-v="femenino" aria-pressed="false">la Señora</button>
       </div>
     </div>
-    <p class="pista" id="pistaGenero"></p>
+    <p class="pista solo-ddjj" id="pistaGenero"></p>
     <label class="campo-lbl"><span>DNI</span>
       <input id="dni" class="num" type="text" inputmode="numeric" placeholder="28.456.789" oninput="actualizar()"></label>
   </section>
 
   <section class="grupo">
-    <h2>El acto</h2>
-    <div class="row-2">
-      <div class="campo-lbl"><span>Formulario</span>
+    <h2 id="tituloActo">El acto</h2>
+    <label class="campo-lbl solo-otros"><span>Qué recibe</span>
+      <select id="queRecibe" oninput="actualizar()">
+        <option value="primer">Primer testimonio</option>
+        <option value="segundo">Segundo testimonio</option>
+        <option value="tercer">Tercer testimonio</option>
+        <option value="simple">Copia simple</option>
+        <option value="certificada">Copia certificada</option>
+      </select></label>
+    <div class="row-2 row-acto">
+      <div class="campo-lbl solo-ddjj"><span>Formulario</span>
         <div class="seg ancho" id="segFormulario">
           <button type="button" data-v="A" aria-pressed="true">“A”</button>
           <button type="button" data-v="B" aria-pressed="false">“B”</button>
@@ -462,7 +498,7 @@ html[data-theme="dark"]{
     <button class="btn-clear" onclick="limpiar()">Limpiar campos</button>
   </div>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:24px 0 0;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 22/10/2026</p>
+<p class="sigec-version" style="margin:24px 0 0;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 29/10/2026</p>
 </div>
 
 <div class="preview-area">
@@ -473,12 +509,13 @@ html[data-theme="dark"]{
     </div>
     <div class="hilo"></div>
     <div class="recibo-titulo">
-      <h2>CONSTANCIA DE RECEPCIÓN</h2>
-      <span>Declaración Jurada Patrimonial</span>
+      <h2 id="tituloHoja">CONSTANCIA DE RECEPCIÓN</h2>
+      <span id="subtituloHoja">Declaración Jurada Patrimonial</span>
     </div>
     <div class="recibo-body" id="cuerpo"></div>
     <div class="recibo-lugar" id="lugarFecha"></div>
     <div class="recibo-footer">
+      <div class="firma" id="firmaRecibe"></div>
       <div class="firma" id="firma"></div>
     </div>
    </div>
@@ -521,6 +558,17 @@ var EXC_M = ["LUCA","NOA","JEREMIAS","MATIAS","TOMAS","NICOLAS","ANDRES","AGUSTI
 var generoElegido = false;
 var genero = "masculino";
 var formulario = "A";
+var tipo = "ddjj";   /* "ddjj" | "otros" */
+
+/* Lo que se puede recibir. El articulo va con cada uno porque cambia: EL testimonio,
+   LA copia. El texto en mayuscula es el que sale impreso. */
+var QUE_RECIBE = {
+  primer:      { art: "el", txt: "PRIMER TESTIMONIO" },
+  segundo:     { art: "el", txt: "SEGUNDO TESTIMONIO" },
+  tercer:      { art: "el", txt: "TERCER TESTIMONIO" },
+  simple:      { art: "la", txt: "COPIA SIMPLE" },
+  certificada: { art: "la", txt: "COPIA CERTIFICADA" }
+};
 
 /* Los dos controles de dos opciones se manejan igual: se pinta el elegido y se avisa. */
 function pintarSeg(cont, valor) {
@@ -534,6 +582,14 @@ document.getElementById("segGenero").addEventListener("click", function (ev) {
   genero = b.getAttribute("data-v");
   generoElegido = true;      /* elegido a mano: la deduccion no lo vuelve a tocar */
   pintarSeg(this, genero);
+  actualizar();
+});
+document.getElementById("segTipo").addEventListener("click", function (ev) {
+  var b = ev.target.closest("button"); if (!b) return;
+  tipo = b.getAttribute("data-v");
+  pintarSeg(this, tipo);
+  document.body.classList.toggle("tipo-otros", tipo === "otros");
+  document.getElementById("tituloActo").textContent = (tipo === "otros") ? "Qué se entrega" : "El acto";
   actualizar();
 });
 document.getElementById("segFormulario").addEventListener("click", function (ev) {
@@ -661,6 +717,31 @@ function actualizar() {
       : LUGAR + ", " + c("", "fecha del recibo") + ".";
   }
 
+  /* ── El recibo de entrega ────────────────────────────────────────────────────
+     Lo firma quien recibe, y tambien la Escribania. Por eso el nombre y el DNI no van
+     en el texto: van debajo del renglon de firma, que es donde se aclara quien firmo.
+     BORRADOR: la formula la escribi yo a partir de lo que pidio Baltasar y falta que la
+     confirme. Si cambia, se cambia aca y en ningun otro lado. */
+  if (tipo === "otros") {
+    var q = QUE_RECIBE[document.getElementById("queRecibe").value] || QUE_RECIBE.primer;
+    document.getElementById("tituloHoja").textContent = "RECIBO";
+    document.getElementById("subtituloHoja").textContent = "";
+    document.getElementById("cuerpo").innerHTML =
+      '<p><span class="lbl">RECIB\u00cd</span> de la Escriban\u00eda General de Gobierno de la ' +
+      'Provincia de C\u00f3rdoba, ' + q.art + ' <strong>' + q.txt + '</strong> de la Escritura N\u00b0\u00a0' +
+      c(e, "nro. escritura") +
+      ' de fecha ' + c(fe ? String(fe.d) : "", "d\u00eda") +
+      ' de ' + c(fe ? MESES[fe.m - 1] : "", "mes") +
+      ' del a\u00f1o ' + c(fe ? String(fe.a) : "", "a\u00f1o") + '.-</p>';
+
+    var fRec = document.getElementById("firmaRecibe");
+    fRec.innerHTML = c(quien, "aclaraci\u00f3n", "nombre") +
+                     '<br>DNI ' + c(d, "DNI");
+    return;
+  }
+
+  document.getElementById("tituloHoja").textContent = "CONSTANCIA DE RECEPCI\u00d3N";
+  document.getElementById("subtituloHoja").textContent = "Declaraci\u00f3n Jurada Patrimonial";
   document.getElementById("cuerpo").innerHTML =
     '<p><span class="lbl">CERTIFICO:</span> que ' + tr + ' ' + c(quien, "apellido y nombres", "nombre") +
     ', Documento Nacional de Identidad n\u00famero ' + c(d, "DNI") +
