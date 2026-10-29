@@ -126,7 +126,7 @@ button.chip{border:0;cursor:pointer;font-family:inherit}
 .aviso.gris{color:var(--muted)}
 .grilla-res,.grilla-per{display:flex;flex-direction:column;margin-top:12px}
 .fila-res,.enc-tabla{display:grid;grid-template-columns:minmax(0,1fr) 84px 84px 84px 84px 100px;align-items:center;gap:8px;padding:9px 10px;border-bottom:1px solid var(--line)}
-.fila-per,.enc-tabla.per{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 72px 64px 80px minmax(170px,230px);align-items:start;gap:10px;padding:8px 10px;border-bottom:1px solid var(--line)}
+.fila-per,.enc-tabla.per{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr) 64px 72px 80px minmax(170px,230px);align-items:start;gap:10px;padding:8px 10px;border-bottom:1px solid var(--line)}
 .fila-per .org{font-size:12.5px;color:var(--muted);overflow-wrap:anywhere}
 .fila-per .ck.nd{color:var(--muted);font-weight:500}
 .fila-per .ck.nd small{display:block;font-size:11px;font-weight:500;line-height:1.25}
@@ -506,7 +506,7 @@ html[data-theme="dark"] .paso h2 .num{color:#0E1524}
  </section>
  </div>
 
- <p class="pie"><span class="sigec-version">Versión del 26/10/2026</span></p>
+ <p class="pie"><span class="sigec-version">Versión del 29/10/2026</span></p>
 </div>
 
 <dialog id="dlg" aria-labelledby="dlgTit"><div class="dlg" id="dlgCont"></div></dialog>
@@ -550,6 +550,10 @@ const FUENTES=[
  {id:"u", n:"Publicadas",  t:"Declaraciones publicadas",   d:"El índice de las declaraciones publicadas en la web del Poder Ejecutivo. Las del Poder Judicial y del Legislativo no se publican ahí.", col:"Publicada"}
 ];
 const FID=["p","a","u"];
+/* El orden en que se muestran (Baltasar, 28/10/2026: «que el orden de los filtros sea: está activo, presenta y
+   publicada»). FID sigue siendo el orden de los códigos (cod[0] presentó, cod[1] activo, cod[2] publicada). */
+const VER_ORDEN=["a","p","u"];
+const TIT_COL={p:"Según el índice del Protocolo B",a:"Según la nómina",u:"Según el índice de la web"};
 const FN=Object.fromEntries(FUENTES.map(f=>[f.id,f]));
 /* Los poderes (Baltasar, 25/10/2026: «el Poder Judicial cuenta… dividirlo por Poder Judicial,
    Ejecutivo y Legislativo, y entes autárquicos»; y «sería un cotejo aparte, por eso hay que
@@ -680,7 +684,7 @@ const valNorm=s=>sinTildes(s).toLowerCase().replace(/\s+/g," ").trim();
 function porDefecto(tipo,v){
  if(tipo==="poder") return /^(ejec|jud|legis)/.test(v);
  if(tipo==="acto") return /ddjj|declarac/.test(v);
- if(tipo==="estado") return !/anul|falta|imposib|pendien/.test(v);
+ if(tipo==="estado") return !/anul|falta|imposib|pendien|incompar/.test(v);
  return true; }
 function cuenta(filtros,tipo,valor){ const v=valNorm(valor); const m=filtros&&filtros[tipo]; if(m&&tiene(m,v)) return !!m[v];
  // un poder mal escrito («Judical») sigue lo que se decidió para el bien escrito
@@ -694,14 +698,24 @@ const esFaltaFirmar=r=>r.estado!==undefined&&/falta\s*firm/.test(valNorm(r.estad
 /* Las filas de todas las partes de una lista, contadas una vez por persona. De las que no
    cuentan se recuerda la última de cada nombre: «falta firmar» aparte, y las demás con el
    motivo, para que quien revisa vea que hay una DDJJ que quedó afuera. */
-function combinarFilas(grupos,filtros,pods){ const out=new Map(), falta=new Map(), fuera=new Map(); const excl={}; let total=0;
+/* Las anuladas por incomparecencia (Baltasar, 28/10/2026: «también me tiene que aparecer el hecho de aquellas
+   personas que presentaron pero se anularon por incomparecencia»): no cuentan, pero se guardan todas, por nombre,
+   para mostrarlas aparte. Sólo las que contarían si no fuera por el estado: una DDJJ de un poder que cuenta. */
+const esIncomparecencia=r=>r.estado!==undefined&&/incompar/.test(valNorm(r.estado));
+function combinarFilas(grupos,filtros,pods){ const out=new Map(), falta=new Map(), fuera=new Map(), fueraOtra=new Map(), incomp=new Map(); const excl={}; let total=0;
  const add=(arr,v)=>{ v=String(v||"").trim(); if(v&&!arr.includes(v)) arr.push(v); };
- const anotar=(mapa,r,motivo)=>{ if(!r.k) return; const p=mapa.get(r.k); if(!p||ordenFecha(r.fecha)>=ordenFecha(p.fecha)) mapa.set(r.k,{escr:r.escr||"",fecha:r.fecha||"",motivo,cargo:sinCodigo(r.cargo)||""}); };
+ const anotar=(mapa,r,motivo,inc)=>{ if(!r.k) return; const p=mapa.get(r.k); if(!p||ordenFecha(r.fecha)>=ordenFecha(p.fecha)) mapa.set(r.k,{escr:r.escr||"",fecha:r.fecha||"",motivo,cargo:sinCodigo(r.cargo)||"",incomp:!!inc}); };
  for(const [gi,filas] of grupos.entries()) for(const r of filas){ total++; const pod=pods?pods[gi]||"E":"";
   const ex=excluye(r,filtros);
   if(ex){ excl[ex]=(excl[ex]||0)+1;
+   const inc=!!r.k&&esIncomparecencia(r)&&!excluye(Object.assign({},r,{estado:""}),filtros);
+   if(inc){ const a=incomp.get(r.k)||[], e={nom:r.nom||"",dni:String(r.dni||""),escr:String(r.escr||""),fecha:String(r.fecha||""),cargo:sinCodigo(r.cargo)||"",pod:normPoder(r.poder),k:r.k};
+    const ya=(e.escr||e.fecha)&&a.find(x=>x.escr===e.escr&&x.fecha===e.fecha&&(x.dni===e.dni||!x.dni||!e.dni));
+    if(!ya) a.push(e); else if(!ya.dni&&e.dni) ya.dni=e.dni;
+    incomp.set(r.k,a); }
    if(ex==="estado"&&esFaltaFirmar(r)) anotar(falta,r,"falta firmar");
-   else anotar(fuera,r,ex==="estado"?String(r.estado||"").trim():`${(CATEG.find(x=>x[0]===ex)||["",ex])[1]} ${String(r[ex]||"en blanco").trim()}`);
+   else{ const mot=ex==="estado"?String(r.estado||"").trim():`${(CATEG.find(x=>x[0]===ex)||["",ex])[1]} ${String(r[ex]||"en blanco").trim()}`;
+    anotar(fuera,r,mot,inc); if(!inc) anotar(fueraOtra,r,mot); }
    continue; }
   const key=r.dni?"d"+r.dni:"n"+r.k; let m=out.get(key);
   if(!m){ m={nom:r.nom,k:r.k,dni:r.dni||"",cuil:r.cuil||"",cargos:[],jurs:[],escals:[],revistas:[],empresas:[],escrs:[],puestos:[],filas:0,pg:pod==="J"||pod==="L"?pod:"E"}; out.set(key,m); }
@@ -715,7 +729,7 @@ function combinarFilas(grupos,filtros,pods){ const out=new Map(), falta=new Map(
  const conDni=new Map(); for(const m of out.values()) if(m.dni&&m.k){ const ck=m.pg+"|"+m.k; conDni.set(ck,conDni.has(ck)?null:m); }
  for(const [key,m] of [...out]) if(!m.dni&&m.k){ const d=conDni.get(m.pg+"|"+m.k); if(!d) continue; d.filas+=m.filas; ["cargos","jurs","escals","revistas","empresas"].forEach(c=>m[c].forEach(v=>add(d[c],v))); m.puestos.forEach(x=>{ if(!d.puestos.some(y=>y.cargo===x.cargo&&y.jur===x.jur&&y.pod===x.pod)) d.puestos.push(x); }); d.escrs.push(...m.escrs); out.delete(key); }
  for(const m of out.values()) m.escrs.sort((a,b)=>ordenFecha(b.fecha)-ordenFecha(a.fecha));
- return {filas:[...out.values()],falta,fuera,excl,total}; }
+ return {filas:[...out.values()],falta,fuera,fueraOtra,incomp,excl,total}; }
 
 /* ============================================================================
    El cotejo. Cada persona de cada lista es un registro; los de la misma persona se
@@ -823,7 +837,7 @@ function cotejar(L,vinculos,vistos){
   .filter(x=>x.g!==x.h&&(x.dup||disjuntos(x.g,x.h))&&!rechazado(x.g,x.h)&&!(x.dup&&dnisDistintos(x.g,x.h)));
  const pend=new Set(); vigentes.forEach(x=>{ pend.add(x.g); pend.add(x.h); });
  const deGrupo=new Map(), personas=[];
- const falta=L.p?L.p.falta:new Map(), fuera=L.p?L.p.fuera:new Map();
+ const falta=L.p?L.p.falta:new Map(), fuera=L.p?L.p.fuera:new Map(), incompM=L.p&&L.p.incomp||new Map();
  for(const g of raices){ const regs={};
   for(const i of miembros[g]){ const x=R[i]; if(!regs[x.f]) regs[x.f]=x; }
   const orden=["a","p","u"].map(f=>regs[f]).filter(Boolean); const pri=orden[0];
@@ -847,6 +861,7 @@ function cotejar(L,vinculos,vistos){
   p.busca=sinTildes([p.nom,...otros.map(o=>o.nom),p.dni,fmtDni(p.dni),p.cargos.join(" "),p.jurs.join(" ")].join(" ")).toLowerCase();
   deGrupo.set(g,p); personas.push(p); }
  personas.sort((a,b)=>a.nom.localeCompare(b.nom,"es"));
+ personas.forEach(p=>{ p.incomp=[]; });   // las anuladas por incomparecencia, en adjudicarIncomp (cuando ya tienen su poder)
  // las preguntas: si una persona tiene varias posibles, van juntas
  const vistosPar=new Set(), lista=[];
  for(const x of vigentes){ const A=deGrupo.get(x.g), B=deGrupo.get(x.h); if(!A||!B) continue; const k=Math.min(x.g,x.h)+"|"+Math.max(x.g,x.h); if(vistosPar.has(k)) continue; vistosPar.add(k); lista.push({A,B,motivo:x.motivo}); }
@@ -1006,7 +1021,7 @@ function vistosHasta(i){ const m=M(), v=new Map(); const ad=(s,x)=>!x||s.split("
    corrige también las semanas pasadas, y así la columna «Semana anterior», «Cambios», el
    historial y el Excel dicen lo mismo. s.res guarda la cuenta con la clave que la produjo
    (listas, filtros, confirmaciones, versión del cruce) para no recalcular al abrir. */
-const LOGICA="8";
+const LOGICA="9";
 /* La DDJJ de otro cargo (Baltasar, 23/10/2026: «presentó en 2024 pero cambió el cargo… aparece
    como que sí presentó pero en realidad no»). El protocolo dice con qué cargo se presentó cada
    DDJJ; la nómina, el cargo de hoy. Lo decide una persona, una escritura a la vez: «No es por
@@ -1208,6 +1223,57 @@ function vista(R,alc){ if(!R) return null; let c=VISTAS.get(R); if(!c){ c={}; VI
   propuestas:R.propuestas.filter(x=>en.has(x.centro)||x.opciones.some(o=>en.has(o))),fuera:(R.fuera||[]).filter(x=>vals.has(x.v))});
  c[alc]=v; return v; }
 /* Se corre después de aplicarCargos: escribe sólo p.ubic, p.sinOrg, r.fuera y p.busca. */
+/* Las anuladas por incomparecencia: a la persona que tiene el DNI de la fila, si el índice lo trae; si no, a la que es
+   la única con ese nombre en ese poder (y no tiene otro DNI). A los demás que tienen ese nombre la fila no se les muestra
+   como suya: sólo se avisa (p.incompAjenas). Corre antes de ubicar a quien no está en la nómina, para que la fila de otro
+   no le dé organismo ni, por el organismo, poder; lo que no tiene dueño se arma después de los poderes (agruparIncomp). */
+// la misma escritura: el mismo número y la misma fecha; sin fecha, el mismo número y el mismo nombre (los números se
+// repiten de un año a otro, pero no con el mismo nombre; y dos listas del mismo año pueden traer la misma fila); sin
+// número, la misma fecha y el mismo nombre
+const claveIncomp=e=>e.escr?(e.fecha?e.escr+"|"+e.fecha:e.escr+"||"+(e.k||e.nom)):e.fecha?"|"+e.fecha+"|"+(e.k||e.nom):null;
+const mismaIncomp=(x,e)=>x===e||(claveIncomp(e)!==null&&claveIncomp(x)===claveIncomp(e));
+function adjudicarIncomp(r,L){ const M=L.p&&L.p.incomp||new Map(); r.personas.forEach(p=>{ p.incomp=[]; p.incompAjenas=[]; });
+ const okPod=(e,p)=>e.pod==="?"||compatible(e.pod,p.alc), otroDni=(e,p)=>!!e.dni&&p.dnis.length>0&&!p.dnis.includes(e.dni);
+ const porK=new Map(), porD=new Map(), en=(m,k,p)=>{ if(!m.has(k)) m.set(k,[]); m.get(k).push(p); };
+ for(const p of r.personas){ p.ks.forEach(k=>en(porK,k,p)); p.dnis.forEach(d=>en(porD,d,p)); }
+ const conK=k=>porK.get(k)||[];
+ // con el DNI, quien lo tiene, en cualquier poder (como las filas que cuentan); si no, por el nombre en ese poder
+ const duenos=(k,e)=>e.dni&&porD.has(e.dni)?porD.get(e.dni):conK(k).filter(p=>okPod(e,p)&&!otroDni(e,p));
+ const resto=[], tomadas=new Set();
+ for(const [k,es] of M) for(const e of es){ const d=duenos(k,e);
+  if(d.length===1){ if(!d[0].incomp.some(x=>mismaIncomp(x,e))) d[0].incomp.push(e); const c=claveIncomp(e); if(c) tomadas.add(c); } else resto.push({k,e,d}); }
+ r.incompResto=[];
+ for(const x of resto){ const {k,e,d}=x, c=claveIncomp(e); if(c&&tomadas.has(c)) continue;   // la misma escritura ya es de alguien
+  x.otro=d.length?[]:conK(k).filter(p=>!otroDni(e,p));                       // con ese nombre, pero en otro poder
+  x.otroDni=d.length||x.otro.length?[]:conK(k).filter(p=>otroDni(e,p));        // con ese nombre, pero con otro DNI
+  const ajena=(p,a)=>{ if(!p.incompAjenas.some(y=>mismaIncomp(y.e,e))) p.incompAjenas.push(a); };
+  d.forEach(p=>ajena(p,{e,por:"homonimos",n:d.length})); x.otro.forEach(p=>ajena(p,{e,por:"otroPoder"})); x.otroDni.forEach(p=>ajena(p,{e,por:"otroDni"}));
+  r.incompResto.push(x); }
+ r.personas.forEach(p=>{ p.incomp.sort((a,b)=>ordenFecha(b.fecha)-ordenFecha(a.fecha)); p.incompAjenas.sort((a,b)=>ordenFecha(b.e.fecha)-ordenFecha(a.e.fecha));
+  // la anulada de otro no se le muestra como suya (el «no cuenta» del renglón, su organismo, el Excel, la Consulta):
+  // queda la otra fila suya que no cuenta, si la hay; y quien no presentó y tiene la suya, la tiene ahí
+  const v=p.fuera; if(v&&v.incomp&&!p.incomp.some(x=>x.escr===v.escr&&x.fecha===v.fecha)) p.fuera=L.p.fueraOtra&&p.ks.map(k=>L.p.fueraOtra.get(k)).find(Boolean)||null;
+  const mia=p.incomp[0]; if(mia&&p.cod[0]==="0"&&!p.falta&&(!p.fuera||ordenFecha(mia.fecha)>=ordenFecha(p.fuera.fecha))) p.fuera={escr:mia.escr,fecha:mia.fecha,motivo:"Anulada por incomparecencia",cargo:mia.cargo,incomp:true}; }); }
+/* Lo que no tiene dueño, al pie de su lista, un renglón por nombre, lista y tipo (homónimos, otro poder, otro DNI,
+   parecido o nadie), sólo para la semana que se muestra (incompSueltas). Va a la lista del poder de la DDJJ; a la de los entes si sus posibles dueños están todos ahí; y si
+   ese poder no tiene a nadie en el cotejo, a la primera que tenga a alguien, diciendo de qué poder es. */
+function agruparIncomp(r){ const grupos=new Map(), hay=new Set(r.personas.flatMap(p=>p.alc)), toks=k=>k.split(" ").filter(Boolean);
+ const PRE=new Map(), pre=p=>{ let x=PRE.get(p); if(!x){ const ns=[p.nom,...(p.otrosNombres||[]).map(o=>o.nom)]; x={ap:ns.map(n=>palabras(n)[0]||""),cp:ns.map(compacto),ts:p.ks.map(toks)}; PRE.set(p,x); } return x; };
+ for(const {k,e,d,otro,otroDni:od} of r.incompResto||[]){
+  // un nombre parecido (con la misma regla con la que el cotejo pregunta), primero en ese poder
+  let pars=[]; if(!d.length&&!otro.length&&!od.length){ const tk=toks(k), ap=palabras(e.nom)[0]||"", ce=compacto(e.nom);
+   const parece=p=>{ if(e.dni&&p.dnis.length&&!p.dnis.includes(e.dni)) return false; const x=pre(p);
+    return x.ts.some(t=>(Math.abs(tk.length-t.length)<=1&&parecidos(tk,t))||incluido(tk,t)||(todasMenosUna(tk,t)&&x.ap.some(a=>casi(ap,a))))||(ce.length>=8&&x.cp.some(y=>y===ce||casi(ce,y))); };
+   const comp=[], otros=[]; for(const p of r.personas) if(parece(p)) ((e.pod==="?"||compatible(e.pod,p.alc))?comp:otros).push(p);
+   pars=comp.length?comp:otros; }
+  const pi=e.pod==="?"?"E":e.pod, cand=d.length?d:od.length?od:pars;
+  let pod=pi==="E"&&cand.length&&cand.every(p=>p.alc.includes("A")&&!p.alc.includes("E"))?"A":pi; const podIndice=pod;
+  if(!hay.has(pod)) pod=(PODERES.find(x=>hay.has(x.id))||{id:pod}).id;
+  // dos anuladas del mismo nombre en distinta situación no comparten la frase
+  const tipo=d.length>=2?"h"+d.map(p=>p.rep).sort().join("~"):otro.length?"o":od.length?"d":pars.length?"p"+pars.map(p=>p.rep).sort().join("~"):"s", g=k+"|"+pod+"|"+tipo; let x=grupos.get(g);
+  if(!x){ x={k,pod,es:[],homonimos:d.length,homos:d,otro,otroDni:od,parecidos:pars}; grupos.set(g,x); }
+  if(!x.es.some(y=>mismaIncomp(y,e))) x.es.push(Object.assign({},e,{podIndice})); }
+ r.incompSueltas=[...grupos.values()]; r.incompSueltas.forEach(x=>x.es.sort((a,b)=>ordenFecha(b.fecha)-ordenFecha(a.fecha))); }
 function ubicarNoActivos(r,L){ r.fuera=[]; const jurs=[...new Set(r.personas.filter(p=>p.cod[1]==="1").flatMap(p=>p.jurs))]; const us=[];
  for(const p of r.personas){ p.ubic=null; p.sinOrg=null; if(p.cod[1]==="1") continue;
   const u=ubicar(p,p.sinNom?[]:jurs,p.sinNom||!!L.a,!!L.p);
@@ -1287,7 +1353,7 @@ const cuentaVieja=i=>{ const s=M().semanas[i]; return !s.res||s.resK!==claveCalc
 function calc(i){ const m=M(), s=m.semanas[i]; if(!s) return null; const k=claveCalc(i);
  const c=MEMO.get(i); if(c&&c.k===k) return c.r;
  const L=listasDe(s);
- const r=cotejar(L,m.vinculos||[],vistosHasta(i)); poderes(r,s); aplicarCargos(r,m.cargos,s.s,L,m.revisadas,m.vinculos); ubicarNoActivos(r,L); alcances(r,s); r.res=resumir(r.personas,r.propuestas); r.L=L;
+ const r=cotejar(L,m.vinculos||[],vistosHasta(i)); poderes(r,s); aplicarCargos(r,m.cargos,s.s,L,m.revisadas,m.vinculos); adjudicarIncomp(r,L); ubicarNoActivos(r,L); alcances(r,s); r.res=resumir(r.personas,r.propuestas); r.L=L;
  const toca=(x,a)=>x.centro.alc.includes(a)||x.opciones.some(o=>o.alc.includes(a));
  r.res.por=Object.fromEntries(PODERES.map(({id})=>[id,resumir(r.personas.filter(p=>p.alc.includes(id)),r.propuestas.filter(x=>toca(x,id)))]));
  // sólo se guarda la cuenta hecha con todas sus listas a mano
@@ -1326,9 +1392,19 @@ let TAB=null;
 function ponerTab(t){ TAB=t; document.querySelectorAll("[data-panel]").forEach(e=>{ e.hidden=e.dataset.panel!==t; });
  document.querySelectorAll("#pestanas [data-tab]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.tab===t))); }
 function pintarPestanas(){ if(!hayDatos()) TAB="carga"; else if(!TAB) TAB="buscar"; ponerTab(TAB);
- const r=ACT.R, n=r&&enUltima()?r.propuestas.length+r.personas.filter(p=>p.revCargo||p.inconsist||p.dudaPoder).length:0, b=$("#pestN");
+ const r=ACT.R, n=r&&editable()?r.propuestas.length+r.personas.filter(p=>p.revCargo||p.inconsist||p.dudaPoder).length:0, b=$("#pestN");
  b.textContent=n?nf(n):""; b.classList.toggle("oculto",!n); b.title=n?"Lo que falta decidir: coincidencias de nombre e inconsistencias":""; }
 const enUltima=()=>!!ACT&&ACT.i===M().semanas.length-1;
+/* Sólo para ver (Baltasar, 28/10/2026: «que consulta sólo pueda ver»): quien entra al compartido con una cuenta de Ley
+   Pierri de perfil Consulta ve todo —filtros, perfiles, el Excel, una copia de respaldo—, pero no carga listas, no
+   decide, no cambia el texto de la notificación, no publica, no abre una copia ni maneja los usuarios. Y su sesión
+   nunca sube nada a GitHub (unaVuelta). Es una barrera de la herramienta, no de GitHub: con la llave de GitHub de
+   todos, quien sepa programar podría escribir igual; para que lo impida GitHub, a esa persona se le da una llave sólo
+   de lectura. */
+const soloVerN=n=>!!n&&!!n.pierri&&!["admin","editor"].includes(n.rol);   // un perfil que no se conoce, tampoco
+const SOLO_VER=()=>!!NUBE&&!DEMO&&soloVerN(NUBE);
+const editable=()=>enUltima()&&!SOLO_VER();
+const soloVer=()=>{ if(!SOLO_VER()) return false; dialogoAviso("Sólo para ver","Entraste con un perfil de Consulta de Ley Pierri: ves todo el cotejo, pero no cargás listas ni decidís."); return true; };
 function pintarCab(){ const s=ACT.s;
  $("#chipSemana").textContent=s?"Semana del "+isoAFecha(s.s):"Sin listas cargadas"; }
 
@@ -1337,6 +1413,7 @@ function pintarBandas(){ let h="";
  if(conflicto&&!DEMO) h+=`<div class="banda mal"><span><b>Otra ventana del cotejo guardó cambios.</b> Lo último que se hizo en esta ventana no se guardó, para no pisar lo de la otra. Recargá para seguir con lo más nuevo.</span><button class="btn sm" type="button" data-acc="recargar">Recargar</button></div>`;
  if(sinGuardar&&!DEMO) h+=`<div class="banda mal"><span><b>Esta computadora no deja guardar.</b> Lo que se cargue se pierde al cerrar. Pasa en una ventana de incógnito o con los datos de sitio bloqueados.</span></div>`;
  if(errorGuardar&&!DEMO) h+=`<div class="banda mal"><span><b>No se pudo guardar el último cambio</b> (${esc(errorGuardar)}). Conviene guardar una copia antes de cerrar.</span></div>`;
+ if(SOLO_VER()) h+=`<div class="banda info"><span><b>Sólo para ver.</b> Entraste con un perfil de Consulta de Ley Pierri: ves todo el cotejo, bajás el Excel y copiás las notificaciones, pero no cargás listas ni decidís.</span></div>`;
  if(WEB&&!NUBE&&!DEMO) h+=`<div class="banda info"><span><b>Entrá para ver el cotejo.</b> Está sólo en GitHub; sin entrar, lo que se haga no se guarda.</span><button class="btn sm" type="button" data-acc="nube">Entrar</button></div>`;
  if(WEB&&NUBE&&SIN_BAJAR.size&&!DEMO) h+=`<div class="banda mal"><span><b>No se pudieron bajar ${SIN_BAJAR.size===1?"una lista":nf(SIN_BAJAR.size)+" listas"} de GitHub:</b> los números pueden estar incompletos.</span><button class="btn sm" type="button" data-acc="rebajar">Volver a intentar</button></div>`;
  if(NUBE&&!DEMO&&NUBE.estado==="error"&&!["red","limite","ocupado","http","falta"].includes(NUBE.error)) h+=`<div class="banda mal"><span><b>El cotejo compartido no se pudo actualizar.</b> ${esc(txtNube(NUBE.error)+QUEDA_ACA())}</span><button class="btn sm" type="button" data-acc="verNube">Ver</button></div>`;
@@ -1346,6 +1423,23 @@ function pintarBandas(){ let h="";
  $("#bandas").innerHTML=h; }
 
 /* Cuántas personas cuenta una parte sola, con lo que cuenta hoy. */
+/* Las anuladas por incomparecencia que no quedaron en una persona (las arma adjudicarIncomp, una por nombre y lista):
+   varios con ese nombre («homonimos»), alguien con ese nombre en otro poder («otro»), alguien con un nombre parecido
+   («parecido») o nadie. */
+const incompSueltas=()=>{ const R=ACT&&ACT.R; if(!R) return []; if(!R.incompSueltas) agruparIncomp(R); return R.incompSueltas||[]; };
+const incompDe=alc=>({personas:ACT.R.personas.filter(p=>p.alc.includes(alc)&&p.incomp&&p.incomp.length),sueltas:incompSueltas().filter(x=>x.pod===alc)});
+// cada una una vez: por el DNI, si el índice lo trae y nadie lo tiene; si no, por el nombre, salvo que alguien que ya
+// tiene una en su renglón pueda ser su dueño. {n: todas, pie: las que van al pie}
+const candIncomp=x=>[...(x.homos||[]),...(x.otro||[]),...(x.otroDni||[]),...(x.parecidos||[])];
+const nIncomp=()=>{ if(!ACT||!ACT.R) return {n:0,pie:0}; const P=ACT.R.personas.filter(p=>p.incomp&&p.incomp.length);
+ const pie=new Set(incompSueltas().flatMap(x=>{ const c=candIncomp(x), suya=P.some(p=>c.includes(p)), ds=[...new Set(x.es.map(e=>e.dni).filter(d=>d&&!P.some(p=>p.dnis.includes(d))))];
+  return ds.length?ds.map(d=>"d"+d):suya?[]:["n"+x.k]; })).size;
+ return {n:P.length+pie,pie}; };
+// sin nadie en el cotejo (sólo el índice, todo anulado) no hay lista adonde ir: se nombran ahí mismo
+const textoTarjetaIncomp=()=>{ const {n,pie}=nIncomp(), uno=pie===1;
+ return `${n===1?"Una persona tiene":nf(n)+" personas tienen"} una DDJJ anulada por incomparecencia: no cuenta como presentada.${pie?` ${pie===n?(n===1?"Va":"Van"):`${nf(pie)} de ellas ${uno?"va":"van"}`} al pie de la lista: no se sabe de quién ${uno?"es":"son"}, o no ${uno?"está":"están"} en el cotejo.`:""} `
+  +(ACT.R.personas.length?`<button class="btn lnk sm" type="button" data-incomp="${alcIncomp()}">Ver quiénes</button>`:esc(incompSueltas().map(x=>`«${x.es[0].nom||x.k}» (${x.es.map(escFecha).join("; ")})`).join(", ")+".")); };
+const alcIncomp=()=>{ const t=x=>{ const d=incompDe(x); return d.personas.length+d.sueltas.length; }; return t(ALC)?ALC:(PODERES.find(x=>t(x.id))||{id:ALC}).id; };
 const personasDe=(f,l)=>combinarFilas([l.filas],filtrosDe(ACT.s)[f]).filas.length;
 function queCuenta(f){ const F=filtrosDe(ACT.s)[f]||{}; const ls=idsDe(ACT.s,f).map(id=>LS().get(id)).filter(Boolean); if(!ls.length) return "";
  const partes=[]; for(const [t,n] of CATEG){ const vals=new Map(); for(const l of ls) for(const r of l.filas) if(r[t]!==undefined){ const v=valNorm(r[t]); if(!vals.has(v)) vals.set(v,r[t]||"en blanco"); }
@@ -1358,12 +1452,12 @@ function avisoLista(f,ls){ if(!ls.length) return ""; const L=lunesDe(new Date())
  if(f==="a"){ const b=deBase(ls); const fd=b.map(l=>l.fechaDatos).filter(Boolean)[0]; const d=fd?diasDesde(fd):null;
   if(d!=null&&d>35) return `La nómina tiene ${nf(d)} días`; return !fd&&lunesDe(new Date(b[0].cargada))<L?"Sin actualizar esta semana":""; }
  return ls.every(l=>lunesDe(new Date(l.cargada))<L)?"Sin actualizar esta semana":""; }
-function pintarListas(){ const s=ACT.s, ult=M().semanas.length-1, enUlt=ACT.i===ult||ult<0;
+function pintarListas(){ const s=ACT.s, ult=M().semanas.length-1, ultima=ACT.i===ult||ult<0, enUlt=ultima&&!SOLO_VER();
  $("#listas").innerHTML=FUENTES.map(F=>{ const ids=idsDe(s,F.id); const ls=ids.map(id=>LS().get(id)).filter(Boolean);
   const comb=ACT.R&&ACT.R.L[F.id]; const n=comb?comb.filas.length:0;
   // deshacer sólo lo cargado en la semana del calendario: nunca lo de una semana que ya cerró
   const deshacer=enUlt&&esEstaSemana(s)&&s.orig&&tiene(s.orig,F.id);
-  const av=enUlt?avisoLista(F.id,ls):""; const estado=av?`<span class="chip t-warn">${av}</span>`:"";
+  const av=ultima?avisoLista(F.id,ls):""; const estado=av?`<span class="chip t-warn">${av}</span>`:"";
   const partes=ls.length>1||F.id==="p"||ls.some(l=>l.ente)?`<ul class="partes">${ls.map(l=>`<li><span>${l.clave?"<b>"+esc(l.clave)+"</b>"+(l.ente?({J:" (nómina del Poder Judicial)",L:" (nómina del Poder Legislativo)"}[poderLista(l)]||" (ente autárquico)"):"")+" · ":""}${esc(l.archivo)} · ${nf(personasDe(F.id,l))} personas · ${fechaDe(l.cargada)}</span>${enUlt&&ls.length>1?`<button class="btn lnk sm" type="button" data-quitar="${F.id}|${esc(l.id)}">Quitar</button>`:""}</li>`).join("")}</ul>`:"";
   const una=ls.length===1&&F.id!=="p"&&!ls[0].ente?ls[0]:null;
   const qc=ls.length?queCuenta(F.id):"";
@@ -1375,6 +1469,7 @@ function pintarListas(){ const s=ACT.s, ult=M().semanas.length-1, enUlt=ACT.i===
    ${partes}
    ${F.id==="a"&&(M().entesOrg||[]).length?`<div class="cuando">Organismos de PeopleNet marcados como ente: ${esc(yLista((M().entesOrg||[]).map(x=>x.nom)))}.</div>`:""}
    ${qc?`<div class="cuando">${esc(qc)}</div>`:""}
+   ${F.id==="p"&&nIncomp().n?`<div class="cuando">${textoTarjetaIncomp()}</div>`:""}
    ${estado?`<div>${estado}</div>`:""}
    ${enUlt?`<div class="acc"><button class="btn sm ${ls.length?"":"pri"}" type="button" data-cargar="${F.id}">${ls.length?(F.id==="a"?"Cargar la nómina o la de un ente":"Cargar la de esta semana"):"Cargar la lista"}</button>${ls.length&&F.id!=="u"?`<button class="btn lnk sm" type="button" data-cuenta="${F.id}">Qué cuenta</button>`:""}${deshacer?`<button class="btn lnk sm" type="button" data-deshacer="${F.id}">Deshacer lo de esta semana</button>`:""}</div>`:""}
   </div>`; }).join(""); }
@@ -1384,14 +1479,15 @@ const yLista=a=>a.length<2?a.join(""):a.slice(0,-1).join(", ")+" y "+a[a.length-
    desde la anterior y lo que falta. Sin listas, cómo empezar. */
 function pintarTitular(){ const r=ACT.r; const cont=$("#titular"), vac=$("#vacio");
  if(hayDatos()&&ALC!=="E"&&(r.sinNom||!r.personas.length)){ vac.innerHTML=""; const n=r.personas.length, t=PN[ALC].t;
-  cont.innerHTML=ALC==="A"&&!n?`Todavía no hay entes autárquicos. Se suman de dos maneras: con «Cargar la nómina o la de un ente», en «Cargar la semana», o tocando «Es un ente» al lado de un organismo en «Resumen» › «Por organismo», mirando el Poder Ejecutivo.`
+  cont.innerHTML=ALC==="A"&&!n&&SOLO_VER()?"Todavía no hay entes autárquicos.":ALC==="A"&&!n?`Todavía no hay entes autárquicos. Se suman de dos maneras: con «Cargar la nómina o la de un ente», en «Cargar la semana», o tocando «Es un ente» al lado de un organismo en «Resumen» › «Por organismo», mirando el Poder Ejecutivo.`
    :!r.L.p?`Falta el índice del Protocolo B: sin él no se puede decir quién del ${t} presentó.`
    :!n?`No hay ninguna declaración del ${t} en el índice del Protocolo B${/judicial/i.test(t)||/legislativo/i.test(t)?" (o en «Qué cuenta» ese poder está marcado para que no cuente)":""}.`
    :`<b>${nf(n)}</b> ${n===1?"persona presentó":"personas presentaron"} la declaración como del ${t} (índice del Protocolo B). No hay nómina del ${t}: no se puede decir quién está en funciones ni a quién le falta. Estas declaraciones no se publican en la web.`;
   return; }
  if(!r||!r.personas.length){
   cont.textContent="Quién presentó la declaración jurada, quién está activo y quién la tiene publicada.";
-  vac.innerHTML=`<div class="card"><div class="mensaje">Todavía no hay listas cargadas. Se cargan en «Las tres listas», en la pestaña de la carga: se abre cada Excel tal como llega, o se selecciona la lista en Excel con los títulos de las columnas, se copia y se pega. Con la nómina y una de las otras dos ya se ve el cotejo.
+  vac.innerHTML=SOLO_VER()?`<div class="card"><div class="mensaje">Todavía no hay listas en el cotejo compartido: las carga alguien con perfil de Administración o de Revisión en Ley Pierri. Cuando estén, se ven acá.
+   <div class="row" style="margin-top:10px"><button class="btn" type="button" data-acc="demo">Probar con un ejemplo inventado</button></div></div></div>`:`<div class="card"><div class="mensaje">Todavía no hay listas cargadas. Se cargan en «Las tres listas», en la pestaña de la carga: se abre cada Excel tal como llega, o se selecciona la lista en Excel con los títulos de las columnas, se copia y se pega. Con la nómina y una de las otras dos ya se ve el cotejo.
    <div class="row" style="margin-top:10px"><button class="btn pri" type="button" data-tab="carga">Cargar las listas</button><button class="btn" type="button" data-acc="demo">Probar con un ejemplo inventado</button></div></div></div>`;
   return; }
  vac.innerHTML="";
@@ -1448,13 +1544,13 @@ function pintarResumen(){ const r=ACT.r; const sec=$("#secSit");
  const GR=gruposRes(r); $("#tSit").textContent=GR===GRUPOS_RES?"Las siete situaciones":"Las situaciones";
  const C=en?contar(r.personas):res.c, CP=pr?(en?contar(ACT.prev.personas):pr.c):null;
  const tot=en?Object.values(C).reduce((a,b)=>a+b,0):res.total;
- let h=`<div class="grilla-res" style="margin-top:0"><div class="enc-tabla"><span>Situación</span><span class="c">Presentó</span><span class="c">Activo</span><span class="c">Publicada</span><span class="c">Personas</span><span class="c">${pr?"Semana anterior":""}</span></div>`;
+ let h=`<div class="grilla-res" style="margin-top:0"><div class="enc-tabla"><span>Situación</span>${VER_ORDEN.map(f=>`<span class="c">${FN[f].col}</span>`).join("")}<span class="c">Personas</span><span class="c">${pr?"Semana anterior":""}</span></div>`;
  for(const [tit,cods] of GR){ h+=`<div class="grupo-res">${tit}</div>`;
   for(const c of cods){ const S=SIT[c], n=C[c]||0, a=CP?(CP[c]||0):null; const on=R.p===c[0]&&R.a===c[1]&&R.u===c[2]&&!FILTRO.sit;
    const sin=FID.filter((f,k)=>c[k]==="1"&&!r.L[f]&&!estructural(f)); // pide una lista que no está: siempre 0
    h+=`<button type="button" class="fila-res ${n?"":"cero"} ${on?"on":""}" data-sit="${c}" aria-pressed="${on}" ${sin.length?`disabled title="${SIN[sin[0]].charAt(0).toUpperCase()+SIN[sin[0]].slice(1)} no se puede saber"`:`title="Ver quiénes son"`}>
     <span class="sit-n"><span class="pto ${S.tono}"></span><span><b>${S.n}</b><small>${S.d}</small></span></span>
-    <span class="cks">${FID.map((f,k)=>c[k]==="-"?`<span class="ck no" style="font-weight:500"><i>${FN[f].col}: </i>${f==="a"?"sin nómina":"no se publica"}</span>`:`<span class="ck ${c[k]==="1"?"si":"no"}"><i>${FN[f].col}: </i>${c[k]==="1"?"Sí":"No"}</span>`).join("")}</span>
+    <span class="cks">${VER_ORDEN.map(f=>[f,FID.indexOf(f)]).map(([f,k])=>c[k]==="-"?`<span class="ck no" style="font-weight:500"><i>${FN[f].col}: </i>${f==="a"?"sin nómina":"no se publica"}</span>`:`<span class="ck ${c[k]==="1"?"si":"no"}"><i>${FN[f].col}: </i>${c[k]==="1"?"Sí":"No"}</span>`).join("")}</span>
     <span class="cant">${nf(n)}</span>
     <span class="dif ${a!=null&&n!==a?"cambia":""}">${a==null?"":n===a?"igual":(n>a?"+":"−")+nf(Math.abs(n-a))}</span>
    </button>`; } }
@@ -1498,12 +1594,12 @@ function pintarOrganismos(){ const sec=$("#secMin"); const r=ACT.r;
  $("#tablaMin").innerHTML=h; pintarFueraMin();
  // las marcas de ente que no están en la nómina de esta semana, y el aviso de la última que se puso
  const marcados=(M().entesOrg||[]).filter(x=>x&&x.nom), js=new Set(r.personas.flatMap(p=>(p.puestos||[]).map(x=>valNorm(x.jur)))), faltan=marcados.filter(x=>!js.has(x.j));
- if(ALC==="A"&&DIM==="jurs"&&faltan.length) $("#aMin").innerHTML=esc($("#aMin").textContent)+` <span class="aviso">Marcado como ente pero no está en la nómina de esta semana: ${faltan.map(x=>`«${esc(x.nom)}»${enUltima()?` <button class="btn lnk sm" type="button" data-ente="${esc(x.nom)}|0">Quitar la marca</button>`:""}`).join(", ")}. Si cambió de nombre en PeopleNet, se marca de nuevo con el nombre nuevo.</span>`;
- if(AVISO_ENTE&&enUltima()&&ALC==="E"&&DIM==="jurs") $("#aMin").innerHTML=esc($("#aMin").textContent)+` <span class="aviso">«${esc(AVISO_ENTE)}» pasó a «Entes autárquicos». <button class="btn lnk sm" type="button" data-ente="${esc(AVISO_ENTE)}|0">Deshacer</button></span>`; }
+ if(ALC==="A"&&DIM==="jurs"&&faltan.length) $("#aMin").innerHTML=esc($("#aMin").textContent)+` <span class="aviso">Marcado como ente pero no está en la nómina de esta semana: ${faltan.map(x=>`«${esc(x.nom)}»${editable()?` <button class="btn lnk sm" type="button" data-ente="${esc(x.nom)}|0">Quitar la marca</button>`:""}`).join(", ")}. Si cambió de nombre en PeopleNet, se marca de nuevo con el nombre nuevo.</span>`;
+ if(AVISO_ENTE&&editable()&&ALC==="E"&&DIM==="jurs") $("#aMin").innerHTML=esc($("#aMin").textContent)+` <span class="aviso">«${esc(AVISO_ENTE)}» pasó a «Entes autárquicos». <button class="btn lnk sm" type="button" data-ente="${esc(AVISO_ENTE)}|0">Deshacer</button></span>`; }
 /* La marca de ente, al lado de cada organismo: sólo por jurisdicción, en la última semana. */
 function enteBtn(v){ if(DIM!=="jurs"||v===SIN_DATO||!enUltima()) return ""; const marcado=(M().entesOrg||[]).some(x=>x&&x.j===valNorm(v));
- if(ALC==="E") return ` <button class="btn lnk sm" type="button" data-ente="${esc(v)}|1" title="Marcarlo como ente autárquico: pasa, con su gente, a «Entes autárquicos». Se deshace desde ahí.">Es un ente</button>`;
- if(ALC==="A") return marcado?` <button class="btn lnk sm" type="button" data-ente="${esc(v)}|0" title="Vuelve al Poder Ejecutivo">Marcado como ente · Deshacer</button>`:` <span class="chip t-neutro" title="Viene de una lista cargada como ente">Lista del ente</span>`;
+ if(ALC==="E") return !editable()?"":` <button class="btn lnk sm" type="button" data-ente="${esc(v)}|1" title="Marcarlo como ente autárquico: pasa, con su gente, a «Entes autárquicos». Se deshace desde ahí.">Es un ente</button>`;
+ if(ALC==="A") return marcado?(editable()?` <button class="btn lnk sm" type="button" data-ente="${esc(v)}|0" title="Vuelve al Poder Ejecutivo">Marcado como ente · Deshacer</button>`:` <span class="chip t-neutro" title="Un organismo de PeopleNet marcado a mano como ente">Marcado como ente</span>`):` <span class="chip t-neutro" title="Viene de una lista cargada como ente">Lista del ente</span>`;
  return ""; }
 /* Quienes no están en la nómina no cuentan en la tabla ni en los porcentajes: van debajo, por el
    organismo que les da su DDJJ o una nómina anterior, sin porcentaje (de un organismo de afuera no se
@@ -1530,13 +1626,13 @@ const lado=p=>`<div class="lado"><div class="nom">${esc(p.nom)}</div>
 /* Entre homónimos, el botón dice cuál es: el DNI o, si no tiene, el organismo o el cargo. */
 const cualEs=(o,todas)=>{ if(todas.filter(q=>claveNombre(q.nom)===claveNombre(o.nom)).length<2) return o.nom;
  return o.nom+" · "+(o.dni?"DNI "+fmtDni(o.dni):o.jurs[0]||o.cargos[0]||FID.filter((f,i)=>o.cod[i]==="1").map(f=>FN[f].n).join(", ")); };
-function pintarConfirmar(){ const r=ACT.R, puede=enUltima(); const P=r?r.propuestas:[];
+function pintarConfirmar(){ const r=ACT.R, puede=editable(); const P=r?r.propuestas:[];
  const rech=r?(M().vinculos||[]).map((v,i)=>({v,i})).filter(x=>x.v&&!x.v.si&&(r.claves.has(x.v.x)||r.claves.has(x.v.y))):[];
  const unidos=r?r.confirmados.map(v=>({v})):[];
  const decs=r?(M().cargos||[]).filter(v=>v&&typeof v.k==="string").map(v=>{ const {p,e}=escrDeClave(r,v.k); return {v,p,e}; }):[];
  const rv=r?(M().revisadas||[]).filter(v=>v&&typeof v.k==="string").map(v=>({v,p:escrDeClave(r,v.k).p})):[];
  const hay=!!(r&&r.personas.length); $("#secConfirmar").classList.toggle("oculto",!hay); $("#secRevisar").classList.toggle("oculto",!hay);
- const nC=$("#nConf"); nC.textContent=puede&&P.length?nf(P.length):""; nC.classList.toggle("oculto",!(puede&&P.length)); nC.title=P.length===1?"Una pregunta por contestar":nf(P.length)+" preguntas por contestar";
+ const nC=$("#nConf"); nC.textContent=(puede||SOLO_VER())&&P.length?nf(P.length):""; nC.classList.toggle("oculto",!((puede||SOLO_VER())&&P.length)); nC.title=P.length===1?"Una pregunta por contestar":nf(P.length)+" preguntas por contestar";
  const pdTxt=q=>q.cod[1]==="1"?`en la nómina ${q.alc[0]==="A"?"de un ente autárquico":"del "+PN[q.alc[0]].t}`:`con una DDJJ ${q.alc[0]==="A"?"de un ente autárquico":"del "+PN[q.alc[0]].t}`;
  $("#props").innerHTML=P.length?P.map(x=>`<div class="prop"><div class="motivo">${esc(x.motivo)}</div>${x.opciones.filter(o=>!o.alc.some(a=>compatible(a,x.centro.alc)||x.centro.alc.includes(a))).slice(0,1).map(o=>`<div class="motivo">Uno figura ${esc(pdTxt(x.centro))} y el otro ${esc(pdTxt(o))}: puede ser alguien que pasó de un poder al otro, o dos personas con el mismo nombre.</div>`).join("")}
   <div class="lados">${lado(x.centro)}${x.opciones.map(lado).join("")}</div>
@@ -1549,12 +1645,12 @@ function pintarConfirmar(){ const r=ACT.R, puede=enUltima(); const P=r?r.propues
  $("#rechazos").innerHTML=dec.size?`<details class="rechazos"><summary>Lo que se separó o se contestó «no son la misma persona» (${nf(dec.size)})</summary><ul style="list-style:none;margin:6px 0 0;padding:0">${[...dec.values()].map(vs=>`<li><span>${esc(yLista([...new Set(vs.flatMap(v=>[v.x,v.y]))].map(k=>"«"+nom(k)+"»")))}${vs[0].t?` · ${fechaDe(vs[0].t)}`:""}${vs[0].quien?` · ${esc(vs[0].quien)}`:""}</span>${puede?`<button class="btn lnk sm" type="button" data-reunir="${esc(vs[0].x+"‖"+vs[0].y)}">Volver a considerar</button>`:""}</li>`).join("")}</ul></details>`:"";
  const decHtml=decs.length?`<details class="rechazos"><summary>Lo decidido sobre el cargo de una DDJJ (${nf(decs.length)})</summary><ul style="list-style:none;margin:6px 0 0;padding:0">${decs.map(x=>`<li><span>${x.p?`«${esc(x.p.nom)}»`:"(ya no está en las listas)"}${x.e?` · Esc. ${esc(x.e.n||"—")} del ${esc(x.e.fecha||"—")}${x.e.cargo?` como «${esc(x.e.cargo)}»`:""}`:""}: ${x.v.cese?"es la de cese de un cargo anterior":x.v.otra?"es de otra persona con el mismo nombre":x.v.si?"es de un cargo anterior":"es por su cargo"}${x.v.t?` · ${fechaDe(x.v.t)}`:""}${x.v.quien?` · ${esc(x.v.quien)}`:""}</span>${puede?`<button class="btn lnk sm" type="button" data-cargo="${esc(x.v.k)}" data-v="x">Deshacer</button>`:""}</li>`).join("")}</ul></details>`:"";
  const RR=ACT.R, porP=PODERES.map(x=>({x,n:RR?RR.personas.filter(p=>p.alc.includes(x.id)&&(p.revCargo||p.inconsist||p.dudaPoder)).length:0})).filter(o=>o.n);
- const nRv=hay&&RR?RR.personas.filter(p=>p.revCargo||p.inconsist||p.dudaPoder).length:0, nR=$("#nRev"); nR.textContent=puede&&nRv?nf(nRv):""; nR.classList.toggle("oculto",!(puede&&nRv));
- $("#revAcc").innerHTML=!hay?"":!nRv?`<p class="ayuda" style="margin:0">No queda ninguna por revisar.</p>`:!puede?`<span class="ayuda" style="margin:0">Es una semana anterior: las inconsistencias se revisan en la última semana.</span><button class="btn sm" type="button" data-acc="volverHoy">Volver a la última semana</button>`:porP.length>1?`<span class="ayuda" style="margin:0">Revisarlas en la lista:</span> ${porP.map((o,i)=>`<button class="btn ${i?"":"pri"} sm" type="button" data-revpod="${o.x.id}">${esc(o.x.id==="A"?"Entes autárquicos":o.x.n)} (${nf(o.n)})</button>`).join(" ")}<span class="ayuda" style="margin:0">En «Buscar», cada una con sus botones. La que se decide sale de la lista.</span>`:`<button class="btn pri" type="button" data-revpod="${porP.length?porP[0].x.id:"E"}">Revisarla${nRv===1?"":"s"} en la lista</button><span class="ayuda" style="margin:0">En «Buscar», cada una con sus botones. La que se decide sale de la lista.</span>`;
+ const nRv=hay&&RR?RR.personas.filter(p=>p.revCargo||p.inconsist||p.dudaPoder).length:0, nR=$("#nRev"); nR.textContent=(puede||SOLO_VER())&&nRv?nf(nRv):""; nR.classList.toggle("oculto",!((puede||SOLO_VER())&&nRv));
+ $("#revAcc").innerHTML=!hay?"":!nRv?`<p class="ayuda" style="margin:0">No queda ninguna por revisar.</p>`:SOLO_VER()?`<span class="ayuda" style="margin:0">Con el perfil de Consulta se ven, pero no se revisan:</span> ${porP.length>1?porP.map((o,i)=>`<button class="btn ${i?"":"pri"} sm" type="button" data-revpod="${o.x.id}">${esc(o.x.id==="A"?"Entes autárquicos":o.x.n)} (${nf(o.n)})</button>`).join(" "):`<button class="btn pri sm" type="button" data-revpod="${porP.length?porP[0].x.id:"E"}">Verla${nRv===1?"":"s"} en la lista</button>`}`:!puede?`<span class="ayuda" style="margin:0">Es una semana anterior: las inconsistencias se revisan en la última semana.</span><button class="btn sm" type="button" data-acc="volverHoy">Volver a la última semana</button>`:porP.length>1?`<span class="ayuda" style="margin:0">Revisarlas en la lista:</span> ${porP.map((o,i)=>`<button class="btn ${i?"":"pri"} sm" type="button" data-revpod="${o.x.id}">${esc(o.x.id==="A"?"Entes autárquicos":o.x.n)} (${nf(o.n)})</button>`).join(" ")}<span class="ayuda" style="margin:0">En «Buscar», cada una con sus botones. La que se decide sale de la lista.</span>`:`<button class="btn pri" type="button" data-revpod="${porP.length?porP[0].x.id:"E"}">Revisarla${nRv===1?"":"s"} en la lista</button><span class="ayuda" style="margin:0">En «Buscar», cada una con sus botones. La que se decide sale de la lista.</span>`;
  const dps=(M().poderes||[]).filter(v=>v&&typeof v.k==="string").map(v=>({v,...escrDeClave(ACT.R,v.k)}));
  $("#revisados").innerHTML=decHtml+(dps.length?`<details class="rechazos"><summary>Lo decidido sobre el poder de una DDJJ (${nf(dps.length)})</summary><ul style="list-style:none;margin:6px 0 0;padding:0">${dps.map(x=>`<li><span>${x.p?`«${esc(x.p.nom)}»`:"(ya no está en las listas)"}${x.e?` · Esc. ${esc(x.e.n||"—")} del ${esc(x.e.fecha||"—")}`:""}: es del ${esc((PN[x.v.poder]||PN.E).t)}${x.e&&x.e.poder?` (el índice dice «${esc(x.e.poder)}»)`:""}${x.v.t?` · ${fechaDe(x.v.t)}`:""}${x.v.quien?` · ${esc(x.v.quien)}`:""}</span>${puede?`<button class="btn lnk sm" type="button" data-poder="${esc(x.v.k)}" data-v="x">Deshacer</button>`:""}</li>`).join("")}</ul></details>`:"");
  if(rv.length) $("#revisados").innerHTML+=`<details class="rechazos"><summary>Inconsistencias revisadas: dejó el cargo (${nf(rv.length)})</summary><ul style="list-style:none;margin:6px 0 0;padding:0">${rv.map(x=>`<li><span>${x.p?`«${esc(x.p.nom)}»`:"(ya no está en las listas)"}${x.v.t?` · ${fechaDe(x.v.t)}`:""}${x.v.quien?` · ${esc(x.v.quien)}`:""}</span>${puede?`<button class="btn lnk sm" type="button" data-desrevisar="${esc(x.v.k)}">Deshacer</button>`:""}</li>`).join("")}</ul></details>`;
- const qn=quienGuardado(); $("#quien").innerHTML=WEB&&!NUBE&&!DEMO?"":NUBE&&!DEMO?`<p class="ayuda" style="margin:12px 0 0">Cada decisión queda con el usuario de quien la toma. En esta computadora: <b>${esc(quienNube())}</b>.</p>`:DEMO?`<p class="ayuda" style="margin:8px 0 0">Cada decisión queda con el nombre de quien la toma. En el ejemplo, como «Ejemplo».</p>`:`<p class="ayuda" style="margin:12px 0 0">Cada decisión queda con el nombre de quien la toma.${qn?` En esta computadora: <b>${esc(qn)}</b>.`:""} <button class="btn lnk sm" type="button" data-acc="cambiarQuien">${qn?"Cambiar":"Escribir el nombre"}</button></p>`;
+ const qn=quienGuardado(); $("#quien").innerHTML=(WEB&&!NUBE&&!DEMO)||SOLO_VER()?"":NUBE&&!DEMO?`<p class="ayuda" style="margin:12px 0 0">Cada decisión queda con el usuario de quien la toma. En esta computadora: <b>${esc(quienNube())}</b>.</p>`:DEMO?`<p class="ayuda" style="margin:8px 0 0">Cada decisión queda con el nombre de quien la toma. En el ejemplo, como «Ejemplo».</p>`:`<p class="ayuda" style="margin:12px 0 0">Cada decisión queda con el nombre de quien la toma.${qn?` En esta computadora: <b>${esc(qn)}</b>.`:""} <button class="btn lnk sm" type="button" data-acc="cambiarQuien">${qn?"Cambiar":"Escribir el nombre"}</button></p>`;
  $("#rechazos").innerHTML+=unidos.length?`<details class="rechazos"><summary>Lo que se confirmó «es la misma persona» (${nf(unidos.length)})</summary><ul style="list-style:none;margin:6px 0 0;padding:0">${unidos.map(x=>`<li><span>«${esc(nom(x.v.x))}» y «${esc(nom(x.v.y))}»${x.v.t?` · ${fechaDe(x.v.t)}`:""}${x.v.quien?` · ${esc(x.v.quien)}`:""}</span>${puede?`<button class="btn lnk sm" type="button" data-desunir="${esc(x.v.x+"‖"+x.v.y)}">Deshacer</button>`:""}</li>`).join("")}</ul></details>`:""; }
 
 const jursActivas=()=>{ const s=new Set(); (ACT.r?ACT.r.personas:[]).forEach(p=>{ if(p.cod[1]==="1") valoresDe(p,"jurs").forEach(j=>s.add(j)); }); return [...s].sort((a,b)=>a===SIN_DATO?1:b===SIN_DATO?-1:a.localeCompare(b,"es")); };
@@ -1568,7 +1664,7 @@ function pintarSelMin(){ const js=jursActivas(), conA=!!(ACT.r&&ACT.r.L.a), fu=A
   +(conA?`<optgroup label="Quienes no están en la nómina">${op("-","No están en la nómina")}${op("?","Sin organismo (no están en la nómina)")}</optgroup>`:""); }
 /* Las tres preguntas (Todos, Sí o No sobre cada letra de la situación), que se combinan con
    «y» entre sí, con el organismo, la búsqueda y los atajos que no son una combinación. */
-const PREG=[["p","¿Presentó?","el índice del Protocolo B"],["a","¿Está activo?","la nómina"],["u","¿Está publicada?","el índice de la web"]];
+const PREG=[["a","¿Está activo?","la nómina"],["p","¿Presentó?","el índice del Protocolo B"],["u","¿Está publicada?","el índice de la web"]];
 const ATAJOS=[
  {id:"noPres",t:"Activos que no presentaron",r:{p:"0",a:"1",u:""},pide:"pa"},
  {id:"faltaPub",t:"Falta publicar",r:{p:"1",a:"1",u:"0"},pide:"pau"},
@@ -1576,7 +1672,7 @@ const ATAJOS=[
  {id:"pendiente",t:"Lo pendiente de la nómina",sit:"pendiente",pide:"pau",aparte:true},
  {id:"cambio",t:"Cambiaron esta semana",sit:"cambio",pide:"",aparte:true}];
 const especial=x=>x&&x.startsWith("cod:")?(SIT[x.slice(4)]||{n:""}).n:ESPECIAL[x];
-const ESPECIAL={pendiente:"Lo pendiente de la nómina",cambio:"Cambiaron esta semana",cese:"Deben la DDJJ de cese",incons:"Inconsistencias",pend:"Por confirmar",nombre:"Unidos por el nombre",otroCargo:"¿DDJJ de otro cargo?"};
+const ESPECIAL={incomp:"Anulada por incomparecencia",pendiente:"Lo pendiente de la nómina",cambio:"Cambiaron esta semana",cese:"Deben la DDJJ de cese",incons:"Inconsistencias",pend:"Por confirmar",nombre:"Unidos por el nombre",otroCargo:"¿DDJJ de otro cargo?"};
 const rVacia=()=>({p:"",a:"",u:""});
 const rDe=()=>{ const L=ACT&&ACT.r?ACT.r.L:{}; const x=rVacia(); for(const k of FID) if(L[k]) x[k]=FILTRO.r[k]; return x; };
 const atajoPuesto=()=>{ const R=rDe(); return ATAJOS.find(t=>(t.sit||"")===FILTRO.sit&&FID.every(k=>(t.r?t.r[k]:"")===R[k])); };
@@ -1602,7 +1698,9 @@ function pintarFiltros(){ const r=ACT.r; const sec=$("#secPersonas");
  // (inconsistencias, por confirmar, unidos por el nombre) no tienen atajo: se llega desde la carga
  const nCe=r.personas.filter(p=>debeTxt(p)).length, nDo=r.personas.filter(p=>{ const d=debeTxt(p); return d&&d.doble; }).length;
  if(nCe||FILTRO.sit==="cese") h+=`<button type="button" class="chipb ${nDo?"rojo":""} ${FILTRO.sit==="cese"?"on":""}" aria-pressed="${FILTRO.sit==="cese"}" data-filtro="cese" title="Los que presentaron la DDJJ de un cargo anterior y no la de cese de ese cargo. Si tampoco presentaron la del cargo de hoy, están en doble falta">Deben la DDJJ de cese${nDo?" · hay doble falta":""}</button>`;
- if(FILTRO.sit&&FILTRO.sit!=="cese"&&!ATAJOS.some(t=>t.sit===FILTRO.sit&&!t.aparte)) h+=`<button type="button" class="chipb on" data-filtro="${FILTRO.sit}" title="Quitar este filtro">${especial(FILTRO.sit)} ✕</button>`;
+ const nIn=r.personas.filter(p=>p.incomp&&p.incomp.length).length+incompDe(ALC).sueltas.length;
+ if(nIn||FILTRO.sit==="incomp") h+=`<button type="button" class="chipb ${FILTRO.sit==="incomp"?"on":""}" aria-pressed="${FILTRO.sit==="incomp"}" data-filtro="incomp" title="Tienen en el índice del protocolo una DDJJ anulada por incomparecencia: no cuenta como presentada">Anulada por incomparecencia</button>`;
+ if(FILTRO.sit&&FILTRO.sit!=="cese"&&FILTRO.sit!=="incomp"&&!ATAJOS.some(t=>t.sit===FILTRO.sit&&!t.aparte)) h+=`<button type="button" class="chipb on" data-filtro="${FILTRO.sit}" title="Quitar este filtro">${especial(FILTRO.sit)} ✕</button>`;
  if(FILTRO.grp) h+=`<button type="button" class="chipb on" data-acc="sinGrp" title="Quitar este filtro">${esc((DIMS.find(d=>d[0]===FILTRO.grp.dim)||["",""])[1])}: ${esc(FILTRO.grp.v)} ✕</button>`;
  $("#atajos").innerHTML=h; }
 
@@ -1614,7 +1712,7 @@ function pasaF(F){ const q=sinTildes(F.q||"").toLowerCase().trim(), qd=q.replace
  return p=>{ if(F.sit==="cambio"){ if(!ACT.cmp||!ACT.cmp.cambios.has(p)) return false; }
   else if(F.sit==="incons"){ if(!p.revCargo&&!p.inconsist&&!p.dudaPoder) return false; }
   else if(F.sit&&F.sit.startsWith("cod:")){ if(p.cv!==F.sit.slice(4)) return false; }
-  else if(F.sit==="pend"){ if(!p.pend) return false; } else if(F.sit==="nombre"){ if(!p.porNombre&&!p.manual) return false; }
+  else if(F.sit==="pend"){ if(!p.pend) return false; } else if(F.sit==="incomp"){ if(!(p.incomp&&p.incomp.length)) return false; } else if(F.sit==="nombre"){ if(!p.porNombre&&!p.manual) return false; }
   else if(F.sit==="cese"){ if(!debeTxt(p)) return false; }
   else if(F.sit==="pendiente"){ if(!(p.cod[1]==="1"&&(p.cod[0]==="0"||(!p.sinWeb&&p.cod[2]==="0")||p.debeCese))) return false; }
   for(let k=0;k<3;k++){ const v=R[FID[k]]; if(v&&p.cod[k]!==v) return false; }
@@ -1656,43 +1754,90 @@ function pintarBarra(L){ const d=descFiltro(), n=L.length;
   sits=`${nf(nn)} no ${nn===1?"está":"están"} en la nómina: ${nn===1?"lo ubica":"los ubica"} su DDJJ o una nómina anterior. «Por organismo» y los porcentajes cuentan sólo a ${ns===1?"el que está":"los "+nf(ns)+" que están"}.`; }
  if(FILTRO.sit!=="cambio"&&d.modo!=="todo"&&fl.length) sits+=(sits?" ":"")+`${SIN[fl[0]].charAt(0).toUpperCase()+SIN[fl[0]].slice(1)}${fl.length>1?" y "+fl.slice(1).map(f=>SIN[f].replace(/^sin /,"")).join(" y "):""}, las situaciones no se pueden decir.`;
 
- const nsl=salieronAca().length;
- const btn=!n&&nsl?`Bajar ${nsl===1?"la que ya no figura":"los "+nf(nsl)+" que ya no figuran"}`:!n?"Nadie con este filtro":d.modo==="min"?"Bajar el Excel del organismo":"Bajar a Excel";
- const ok=BAJADO&&BAJADO.k===claveFiltro()&&BAJADO.n===n&&Date.now()-BAJADO.t<8000?`<span class="bok" role="status">Se bajó «${esc(BAJADO.archivo)}» (${nf(BAJADO.n)} ${BAJADO.n===1?"persona":"personas"}).</span>`:"";
- const cp=COPIADO&&COPIADO.k===claveFiltro()&&COPIADO.n===n&&Date.now()-COPIADO.t<15000?(COPIADO.ok?`<span class="bok" role="status">Copiada${n===1?"":"s"} ${nf(n)} ${n===1?"persona":"personas"}: abrí un Excel nuevo y pegá con Ctrl+V.</span>`:`<span class="bmal" role="status">El navegador no dejó copiar. Probá de nuevo, o bajá el Excel.</span>`):"";
+ const nsl=salieronAca().length, nsu=nSueltasAca();
+ const btn=!n&&nsl?`Bajar ${nsl===1?"la que ya no figura":"los "+nf(nsl)+" que ya no figuran"}`:!n&&nsu?`Bajar ${nsu===1?"la que no tiene dueño en el cotejo":"las "+nf(nsu)+" que no tienen dueño en el cotejo"}`:!n?"Nadie con este filtro":d.modo==="min"?"Bajar el Excel del organismo":"Bajar a Excel";
+ const ok=BAJADO&&BAJADO.k===claveFiltro()&&BAJADO.n===n&&Date.now()-BAJADO.t<8000?`<span class="bok" role="status">Se bajó «${esc(BAJADO.archivo)}» (${!BAJADO.n&&nsu?`${nf(nsu)} ${nsu===1?"anulada":"anuladas"} sin dueño en el cotejo`:`${nf(BAJADO.n)} ${BAJADO.n===1?"persona":"personas"}`}).</span>`:"";
+ const cp=COPIADO&&COPIADO.k===claveFiltro()&&COPIADO.n===n&&Date.now()-COPIADO.t<15000?(COPIADO.ok?`<span class="bok" role="status">${!n&&nsu?`Copiada${nsu===1?" la anulada":"s las "+nf(nsu)+" anuladas"} sin dueño en el cotejo`:`Copiada${n===1?"":"s"} ${nf(n)} ${n===1?"persona":"personas"}`}: abrí un Excel nuevo y pegá con Ctrl+V.</span>`:`<span class="bmal" role="status">El navegador no dejó copiar. Probá de nuevo, o bajá el Excel.</span>`):"";
  $("#barraRes").innerHTML=`<div class="bq"><div class="bn"><b>${nf(n)} ${n===1?"persona":"personas"}</b><span>${esc(d.titulo)}</span></div>${d.filtro&&d.modo!=="min"?`<span class="bf">${esc(d.filtro)}</span>`:""}<span class="bs">${sits}${d.modo!=="todo"?` <button class="btn lnk sm" type="button" data-acc="limpiar">Quitar los filtros</button>`:""}</span></div>
-  <div class="bd"><div class="botones"><button class="btn copiar" type="button" data-acc="copiar" ${n||nsl?"":"disabled"} title="Copia la lista para pegarla en un Excel nuevo, sin bajar ningún archivo. Sirve cuando el antivirus no deja bajar el Excel.">Copiar para Excel</button><button class="btn pri bajar" type="button" data-acc="bajar" ${n||nsl?"":"disabled"}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12"/><path d="M6 11l6 6 6-6"/><path d="M5 20h14"/></svg><span>${btn}</span></button></div>${ok}${cp}</div>`; }
+  <div class="bd"><div class="botones"><button class="btn copiar" type="button" data-acc="copiar" ${n||nsl||nsu?"":"disabled"} title="Copia la lista para pegarla en un Excel nuevo, sin bajar ningún archivo. Sirve cuando el antivirus no deja bajar el Excel.">Copiar para Excel</button><button class="btn pri bajar" type="button" data-acc="bajar" ${n||nsl||nsu?"":"disabled"}><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v12"/><path d="M6 11l6 6 6-6"/><path d="M5 20h14"/></svg><span>${btn}</span></button></div>${ok}${cp}</div>`; }
 
 /* La fila informa y el perfil decide (24/10/2026): con qué cargo presentó va al lado de la
    escritura, y los botones para decidir salen sólo en las listas de trabajo —Inconsistencias,
    Por confirmar, Unidos por el nombre—, donde se resuelve fila por fila sin abrir nada. */
 function pintarPersonas(){ const r=ACT.r; if(!r||!r.personas.length){ $("#personas").innerHTML=""; return; }
- const L=filtradas(); const ver=L.slice(0,FILTRO.n); const puede=enUltima(); pintarBarra(L); const lista=FILTRO.sit; const FU=fuentesDatos(ACT.s);
- let h=`<p class="ayuda fuentes">${esc(fuentesTxt(FU))}</p><div class="enc-tabla per"><span>Persona</span><span title="De la nómina; de quien no está en ella, de su DDJJ">Organismo</span><span class="c" title="Según el índice del Protocolo B">Presentó</span><span class="c" title="Según la nómina">Activo</span><span class="c" title="Según el índice de la web">Publicada</span><span>Situación</span></div>`;
- if(!L.length) h+=`<p class="ayuda" style="margin-top:12px">${salieronAca().length?"Nadie cambió de situación desde la semana anterior.":"No hay nadie con ese filtro."}</p>`;
+ const L=filtradas(); const ver=L.slice(0,FILTRO.n); const puede=editable(); pintarBarra(L); const lista=FILTRO.sit; const FU=fuentesDatos(ACT.s);
+ let h=`<p class="ayuda fuentes">${esc(fuentesTxt(FU))}</p><div class="enc-tabla per"><span>Persona</span><span title="De la nómina; de quien no está en ella, de su DDJJ">Organismo</span>${VER_ORDEN.map(f=>`<span class="c" title="${TIT_COL[f]}">${FN[f].col}</span>`).join("")}<span>Situación</span></div>`;
+ if(!L.length) h+=`<p class="ayuda" style="margin-top:12px">${salieronAca().length?"Nadie cambió de situación desde la semana anterior.":lista==="incomp"&&sueltasVisibles().length?"Nadie del cotejo con este filtro. Abajo, las que no se sabe de quién son o son de alguien que no está en el cotejo.":"No hay nadie con ese filtro."}</p>`;
  // un renglón: las tres verificaciones (24/10/2026: «la naturaleza del sistema… es poder verificar
  // entre esas 3 cosas»); el resto, en el perfil. El punto dice que hay algo por revisar.
  const marca=p=>!!(p.revCargo||p.inconsist||p.dudaPoder||p.pend||debeTxt(p)); let marcas=0; const L0=r.L;
  h+=ver.map(p=>{ const c=ACT.cmp&&ACT.cmp.cambios.get(p); const activo=p.cod[1]==="1"; const dt=debeTxt(p);
   const lin=[];
   if(lista==="incons"&&(p.inconsist||p.revCargo||p.dudaPoder)) lin.push(`<div class="trabajo">${htmlDecidir(p,puede)}</div>`);
-  if(lista==="pend"&&p.pend&&puede) lin.push(`<div class="trabajo">Hay una coincidencia de nombre por confirmar. <button class="btn lnk sm" type="button" data-acc="irConfirmar">Contestarla en «¿Es la misma persona?»</button></div>`);
+  if(lista==="pend"&&p.pend&&(puede||SOLO_VER())) lin.push(`<div class="trabajo">Hay una coincidencia de nombre por confirmar.${puede?` <button class="btn lnk sm" type="button" data-acc="irConfirmar">Contestarla en «¿Es la misma persona?»</button>`:""}</div>`);
   if((lista==="pend"||lista==="nombre")&&(p.porNombre||p.manual)) lin.push(`<div class="nota">${p.manual?"Confirmado a mano":"Unido por el nombre"}.${puede?` <button class="btn lnk sm" type="button" data-separar="${esc(p.rep)}">Separar</button>`:""}</div>`);
   if(lista==="cese"&&dt) lin.push(`<div class="nota">${esc(dt.d)}</div>`);
+  if(lista==="incomp"&&p.incomp&&p.incomp.length) lin.push(`<div class="nota">${esc(textoIncomp(p))}</div>`);
   const m=marca(p); if(m) marcas++;
   const of=orgFila(p,FU);
   const det=[p.dni?"DNI "+fmtDni(p.dni):"",...(activo?p.cargos.slice(0,9):p.pres&&p.pres.cargo?[`presentó como «${p.pres.cargo}»`]:[])].filter(Boolean).join(" · ");
   return `<div class="fila-per" data-fila="${esc(p.rep)}"><div class="per"><div class="nom"><button type="button" class="nom-per" data-perfil="${esc(p.rep)}" title="Ver todo lo que hay de esta persona">${esc(p.nom)}</button></div><div class="det">${esc(det)}</div></div>
    <span class="org"${of.title?` title="${esc(of.title)}"`:""}>${of.txt?esc(of.txt):"—"}${of.sub?`<small>${esc(of.sub)}</small>`:""}</span>
-   <span class="cks">${FID.map((f,k)=>p.cv[k]==="-"?`<span class="ck c nd"><i>${FN[f].col}: </i>—<small>${SIN_ESTR[f]}</small></span>`:`<span class="ck c ${p.cod[k]==="1"?"si":"no"}"><i>${FN[f].col}: </i>${p.cod[k]==="1"?"Sí":"No"}${f==="p"&&p.cod[0]==="0"&&L0.p?(p.falta?"<small>falta firmar</small>":p.otroCargo?`<small>${p.otroCargo.cese?"sólo la de cese":"era de otro cargo"}</small>`:p.fuera?"<small>no cuenta</small>":""):""}</span>`).join("")}</span>
+   <span class="cks">${VER_ORDEN.map(f=>[f,FID.indexOf(f)]).map(([f,k])=>p.cv[k]==="-"?`<span class="ck c nd"><i>${FN[f].col}: </i>—<small>${SIN_ESTR[f]}</small></span>`:`<span class="ck c ${p.cod[k]==="1"?"si":"no"}"><i>${FN[f].col}: </i>${p.cod[k]==="1"?"Sí":"No"}${f==="p"&&p.cod[0]==="0"&&L0.p?(p.falta?"<small>falta firmar</small>":p.otroCargo?`<small>${p.otroCargo.cese?"sólo la de cese":"era de otro cargo"}</small>`:p.fuera||(p.incomp&&p.incomp.length)?"<small>no cuenta</small>":""):""}</span>`).join("")}</span>
    <div class="sitc"><span class="sitl"><span class="chip t-${SIT[p.cv].tono}">${SIT[p.cv].n}</span>${m?`<span class="punto" role="img" aria-label="Tiene algo por revisar: está en su perfil" title="Tiene algo por revisar: está en su perfil"></span>`:""}</span>${c&&lista==="cambio"?`<small>${esc(c.txt)}</small>`:""}</div>${lin.join("")}
   </div>`; }).join("");
  if(marcas) h+=`<p class="ayuda leyenda"><span class="punto" aria-hidden="true"></span> Tiene algo por revisar (una inconsistencia, una duda de poder, una coincidencia por confirmar o la de cese): está en su perfil, tocando la fila.</p>`;
  // con una búsqueda, si hay más en otro poder
- const q=FILTRO.q.trim(); if(q){ const F=Object.assign(filtroAhora(),{r:rVacia(),sit:"",min:"",grp:null}), ot=PODERES.filter(x=>x.id!==ALC).map(x=>({x,n:ACT.R.personas.filter(p=>p.alc.includes(x.id)&&!p.alc.includes(ALC)).filter(pasaF(F)).length})).filter(o=>o.n);
+ const q=FILTRO.q.trim(); if(q&&lista!=="incomp"){ const F=Object.assign(filtroAhora(),{r:rVacia(),sit:"",min:"",grp:null}), ot=PODERES.filter(x=>x.id!==ALC).map(x=>({x,n:ACT.R.personas.filter(p=>p.alc.includes(x.id)&&!p.alc.includes(ALC)).filter(pasaF(F)).length})).filter(o=>o.n);
   if(ot.length) h+=`<p class="ayuda">Con esa búsqueda hay además ${ot.map(o=>`${nf(o.n)} en ${o.x.id==="A"?"los entes autárquicos":"el "+o.x.t} · <button class="btn lnk sm" type="button" data-alc="${o.x.id}" data-q="1">Ver</button>`).join(" · ")}.</p>`; }
+ if(lista==="incomp") h+=pieIncomp();
  h+=`<div class="pie-lista"><span>${L.length>ver.length?`Mostrando ${nf(ver.length)} de ${nf(L.length)}. El Excel lleva las ${nf(L.length)}, no sólo las que se ven.`:L.length?`${nf(L.length)} ${L.length===1?"persona":"personas"}.`:""}</span>${L.length>ver.length?`<button class="btn" type="button" data-acc="mas">Mostrar ${nf(Math.min(300,L.length-ver.length))} más</button>`:""}</div>`;
  $("#personas").innerHTML=h+salieronHtml(); }
+const escFecha=e=>[e.escr?"escritura "+e.escr:"",e.fecha?"del "+e.fecha:""].filter(Boolean).join(" ")||"sin número ni fecha";
+// por qué una anulada con su nombre no es de esta persona
+// el DNI de una anulada: el de la misma escritura en cualquiera de los índices (uno puede traerlo y el otro no)
+const dniDeAnulada=(p,e)=>{ const M=ACT.R&&ACT.R.L.p&&ACT.R.L.p.incomp; if(!M) return ""; for(const k of p.ks) for(const x of M.get(k)||[]) if(x.escr===e.escr&&x.fecha===e.fecha&&x.dni) return x.dni; return ""; };
+const ajenaTxt=(p,e)=>{ const a=(p.incompAjenas||[]).find(x=>x.e.escr===e.escr&&x.e.fecha===e.fecha);
+ const dni=e.dni||(a&&a.e.dni)||dniDeAnulada(p,e);
+ if(a&&a.por==="otroDni") return `tiene otro DNI (${fmtDni(dni)}): puede ser de otra persona, o un error en el DNI del índice`;
+ if(dni&&p.dnis.length&&!p.dnis.includes(dni)) return "es de otra persona, con otro DNI";
+ if(a) return a.por==="homonimos"?`hay ${a.n} personas con ese nombre y no se sabe de cuál es`:`está cargada como del ${(PODERES.find(x=>x.id===a.e.pod)||{t:"otro poder"}).t}: puede ser de otra persona`;
+ return dni&&p.dnis.includes(dni)?"no se pudo saber por qué no es suya":"es de otra persona con el mismo nombre"; };
+const textoIncomp=p=>(p.incomp.length===1?"DDJJ anulada por incomparecencia: ":"DDJJ anuladas por incomparecencia: ")+p.incomp.map(e=>`${escFecha(e)}${e.cargo?`, como «${e.cargo}»`:""}`).join("; ")+(p.cod[0]==="1"?". Tiene otra que cuenta.":". No tiene otra que cuente.");
+/* Al pie de «Anulada por incomparecencia»: cuántas hay en los otros poderes, y quiénes figuran sólo en el índice
+   (no están en la nómina ni en la web, y no tienen otra DDJJ que cuente): no son una persona del cotejo, pero se
+   dice que están. */
+/* Lo que queda al pie, con las preguntas, el organismo o el grupo puestos: se miran en sus posibles dueños (homónimos,
+   el de otro poder, el parecido), y va si alguno pasa; la que no es de nadie no está en ninguna lista ni tiene organismo,
+   así que va sólo con «No». Con una búsqueda, si la tiene el nombre o el cargo de la fila, o el DNI de la fila o de un
+   posible dueño. Para contar las de los otros poderes, sólo la búsqueda: es lo que se lleva el «Ver». */
+function pasaSuelta(x,todo){ const F=filtroAhora(), q=sinTildes(F.q||"").toLowerCase().trim(), qd=q.replace(/\D/g,"");
+ const cand=candIncomp(x);
+ if(todo&&(FID.some(f=>F.r[f])||F.min||F.grp)){
+  // de quién puede ser: si alguno pasa las preguntas, el organismo y el grupo, va; si no hay nadie, es «No» en las tres
+  if(cand.length){ if(!cand.some(pasaF(Object.assign({},F,{sit:"",q:""})))) return false; }
+  else if(FID.some(f=>F.r[f]==="1")||(F.min&&F.min!=="-"&&F.min!=="?")||F.grp) return false; }
+ if(!q) return true;
+ if(qd.length>=4&&(x.es.some(e=>e.dni&&e.dni.includes(qd))||cand.some(p=>p.dnis.some(d=>d.includes(qd))))) return true;
+ return q.split(/\s+/).every(t=>sinTildes(x.es.map(e=>e.nom+" "+(e.cargo||"")).join(" ")||x.k).toLowerCase().includes(t)); }
+const sueltasVisibles=()=>incompDe(ALC).sueltas.filter(x=>pasaSuelta(x,true));
+function pieIncomp(){ const R=ACT.R; if(!R||!R.L.p) return "";
+ const q=FILTRO.q.trim(), pasaP=pasaF({r:rVacia(),sit:"incomp",min:"",grp:null,q});
+ const ot=PODERES.filter(x=>x.id!==ALC).map(x=>{ const d=incompDe(x.id); return {x,n:d.personas.filter(p=>!p.alc.includes(ALC)).filter(pasaP).length+d.sueltas.filter(s=>pasaSuelta(s,false)).length}; }).filter(o=>o.n);
+ const S=sueltasVisibles();
+ const deOtro=(x,e)=>e.podIndice!==x.pod?`, del ${(PODERES.find(p=>p.id===e.podIndice)||{t:e.podIndice}).t}, que no tiene a nadie en el cotejo`:"";
+ const nom=x=>`«${x.es[0].nom||x.k}» (${x.es.length===1?escFecha(x.es[0])+deOtro(x,x.es[0]):"escrituras "+x.es.map(e=>escFecha(e).replace(/^escritura /,"")+deOtro(x,e)).join("; ")})`;
+ const homo=S.filter(x=>x.homonimos>=2), otroP=S.filter(x=>x.homonimos<2&&x.otro.length), dniD=S.filter(x=>x.homonimos<2&&!x.otro.length&&x.otroDni.length);
+ const parec=S.filter(x=>x.homonimos<2&&!x.otro.length&&!x.otroDni.length&&x.parecidos.length), solo=S.filter(x=>x.homonimos<2&&!x.otro.length&&!x.otroDni.length&&!x.parecidos.length);
+ const uno=solo.length===1, conN=!!(R.conNom&&R.conNom[ALC]&&R.L.a), conW=CON_WEB.has(ALC)&&!!R.L.u, no=uno?"no está":"no están";
+ const enListas=conN&&conW?`${no} en la nómina ni en la web`:conN?`${no} en la nómina`:conW?`${no} en la web`:`no ${uno?"figura":"figuran"} en ninguna otra lista`;
+ const dondeOtro=x=>[...new Set(x.otro.map(p=>alcTxt(p.alc)))].join(" y ");
+ return (ot.length?`<p class="ayuda">Hay además ${ot.map(o=>`${nf(o.n)} en ${o.x.id==="A"?"los entes autárquicos":"el "+o.x.t} · <button class="btn lnk sm" type="button" data-incomp="${o.x.id}"${q?' data-q="1"':""}>Ver</button>`).join(" · ")}${q?" con esa búsqueda":""}.</p>`:"")
+  +(homo.length?`<p class="ayuda">Con el mismo nombre que más de una persona, así que no se sabe de cuál es: ${esc(homo.map(x=>nom(x)+` (${x.homonimos} personas)`).join(", "))}.</p>`:"")
+  +(dniD.length?`<p class="ayuda">Con el mismo nombre que alguien del cotejo, pero con otro DNI (es de otra persona, o el DNI está mal cargado en el índice): ${esc(dniD.map(x=>nom(x)+`${x.es[0].dni?`, DNI ${fmtDni(x.es[0].dni)}`:""} ~ ${x.otroDni[0].nom}${x.otroDni[0].dni?`, DNI ${fmtDni(x.otroDni[0].dni)}`:""}${x.otroDni[0].alc.includes(x.pod)?"":`, en ${alcTxt(x.otroDni[0].alc)}`}`).join(", "))}.</p>`:"")
+  +(otroP.length?`<p class="ayuda">Con el mismo nombre que alguien del cotejo en otro poder (puede ser la misma persona, con la DDJJ cargada en otro poder, o alguien distinto): ${esc(otroP.map(x=>nom(x)+` ~ ${x.otro[0].nom}, en ${dondeOtro(x)}`).join(", "))}.</p>`:"")
+  +(parec.length?`<p class="ayuda">Con un nombre parecido al de alguien del cotejo (puede ser la misma persona, escrita distinto): ${esc(parec.map(x=>nom(x)+" ~ "+x.parecidos.map(p=>p.nom+(p.alc.includes(x.pod)?"":`, en ${alcTxt(p.alc)}`)).join(" o ")).join(", "))}.</p>`:"")
+  +(solo.length?`<p class="ayuda">${solo.length===1?"Figura":"Figuran"} sólo en el índice del protocolo, con una DDJJ anulada por incomparecencia y ninguna otra que cuente (${enListas}): ${esc(solo.map(nom).join(", "))}.</p>`:""); }
 // los que ya no figuran: la barra dice que van abajo de la lista
 function salieronHtml(){ const sl=salieronAca(), pa=pasaronAca(); return (sl.length?`<div class="salieron"><b>Ya no figuran en ninguna de las tres listas (${nf(sl.length)}):</b> ${esc(sl.slice(0,60).map(q=>q.nom).join(" · "))}${sl.length>60?` … y ${nf(sl.length-60)} más`:""}.</div>`:"")
  +(pa.length?`<div class="salieron"><b>Pasaron a otro poder (${nf(pa.length)}):</b> ${esc(pa.slice(0,60).map(p=>`${p.nom} (ahora en ${alcTxt(p.alc)})`).join(" · "))}${pa.length>60?` … y ${nf(pa.length-60)} más`:""}.</div>`:""); }
@@ -1708,8 +1853,8 @@ function pintarPlegados(){ const s=ACT.s, m=M(); const ls=f=>s?idsDe(s,f).map(id
  const varios=porP.length>1, pn=o=>varios?` (${o.x.id==="A"?"entes":o.x.n})`:"";
  $("#verEnLista").innerHTML=porP.length?`<span class="ayuda" style="margin:0">Ver en la lista:</span>`+porP.map(o=>`${o.np?`<button class="btn lnk sm" type="button" data-acc="verPend" data-pod="${o.x.id}">${o.np===1?"la persona":"las "+nf(o.np)+" personas"} de las preguntas${pn(o)}</button>`:""}${o.nn?`<button class="btn lnk sm" type="button" data-acc="verNombre" data-pod="${o.x.id}">${o.nn===1?"la persona unida":"las "+nf(o.nn)+" personas unidas"} por el nombre${pn(o)}</button>`:""}`).join(""):""; }
 function pintarPublicar(){ const sec=$("#secPublicar"); if(!hayDatos()){ sec.classList.add("oculto"); return; } sec.classList.remove("oculto");
- const L=ACT.R.L, tres=!!(L.a&&L.p&&L.u); const ok=enUltima()&&!DEMO&&tres; $("#bPublicar").disabled=!ok;
- const pub=M().publicada; $("#tPublicado").textContent=DEMO?"En el ejemplo no se publica.":!enUltima()?"Se publica la última semana: volvé a ella para publicar.":!tres?"Para publicar hacen falta las tres listas de la semana: la consulta no sabría decir lo que falta.":pub?`Última publicación: semana del ${isoAFecha(pub.semana)}, el ${fechaHora(pub.t)}.`:"Todavía no se publicó ninguna semana."; }
+ const L=ACT.R.L, tres=!!(L.a&&L.p&&L.u); const ok=enUltima()&&!DEMO&&tres&&!SOLO_VER(); $("#bPublicar").disabled=!ok;
+ const pub=M().publicada; $("#tPublicado").textContent=DEMO?"En el ejemplo no se publica.":SOLO_VER()?"Con el perfil de Consulta no se publica.":!enUltima()?"Se publica la última semana: volvé a ella para publicar.":!tres?"Para publicar hacen falta las tres listas de la semana: la consulta no sabría decir lo que falta.":pub?`Última publicación: semana del ${isoAFecha(pub.semana)}, el ${fechaHora(pub.t)}.`:"Todavía no se publicó ninguna semana."; }
 
 function pintarHistorial(){ const m=M(); const sec=$("#secHistorial");
  if(!hayDatos()){ sec.classList.add("oculto"); return; } sec.classList.remove("oculto");
@@ -1916,7 +2061,7 @@ function armarParte(f,hojas,archivo){ const filas=[], desc=[]; let fechaDatos=""
 /* ---------- el diálogo ---------- */
 let CARGA=null;
 const dlg=$("#dlg");
-function abrirCarga(f,soloCuenta,ente){ if(WEB&&!NUBE&&!DEMO) return pasoEntrarWeb("Primero entrá: sin entrar, lo que se cargue no se guarda en ningún lado.");
+function abrirCarga(f,soloCuenta,ente){ if(soloVer()) return; if(WEB&&!NUBE&&!DEMO) return pasoEntrarWeb("Primero entrá: sin entrar, lo que se cargue no se guarda en ningún lado.");
  if(WEB&&NUBE&&!DEMO){ const su=M().semanas[M().semanas.length-1], fal=su?FID.flatMap(x=>idsDe(su,x)).filter(id=>!LISTAS.has(id)):[];
   if(fal.length){ asegurar(fal).then(()=>pintar()); return dialogoAviso("Todavía no están las listas de esta semana",fal.some(id=>SIN_BAJAR.has(id))?"Algunas no se pudieron bajar de GitHub. Tocá «Volver a intentar», en la banda roja, antes de cargar otra: si no, la nueva se sumaría a una que no se ve.":"Se están bajando de GitHub. Esperá unos segundos y volvé a tocar."); } } const F=FN[f]; const s=M().semanas[M().semanas.length-1];
  const actuales=idsDe(s,f).map(id=>LS().get(id)).filter(Boolean); ente=!!ente&&f==="a";
@@ -2072,7 +2217,7 @@ function quedaLista(filasNuevas){ const C=CARGA; const d=C.destino||"sumar";
  const quedan=C.actuales.filter(l=>d==="todas"?false:d==="sumar"?true:d==="base"?!!l.ente:"r:"+l.id!==d);
  return combinarFilas([...quedan.map(l=>l.filas),filasNuevas],C.filtros).filas.length; }
 
-async function usarLista(){ const C=CARGA; if(!C||!C.hojas) return; const fe=filasElegidas(); if(!fe) return; $("#cUsar").disabled=true;
+async function usarLista(){ if(SOLO_VER()) return; const C=CARGA; if(!C||!C.hojas) return; const fe=filasElegidas(); if(!fe) return; $("#cUsar").disabled=true;
  const m=M(); const hojas=[...C.elegidas].sort((a,b)=>a-b).map(i=>Object.assign({n:C.hojas[i].n,tabla:C.hojas[i].tabla},C.conf[i]));
  const l=armarParte(C.f,hojas,C.archivo); if(C.f==="p"&&C.clave) l.clave=C.clave;
  // los de un ente figuran en el ente: es su organismo en «Por organismo», en el Excel y en la notificación
@@ -2092,18 +2237,18 @@ async function usarLista(){ const C=CARGA; if(!C||!C.hojas) return; const fe=fil
 const mismoCriterio=(a,b)=>{ a=a||{}; b=b||{}; for(const t of new Set([...Object.keys(a),...Object.keys(b)])) for(const v of new Set([...Object.keys(a[t]||{}),...Object.keys(b[t]||{})])) if(cuenta(a,t,v)!==cuenta(b,t,v)) return false; return true; };
 /* Una semana sin cargas propias que tiene las mismas listas y cuenta lo mismo que la anterior sobra. */
 const sobra=(s,p)=>!!p&&!Object.keys(s.orig||{}).length&&FID.every(x=>idsDe(p,x).join()===idsDe(s,x).join()&&mismoCriterio(filtrosDe(p)[x],filtrosDe(s)[x]));
-async function guardarCuenta(){ const C=CARGA; if(!C) return; const m=M(); m.filtros=m.filtros||{}; m.filtros[C.f]=C.filtros;
+async function guardarCuenta(){ if(SOLO_VER()) return; const C=CARGA; if(!C) return; const m=M(); m.filtros=m.filtros||{}; m.filtros[C.f]=C.filtros;
  // como una carga: si la última semana ya cerró, abre la de hoy y la cerrada queda como estaba
  if(m.semanas.length){ const s=semanaParaCargar(); s.filtros=clonar(m.filtros); if(sobra(s,m.semanas[m.semanas.length-2])) m.semanas.pop(); } VISTA=null;
  VER++; calc(m.semanas.length-1); await guardarMeta(); dlg.close(); await pintar(); }
 
-async function deshacer(f){ const m=M(), s=m.semanas[m.semanas.length-1]; if(!s||!esEstaSemana(s)||!s.orig||!tiene(s.orig,f)) return;
+async function deshacer(f){ if(SOLO_VER()) return; const m=M(), s=m.semanas[m.semanas.length-1]; if(!s||!esEstaSemana(s)||!s.orig||!tiene(s.orig,f)) return;
  const nuevos=idsDe(s,f); s[f]=s.orig[f]; delete s.orig[f];
  // si la semana se abrió sólo por esas cargas, deja de existir
  if(!Object.keys(s.orig).length&&m.semanas.length>1){ const p=m.semanas[m.semanas.length-2]; if(sobra(s,p)) m.semanas.pop(); }
  else if(!Object.keys(s.orig).length&&m.semanas.length===1&&FID.every(x=>!idsDe(s,x).length)) m.semanas.pop();
  VER++; if(m.semanas.length) calc(m.semanas.length-1); const ok=await guardarMeta(); await borrarSobrantes(nuevos,ok); await pintar(); }
-async function quitarParte(f,id){ const m=M(); const s=semanaParaCargar(); if(!tiene(s.orig,f)) s.orig[f]=idsDe(s,f).slice();
+async function quitarParte(f,id){ if(SOLO_VER()) return; const m=M(); const s=semanaParaCargar(); if(!tiene(s.orig,f)) s.orig[f]=idsDe(s,f).slice();
  s[f]=idsDe(s,f).filter(x=>x!==id); VER++; calc(m.semanas.length-1); const ok=await guardarMeta(); await borrarSobrantes([id],ok); await pintar(); }
 
 /* ---------- confirmar y separar ---------- */
@@ -2118,36 +2263,36 @@ const usuarioGuardado=()=>{ try{ const v=localStorage.getItem(USUARIO_K); return
 function quienRevisa(cambiar){ if(DEMO) return "Ejemplo"; if(NUBE) return quienNube(); let n=cambiar?"":quienGuardado(); if(n) return n;
  n=window.prompt("¿Quién está revisando? Escribí tu nombre: queda guardado en esta computadora y va con cada decisión.",quienGuardado());
  n=String(n||"").trim(); if(!n) return null; try{ localStorage.setItem(QUIEN_K,n); }catch(e){} return n; }
-async function decidirCargo(k,v){ if(!enUltima()||!k) return; const quien=v==="x"?"":quienRevisa(); if(quien===null) return; const m=M();
+async function decidirCargo(k,v){ if(!editable()||!k) return; const quien=v==="x"?"":quienRevisa(); if(quien===null) return; const m=M();
  const {p,e}=escrDeClave(ACT.R,k), todas=new Set(p?clavesEscr(p,e):[]); todas.add(k); m.cargos=(m.cargos||[]).filter(x=>x&&!todas.has(x.k));
  if(v==="si"||v==="no"||v==="cese"||v==="otra") m.cargos.push(Object.assign({k:p?claveNueva(p,e):k,si:v!=="no",t:new Date().toISOString(),cargos:p&&p.cod[1]==="1"?[...p.cargos]:[],quien},v==="cese"?{cese:true}:v==="otra"?{otra:true}:{})); VER++; calc(m.semanas.length-1); await guardarMeta(); await pintar();
  if(PERFIL&&dlg.open) pintarPerfil(); }
 /* De qué poder es una DDJJ, cuando el índice lo carga mal o no lo dice (vale para todas las semanas). */
-async function decidirPoder(k,v){ if(!enUltima()||!k) return; const quien=v==="x"?"":quienRevisa(); if(quien===null) return; const m=M();
+async function decidirPoder(k,v){ if(!editable()||!k) return; const quien=v==="x"?"":quienRevisa(); if(quien===null) return; const m=M();
  const {p,e}=escrDeClave(ACT.R,k), todas=new Set(p?clavesEscr(p,e):[]); todas.add(k); m.poderes=(m.poderes||[]).filter(x=>x&&!todas.has(x.k));
  if(/^[EJL]$/.test(v)) m.poderes.push({k:p?claveNueva(p,e):k,poder:v,t:new Date().toISOString(),quien}); VER++; calc(m.semanas.length-1); await guardarMeta(); await pintar();
  if(PERFIL&&dlg.open) pintarPerfil(); }
 /* Un organismo de PeopleNet que es un ente autárquico: pasa, con su gente, a «Entes autárquicos». */
-async function marcarEnte(nom,si){ if(!enUltima()||!nom) return; const quien=si?quienRevisa():""; if(quien===null) return; const m=M(), j=valNorm(nom);
+async function marcarEnte(nom,si){ if(!editable()||!nom) return; const quien=si?quienRevisa():""; if(quien===null) return; const m=M(), j=valNorm(nom);
  m.entesOrg=(m.entesOrg||[]).filter(x=>x&&x.j!==j); if(si) m.entesOrg.push({j,nom,t:new Date().toISOString(),quien});
  AVISO_ENTE=si?nom:""; VER++; calc(m.semanas.length-1); await guardarMeta(); await pintar(); }
 let AVISO_ENTE="";
-async function vincular(id,j){ const x=ACT.R.propuestas.find(p=>p.id===id); if(!x) return; const quien=quienRevisa(); if(quien===null) return; const m=M(); m.vinculos=m.vinculos||[]; const t=new Date().toISOString();
+async function vincular(id,j){ if(SOLO_VER()) return; const x=ACT.R.propuestas.find(p=>p.id===id); if(!x) return; const quien=quienRevisa(); if(quien===null) return; const m=M(); m.vinculos=m.vinculos||[]; const t=new Date().toISOString();
  const poner=(a,b,si)=>{ m.vinculos=m.vinculos.filter(v=>v&&!((v.x===a&&v.y===b)||(v.x===b&&v.y===a))); m.vinculos.push({x:a,y:b,si,t,quien}); };
  if(j==="no") x.opciones.forEach(o=>poner(x.centro.rep,o.rep,false)); else { const o=x.opciones[+j]; if(o) poner(x.centro.rep,o.rep,true); }
  VER++; calc(m.semanas.length-1); await guardarMeta(); await pintar(); }
 /* Una inconsistencia de quien no está en la nómina: es la misma persona que alguien de la nómina
    (se unen, como al confirmar una coincidencia), o se revisó y no está (deja de marcarse). */
-async function unirCon(rep,otro){ const p=ACT.R&&ACT.R.personas.find(q=>q.rep===rep), o=ACT.R&&ACT.R.personas.find(q=>q.rep===otro); if(!enUltima()||!p||!o) return;
+async function unirCon(rep,otro){ const p=ACT.R&&ACT.R.personas.find(q=>q.rep===rep), o=ACT.R&&ACT.R.personas.find(q=>q.rep===otro); if(!editable()||!p||!o) return;
  const quien=quienRevisa(); if(quien===null) return; const m=M(); m.vinculos=(m.vinculos||[]).filter(v=>v&&!((v.x===rep&&v.y===otro)||(v.x===otro&&v.y===rep)));
  m.vinculos.push({x:rep,y:otro,si:true,t:new Date().toISOString(),quien}); VER++; calc(m.semanas.length-1); await guardarMeta(); await pintar(); if(PERFIL&&dlg.open){ PERFIL=o.rep; pintarPerfil(); } }
-async function revisar(k,v){ if(!enUltima()||!k) return; const quien=v?quienRevisa():""; if(quien===null) return; const m=M();
+async function revisar(k,v){ if(!editable()||!k) return; const quien=v?quienRevisa():""; if(quien===null) return; const m=M();
  const {p,e}=escrDeClave(ACT.R,k), todas=new Set(p?clavesEscr(p,e):[]); todas.add(k); m.revisadas=(m.revisadas||[]).filter(x=>x&&!todas.has(x.k));
  if(v) m.revisadas.push({k:p?claveNueva(p,e):k,t:new Date().toISOString(),quien}); VER++; calc(m.semanas.length-1); await guardarMeta(); await pintar(); if(PERFIL&&dlg.open) pintarPerfil(); }
 /* Separar a una persona unida por el nombre: lo confirmado a mano se borra y lo que se
    unió solo queda rechazado, para que no se vuelva a unir ni a preguntar. Se puede volver
    atrás desde «Lo que se separó…». */
-async function separar(rep,mismo){ const p=ACT.R.personas.find(q=>q.rep===rep); if(!p||!(mismo||p.porNombre||p.manual)) return; const quien=quienRevisa(); if(quien===null) return; const m=M(); const cl=new Set(p.claves); m.vinculos=(m.vinculos||[]).filter(Boolean);
+async function separar(rep,mismo){ if(SOLO_VER()) return; const p=ACT.R.personas.find(q=>q.rep===rep); if(!p||!(mismo||p.porNombre||p.manual)) return; const quien=quienRevisa(); if(quien===null) return; const m=M(); const cl=new Set(p.claves); m.vinculos=(m.vinculos||[]).filter(Boolean);
  const quitados=m.vinculos.filter(v=>v.si&&cl.has(v.x)&&cl.has(v.y)); m.vinculos=m.vinculos.filter(v=>!quitados.includes(v));
  const t=new Date().toISOString(); const regs=FID.map(f=>p.regs[f]).filter(Boolean);
  const no=(a,b)=>{ if(!m.vinculos.some(v=>!v.si&&((v.x===a&&v.y===b)||(v.x===b&&v.y===a)))) m.vinculos.push({x:a,y:b,si:false,t,quien}); };
@@ -2156,7 +2301,7 @@ async function separar(rep,mismo){ const p=ACT.R.personas.find(q=>q.rep===rep); 
  VER++; calc(m.semanas.length-1); await guardarMeta(); await pintar(); if(PERFIL&&dlg.open) pintarPerfil(); }
 /* Olvidar una respuesta: «Volver a considerar» un «no» y «Deshacer» un «sí». La pregunta
    vuelve. Por las dos claves y no por la posición: dos clics seguidos no pueden borrar otra. */
-async function olvidar(par,si){ const m=M(); const [x,y]=par.split("‖"); const V=(m.vinculos||[]).filter(Boolean), antes=V.length;
+async function olvidar(par,si){ if(SOLO_VER()) return; const m=M(); const [x,y]=par.split("‖"); const V=(m.vinculos||[]).filter(Boolean), antes=V.length;
  // un «no» se olvida entre las dos personas de hoy y no sólo entre esos dos renglones: «Separar»
  // deja uno por renglón, y con uno solo que quede siguen separadas
  const de=k=>!si&&ACT.R?ACT.R.personas.find(p=>p.claves.includes(k)):null; const P=de(x), Q=de(y), dos=P&&Q&&P!==Q;
@@ -2217,7 +2362,9 @@ function observacion(p){ const dt=debeTxt(p), esa=e=>dt&&e.n===p.debeCese.n&&e.f
  p.inconsist?"Inconsistencia: "+p.inconsist:"",
  p.revCargo?`Inconsistencia: ${p.revCargo}`:"", p.dudaPoder?`Duda de poder: ${p.dudaPoder}`:"",
  ...(p.ajenas||[]).map(e=>`La DDJJ del ${e.fecha||"—"} (escritura ${e.n||"—"}) no cuenta: es de otra persona con el mismo nombre`),p.falta?`Falta firmar${p.falta.escr?" la escritura "+p.falta.escr:""}${p.falta.fecha?" del "+p.falta.fecha:""}`:"",
- p.fuera?`En el índice del protocolo hay una fila que no cuenta${p.fuera.escr?" (escritura "+p.fuera.escr+")":""}: ${p.fuera.motivo}`:"",
+ p.fuera&&!(p.incomp||[]).some(e=>e.escr===p.fuera.escr&&e.fecha===p.fuera.fecha)?`En el índice del protocolo hay una fila que no cuenta${p.fuera.escr?" (escritura "+p.fuera.escr+")":""}: ${p.fuera.motivo}`:"",
+ p.incomp&&p.incomp.length?textoIncomp(p).replace(/\.$/,""):"",
+ ...(p.incompAjenas||[]).map(a=>`Con su nombre hay una DDJJ anulada por incomparecencia (${escFecha(a.e)}): ${ajenaTxt(p,a.e)}`),
  ...p.otrosNombres.map(o=>`En ${FN[o.f].n.toLowerCase()} figura como «${o.nom}»`),
  p.otrosDni.length?"También figura con DNI "+p.otrosDni.map(fmtDni).join(", "):"",
  p.pend?"Por confirmar si es la misma persona que otra de la lista":""].filter(Boolean).join(". "); }
@@ -2252,20 +2399,20 @@ function datosDeFecha(ps,lista){ const s=ACT.s, out=[["Semana del",isoAFecha(s.s
   if(!ps){ const sin={}; noN.filter(x=>!x.ubic&&x.sinOrg).forEach(x=>sin[x.sinOrg.sin]=(sin[x.sinOrg.sin]||0)+1); const ns=Object.values(sin).reduce((a,b)=>a+b,0);
    if(ns) out.push(["Sin organismo (no están en la nómina)",`${nf(ns)}: ${Object.entries(sin).map(([k,n])=>`${nf(n)} ${({web:"sólo están en el índice de la web",cargo:"su DDJJ no lo nombra",sinCargo:"su DDJJ no dice el cargo",dos:"su DDJJ nombra dos",sinIndice:"falta el índice del protocolo"})[k]||k}`).join(", ")}`]); } }
  out.push(["Bajado",fechaHora(new Date())]); if(DEMO) out.push(["","Es un ejemplo con datos inventados."]); return out; }
-const C_FUNC=[["CUIL",15],["DNI",12],["Apellido y nombre",34],["Organismo",40],["De dónde sale el organismo",30],["Cargo",34],["Escalafón",26],["Situación de revista",22],["Presentó",10],["N.º de escritura",14,"num"],["Fecha de la escritura",14,"fecha"],["Activo",9],["Publicada",11],["Situación",34],["Cambio desde la semana anterior",40],["Observación",50]];
+const C_FUNC=[["CUIL",15],["DNI",12],["Apellido y nombre",34],["Organismo",40],["De dónde sale el organismo",30],["Cargo",34],["Escalafón",26],["Situación de revista",22],["Activo",9],["Presentó",10],["N.º de escritura",14,"num"],["Fecha de la escritura",14,"fecha"],["Publicada",11],["Situación",34],["Cambio desde la semana anterior",40],["Observación",50]];
 const C_NOPRES=[["CUIL",15],["DNI",12],["Apellido y nombre",34],["Jurisdicción",40],["Cargo",34],["Situación de revista",22],["Publicada",11],["Situación",34],["Observación",50]];
-function filaFunc(p,F){ const c=ACT.cmp&&ACT.cmp.cambios.get(p); F=F||fuentesDatos(ACT.s); return [p.cuil||"",fmtDni(p.dni),p.nom,orgX(p),fuenteOrg(p,F),p.cargos.join(" · "),p.escals.join(" · "),p.revistas.join(" · "),siNo(p,0),p.pres?p.pres.n:"",p.pres?p.pres.fecha:"",siNo(p,1),siNo(p,2),sitX(p),c?c.txt:"",observacion(p)]; }
+function filaFunc(p,F){ const c=ACT.cmp&&ACT.cmp.cambios.get(p); F=F||fuentesDatos(ACT.s); return [p.cuil||"",fmtDni(p.dni),p.nom,orgX(p),fuenteOrg(p,F),p.cargos.join(" · "),p.escals.join(" · "),p.revistas.join(" · "),siNo(p,1),siNo(p,0),p.pres?p.pres.n:"",p.pres?p.pres.fecha:"",siNo(p,2),sitX(p),c?c.txt:"",observacion(p)]; }
 const filaNoPres=p=>[p.cuil||"",fmtDni(p.dni),p.nom,p.jurs.join(" · "),p.cargos.join(" · "),p.revistas.join(" · "),siNo(p,2),sitX(p),observacion(p)];
 const estructural=k=>!!ACT&&!!ACT.r&&((k==="a"&&ACT.r.sinNom)||(k==="u"&&ACT.r.sinWeb));
 const faltanListas=()=>FID.filter(f=>!ACT.r.L[f]&&!estructural(f));
 const sitX=p=>faltanListas().length?"—":SIT[p.cv||p.cod].n;
 function hojaResumen(personas,conAnterior,desc){ const res=resumir(personas,[]); const ant=conAnterior&&ACT.prev?ACT.prev.res:null; const fl=faltanListas();
- const cols=desc?[["Qué lista es",40],["",10,"auto"],["",9],["",11],["",10,"auto"]]:[["Situación",40],["Presentó",10],["Activo",9],["Publicada",11],["Personas",10,"auto"]]; if(ant) cols.push(["Semana anterior",15,"auto"]);
+ const cols=desc?[["Qué lista es",40],["",10,"auto"],["",9],["",11],["",10,"auto"]]:[["Situación",40],["Activo",9],["Presentó",10],["Publicada",11],["Personas",10,"auto"]]; if(ant) cols.push(["Semana anterior",15,"auto"]);
  // una lista filtrada dice primero qué lista es, y sólo cuenta las situaciones que trae
  const sl=desc?salieronAca():[];
- const pre=desc?[["Lista",desc.titulo,"","",""],...(desc.filtro?[["Filtro",desc.filtro,"","",""]]:[]),["Personas",personas.length,"","",""],...(sl.length?[["Ya no figuran en ninguna lista",sl.length,"","",""]]:[]),["","","","",""],["Situación","Presentó","Activo","Publicada","Personas"]]:[];
+ const pre=desc?[["Lista",desc.titulo,"","",""],...(desc.filtro?[["Filtro",desc.filtro,"","",""]]:[]),["Personas",personas.length,"","",""],...(sl.length?[["Ya no figuran en ninguna lista",sl.length,"","",""]]:[]),["","","","",""],["Situación","Activo","Presentó","Publicada","Personas"]]:[];
  const sn=v=>v==="1"?"Sí":v==="-"?"—":"No";
- const filas=[["Poder",poderTxt(),"","",""].concat(ant?[""]:[])].concat(pre).concat(gruposRes(ACT.r).flatMap(g=>g[1]).filter(c=>!desc||res.c[c]).map(c=>{ const f=[SIT[c].n,sn(c[0]),sn(c[1]),sn(c[2]),fl.length?"—":res.c[c]||0]; if(ant) f.push(fl.length?"—":ant.c[c]||0); return f; }));
+ const filas=[["Poder",poderTxt(),"","",""].concat(ant?[""]:[])].concat(pre).concat(gruposRes(ACT.r).flatMap(g=>g[1]).filter(c=>!desc||res.c[c]).map(c=>{ const f=[SIT[c].n,sn(c[1]),sn(c[0]),sn(c[2]),fl.length?"—":res.c[c]||0]; if(ant) f.push(fl.length?"—":ant.c[c]||0); return f; }));
  const tot=["Total","","","",res.total]; if(ant) tot.push(ant.total); filas.push(tot);
  const vacia=()=>cols.map(()=>""); filas.push(vacia());
  if(fl.length){ const f=vacia(); f[0]=`Falta cargar: ${fl.map(x=>FN[x].n).join(" y ")}. Hasta que esté, nadie figura en ${fl.length>1?"esas listas":"esa lista"} y las situaciones no dicen nada de ${fl.length>1?"ellas":"ella"}.`; filas.push(f,vacia()); }
@@ -2320,17 +2467,26 @@ function hojasOrganismo(min,conNo=true){ const ps=ACT.r.personas.filter(p=>enGru
    filas:no.map(p=>[p.cuil||"",fmtDni(p.dni),p.nom,deOrg(p,min,"cargo",p.cargos),deOrg(p,min,"revista",p.revistas),observacion(p)])},
   todos,...noHoja]; }
 // los que ya no figuran en ninguna lista: las mismas columnas en el cotejo y en la consulta
+// las anuladas sin dueño en el cotejo, las del pie de «Anulada por incomparecencia»: también al Excel y a «Copiar»
+const sueltasAca=()=>FILTRO.sit==="incomp"&&ACT&&ACT.R?sueltasVisibles():[];
+const C_SUELTAS=[["Nombre en el índice",34],["DNI en el índice",12],["N.º de escritura",10],["Fecha de la escritura",12],["Cargo en el protocolo",34],["Poder en el índice",18],["Por qué no tiene dueño en el cotejo",60]];
+const porQueSuelta=x=>x.homonimos>=2?`hay ${x.homonimos} personas con ese nombre: ${x.homos.map(p=>p.nom+(p.dni?" (DNI "+fmtDni(p.dni)+")":"")).join("; ")}`
+ :x.otro.length?`con ese nombre hay alguien en ${alcTxt(x.otro[0].alc)}: ${x.otro[0].nom}`:x.otroDni.length?`con ese nombre hay alguien con otro DNI: ${x.otroDni[0].nom}${x.otroDni[0].dni?" (DNI "+fmtDni(x.otroDni[0].dni)+")":""}`
+ :x.parecidos.length?`nombre parecido a ${x.parecidos.map(p=>p.nom).join(" o ")}`:"no está en el cotejo";
+const filasSueltas=S=>S.flatMap(x=>x.es.map(e=>[e.nom||x.k,fmtDni(e.dni),e.escr,e.fecha,e.cargo,(PODERES.find(p=>p.id===e.pod)||{t:"sin poder"}).t,porQueSuelta(x)]));
+const nSueltasAca=()=>sueltasAca().reduce((a,x)=>a+x.es.length,0);
 const C_SALIERON=[["CUIL",15],["DNI",12],["Apellido y nombre",34],["Jurisdicción",40],["Cargo",34],["La semana anterior figuraba en",40]];
 const filaSalio=q=>[q.cuil||"",fmtDni(q.dni),q.nom,q.jurs.join(" · "),q.cargos.join(" · "),FID.filter((f,i)=>q.cod[i]==="1"||(f==="p"&&q.otroCargo)).map(f=>FN[f].n).join(", ")];
 function hojasParcial(personas,desc){ const h=[hojaResumen(personas,false,desc),{n:"Personas",filtro:true,cols:C_FUNC,filas:(F=>personas.slice().sort(ordenMin).map(p=>filaFunc(p,F)))(fuentesDatos(ACT.s))}];
- const sl=salieronAca();
+ const sl=salieronAca(), su=sueltasAca();
  if(sl.length) h.push({n:"Ya no figuran",filtro:true,cols:C_SALIERON,filas:sl.slice().sort(porNom).map(filaSalio)});
+ if(su.length) h.push({n:"Anuladas sin dueño",filtro:true,cols:C_SUELTAS,filas:filasSueltas(su)});
  return h; }
 function bajar(datos,tipo,nombre){ const a=document.createElement("a"); a.href=URL.createObjectURL(new Blob([datos],{type:tipo})); a.download=nombre; document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },500); }
 const slug=s=>sinTildes(s).toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,50)||"sin-dato";
 const XLSX="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
 /* El único botón de bajar: baja exactamente lo que muestra la lista. */
-function exportar(){ if(!hayDatos()) return; const L=filtradas(); if(!L.length&&!salieronAca().length) return; const d=descFiltro(); let hojas;
+function exportar(){ if(!hayDatos()) return; const L=filtradas(); if(!L.length&&!salieronAca().length&&!sueltasAca().length) return; const d=descFiltro(); let hojas;
  if(d.modo==="todo") hojas=hojasTodo(); else if(d.modo==="min") hojas=hojasOrganismo(FILTRO.min); else hojas=hojasParcial(L,d);
  hojas.forEach(h=>h.n=nombreHoja(h.n)); bajar(libro(hojas),XLSX,d.archivo);
  BAJADO={archivo:d.archivo,k:claveFiltro(),n:L.length,t:Date.now()}; pintarBarra(L); setTimeout(()=>{ if(hayDatos()) pintarBarra(filtradas()); },8200); }
@@ -2345,10 +2501,11 @@ async function alPortapapeles(txt){ const t=document.createElement("textarea"); 
  // dentro de una ventana abierta (el perfil) lo de afuera no se puede seleccionar: va adentro de ella
  const caja=document.querySelector("dialog[open]")||document.body; caja.appendChild(t); t.select(); let ok=false; try{ ok=document.execCommand("copy"); }catch(e){} t.remove(); if(ok) return true;
  try{ await Promise.race([navigator.clipboard.writeText(txt),new Promise((_,no)=>setTimeout(()=>no(new Error("tiempo")),2000))]); return true; }catch(e){ return false; } }
-async function copiar(){ if(!hayDatos()) return; const L=filtradas(), sl=salieronAca(); if(!L.length&&!sl.length) return; const d=descFiltro(), k=claveFiltro();
+async function copiar(){ if(!hayDatos()) return; const L=filtradas(), sl=salieronAca(), su=sueltasAca(); if(!L.length&&!sl.length&&!su.length) return; const d=descFiltro(), k=claveFiltro();
  const filas=[[`${poderTxt()} · ${d.titulo}${d.filtro&&d.modo!=="min"?" · "+d.filtro:""}`],[`Semana del ${isoAFecha(ACT.s.s)} · ${nf(L.length)} ${L.length===1?"persona":"personas"} · copiado el ${fechaHora(new Date())}${DEMO?" · ejemplo con datos inventados":""}`],[],
   C_FUNC.map(c=>c[0]),...(F=>L.slice().sort(ordenMin).map(p=>filaFunc(p,F)))(fuentesDatos(ACT.s)),
-  ...(sl.length?[[],[`Ya no figuran en ninguna lista (${nf(sl.length)})`],C_SALIERON.map(c=>c[0]),...sl.slice().sort(porNom).map(filaSalio)]:[])];
+  ...(sl.length?[[],[`Ya no figuran en ninguna lista (${nf(sl.length)})`],C_SALIERON.map(c=>c[0]),...sl.slice().sort(porNom).map(filaSalio)]:[]),
+  ...(su.length?[[],[`Anuladas por incomparecencia sin dueño en el cotejo (${nf(nSueltasAca())})`],C_SUELTAS.map(c=>c[0]),...filasSueltas(su)]:[])];
  const ok=await alPortapapeles(filas.map(f=>f.map(celdaTxt).join("\t")).join("\r\n"));
  COPIADO={k,n:L.length,t:Date.now(),ok}; pintarBarra(filtradas()); setTimeout(()=>{ if(hayDatos()) pintarBarra(filtradas()); },15200); }
 
@@ -2395,7 +2552,7 @@ function datosConsulta(){ const R=ACT.R, s=ACT.s, cmp=ACT.cmpG; const ls=f=>idsD
   fuentes:{p:ls("p").map(l=>({archivo:l.archivo,clave:l.clave||"",cargada:l.cargada})),a:[...ls("a").filter(l=>!l.ente),...ls("a").filter(l=>l.ente&&poderLista(l)==="A")].map(l=>({archivo:l.archivo,cargada:l.cargada,fechaDatos:l.fechaDatos||"",ente:l.ente?l.clave:""})),u:ls("u").map(l=>({archivo:l.archivo,cargada:l.cargada}))},
   res:resumir(r.personas,R.propuestas.filter(x=>ea(x.centro)||x.opciones.some(ea))),resAnt:prevP?resumir(prevP,[]):null,notificacion:M().notificacion||"",
   salieron:cmp?cmp.salieron.filter(ea).map(q=>({nom:q.nom,dni:q.dni,cuil:q.cuil||"",cod:q.otroCargo?"1"+q.cod.slice(1):q.cod,jurs:q.jurs,cargos:q.cargos})):[],
-  personas:r.personas.map(p=>({nom:p.nom,dni:p.dni,cuil:p.cuil||"",cod:p.cod,jurs:p.jurs,cargos:p.cargos,escals:p.escals,revistas:p.revistas,pres:p.pres,nPres:p.nPres,otroCargo:p.otroCargo,revCargo:p.revCargo||"",inconsist:p.inconsist||"",orgDDJJ:p.orgDDJJ||"",descartadas:(p.descartadas||[]).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo})),ceses:(p.ceses||[]).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo})),puestos:p.puestos||[],debeCese:p.debeCese?{n:p.debeCese.n,fecha:p.debeCese.fecha,cargo:p.debeCese.cargo}:null,hist:historialDe(p),ddjjs:r.L.p?ddjjsDe(p).filter(e=>!/otra persona con el mismo nombre/.test(e.estado)).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo,poder:e.poder,cuenta:e.cuenta,estado:e.estado})):[],falta:p.falta,fuera:p.fuera,otros:p.otrosNombres,otrosDni:p.otrosDni,pend:p.pend,ultimo:p.ultimo,cambio:((cmp&&cmp.cambios.get(p))||{}).txt||"",
+  personas:r.personas.map(p=>({nom:p.nom,dni:p.dni,cuil:p.cuil||"",cod:p.cod,jurs:p.jurs,cargos:p.cargos,escals:p.escals,revistas:p.revistas,pres:p.pres,nPres:p.nPres,otroCargo:p.otroCargo,revCargo:p.revCargo||"",inconsist:p.inconsist||"",orgDDJJ:p.orgDDJJ||"",descartadas:(p.descartadas||[]).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo})),ceses:(p.ceses||[]).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo})),puestos:p.puestos||[],debeCese:p.debeCese?{n:p.debeCese.n,fecha:p.debeCese.fecha,cargo:p.debeCese.cargo}:null,hist:historialDe(p),ddjjs:r.L.p?ddjjsDe(p).filter(e=>!e.ajena&&!/otra persona con el mismo nombre/.test(e.estado)).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo,poder:e.poder,cuenta:e.cuenta,estado:e.estado})):[],falta:p.falta,fuera:p.fuera,otros:p.otrosNombres,otrosDni:p.otrosDni,pend:p.pend,ultimo:p.ultimo,cambio:((cmp&&cmp.cambios.get(p))||{}).txt||"",
    alc:p.alc,podFuente:p.podFuente||"",dudaPoder:p.dudaPoder||"",ubic:p.ubic?{de:p.ubic.de,orgs:p.ubic.orgs,vals:p.ubic.vals,nomina:!!p.ubic.nomina,por:p.ubic.por||"",literal:!!p.ubic.literal,ultima:p.ubic.ultima!==false,al:p.ubic.al||"",e:p.ubic.e?{n:p.ubic.e.n||"",fecha:p.ubic.e.fecha||"",cargo:p.ubic.e.cargo||"",noCuenta:p.ubic.e.noCuenta||""}:null}:null,sinOrg:p.sinOrg?{sin:p.sinOrg.sin,e:p.sinOrg.e?{n:p.sinOrg.e.n||"",fecha:p.sinOrg.e.fecha||"",cargo:p.sinOrg.e.cargo||""}:null,dos:p.sinOrg.dos||null}:null}))}; }
 /* El perfil de un funcionario: todo lo que hay de esa persona, y cada DDJJ del protocolo con el
    cargo con que se presentó (Baltasar, 23/10/2026: «que se vea sobre qué cargo presentó… como un
@@ -2409,7 +2566,8 @@ function ddjjsDe(p){ const s=ACT.s, F=(filtrosDe(s)||{}).p, ks=new Set(p.ks), Dc
    const pe=(p.escrsP||[]).find(x=>x.n===e.n&&x.fecha===e.fecha&&x.cargo===e.cargo); if(pe){ e.pod=pe.pod; e.podD=pe.podD; e.claveP=claveNueva(p,pe); } else e.pod=normPoder(e.poder);
    const estado=ex?(ex==="estado"?(esFaltaFirmar(r)?"Falta firmar":"No cuenta: "+String(r.estado||"").trim().toLowerCase()):`No cuenta: ${(CATEG.find(x=>x[0]===ex)||["",ex])[1].toLowerCase()} ${String(r[ex]||"en blanco").trim().toLowerCase()}`)
     :v&&v.otra?"No cuenta: es de otra persona con el mismo nombre":v&&v.cese?"Es la de cese":d===true?"Era por otro cargo":d===false?"Cuenta (es por este cargo)":"Cuenta";
-   out.push(Object.assign(e,{cuenta:!ex&&d!==true,estado,clave,decidido:d})); } }
+   const ajena=ex==="estado"&&esIncomparecencia(r)&&!excluye(Object.assign({},r,{estado:""}),F)&&!(p.incomp||[]).some(x=>x.escr===e.n&&x.fecha===String(e.fecha));
+   out.push(Object.assign(e,{cuenta:!ex&&d!==true,estado:ajena?`${estado} (${ajenaTxt(p,{dni:String(r.dni||""),escr:e.n,fecha:String(e.fecha)})})`:estado,clave,decidido:d,ajena})); } }
  const vistas=new Set(); return out.filter(e=>{ const k=e.n+"#"+e.fecha+"#"+e.cargo+"#"+e.estado; if(vistas.has(k)) return false; vistas.add(k); return true; }).sort((a,b)=>ordenFecha(b.fecha)-ordenFecha(a.fecha)); }
 /* La notificación para CiDi (Baltasar, 23/10/2026: «un botón que diga notificar… que se copie un
    texto para pegar en la notificación de CiDi… todavía va a variar el texto, no está definido»).
@@ -2485,7 +2643,8 @@ const fuP=F=>F.p?`del índice del Protocolo B${F.p.anios?` (${F.p.anios}${F.p.fa
 const fuA=F=>F.a?`de la nómina de PeopleNet${F.a.fd?" "+F.a.fd:""}${F.a.entes.length?` y de ${F.a.entes.length>1?"las listas":"la lista"} de ${yLista(F.a.entes)}`:""}`:"falta la nómina";
 const fuU=F=>F.u?`del índice de la web, cargado el ${F.u.cargada}`:"falta el índice de la web";
 const fuentesTxt=F=>{ const r=ACT&&ACT.r, t=PN[ALC].t;
- return `De dónde sale cada dato: «Presentó», ${fuP(F)} · «Activo», ${r&&r.sinNom?`no hay nómina del ${t}`:ALC==="A"?"de las listas de los entes y de los organismos de PeopleNet marcados como ente":ALC==="J"||ALC==="L"?`de la nómina del ${t}${F.a&&F.a[ALC]?" "+F.a[ALC]:""}`:F.a?`de la nómina de PeopleNet${F.a.fd?" "+F.a.fd:""}`:"falta la nómina"} · «Publicada», ${r&&r.sinWeb?`las del ${t} no se publican en la web`:fuU(F)} · «Organismo», ${r&&r.sinNom?"de su DDJJ, cuando lo nombra":"de la nómina; de quien no está en ella, de su DDJJ"} · «Poder», de la nómina; de quien no está en ella, del índice del protocolo, salvo lo decidido a mano.`; };
+ const ACT_TXT=`«Activo», ${r&&r.sinNom?`no hay nómina del ${t}`:ALC==="A"?"de las listas de los entes y de los organismos de PeopleNet marcados como ente":ALC==="J"||ALC==="L"?`de la nómina del ${t}${F.a&&F.a[ALC]?" "+F.a[ALC]:""}`:F.a?`de la nómina de PeopleNet${F.a.fd?" "+F.a.fd:""}`:"falta la nómina"}`;
+ return `De dónde sale cada dato: ${ACT_TXT} · «Presentó», ${fuP(F)} · «Publicada», ${r&&r.sinWeb?`las del ${t} no se publican en la web`:fuU(F)} · «Organismo», ${r&&r.sinNom?"de su DDJJ, cuando lo nombra":"de la nómina; de quien no está en ella, de su DDJJ"} · «Poder», de la nómina; de quien no está en ella, del índice del protocolo, salvo lo decidido a mano.`; };
 /* El organismo de quien no está en la nómina, en una frase (el perfil y el title de la fila). */
 const delEsc=e=>[e.fecha?"del "+e.fecha:"",e.n?`(Esc. ${e.n})`:""].filter(Boolean).join(" ");
 function textoOrg(p,F){ const u=p.ubic, so=p.sinOrg; if(p.sinNom&&!u) return "";
@@ -2555,7 +2714,7 @@ function htmlHistorial(H){ if(!H||!H.length) return "";
   return `<tr><td data-t="Semana">${esc(isoAFecha(x.s))}</td><td data-t="En la nómina">${nom}</td><td data-t="Presentó">${pre}</td><td data-t="Publicada">${pub}</td><td data-t="Qué cambió">${esc(c)}</td></tr>`; }).join("")}</tbody></table></div>${H.length===1?`<p class="ayuda" style="margin:6px 0 0">Hay una sola semana: desde la próxima se ve qué cambió.</p>`:""}`; }
 function htmlPerfil(p,o){ const activo=p.cod[1]==="1", fila=(t,v)=>v?`<div class="pf-f"><span>${t}</span><b>${esc(v)}</b></div>`:"";
  const pt=x=>x==="A"?"Entes autárquicos":(PN[x]||PN.E).t, podTxt=p.alc?p.alc.map(pt).join(" y "):"";
- const hoy=p.sinNom?`<p style="margin:0">No hay nómina del ${esc(pt(p.alc[0]))}: no se puede saber si está en funciones. Cuando llegue, se carga con «Cargar la nómina o la de un ente», como «La nómina del ${esc(pt(p.alc[0]))}».${o.org?" "+esc(o.org):""}</p>`:!o.conA?`<p class="ayuda" style="margin:0">Falta la nómina: no se puede decir qué cargo tiene hoy.${p.ultimo?` Último organismo en que figuró: ${esc(p.ultimo.jur||"—")} (nómina al ${esc(p.ultimo.al)}).`:""}</p>`:activo?
+ const hoy=p.sinNom?`<p style="margin:0">No hay nómina del ${esc(pt(p.alc[0]))}: no se puede saber si está en funciones.${SOLO_VER()?"":` Cuando llegue, se carga con «Cargar la nómina o la de un ente», como «La nómina del ${esc(pt(p.alc[0]))}».`}${o.org?" "+esc(o.org):""}</p>`:!o.conA?`<p class="ayuda" style="margin:0">Falta la nómina: no se puede decir qué cargo tiene hoy.${p.ultimo?` Último organismo en que figuró: ${esc(p.ultimo.jur||"—")} (nómina al ${esc(p.ultimo.al)}).`:""}</p>`:activo?
   fila("Cargo",p.cargos.join(" · "))+fila("Jurisdicción",p.jurs.join(" · "))+fila("Escalafón",p.escals.join(" · "))+fila("Situación de revista",p.revistas.join(" · "))+fila("Nómina al",o.fd)
   :`<p style="margin:0">No está en la nómina de activos${o.fd?" al "+esc(o.fd):""}.${o.org?" "+esc(o.org):p.ultimo?` Último organismo en que figuró: ${esc(p.ultimo.jur||"—")} (nómina al ${esc(p.ultimo.al)}).`:""}${o.conP&&p.cod[0]==="1"&&p.pres&&!p.inconsist?(!pareceCese(p.pres.cargo)&&!p.ceses.some(c=>c.n===p.pres.n&&c.fecha===p.pres.fecha)&&o.ref&&ordenFecha(p.pres.fecha)>ordenFecha(o.ref)?" Presentó después de la fecha de la nómina: puede haber asumido después, y se va a ver con la nómina nueva.":" Lo que presentó se toma como la DDJJ de cese."):""}</p>`;
  const dd=o.ddjjs;
@@ -2596,18 +2755,18 @@ function htmlDecidir(p,puede){
   const qued=e.pod==="?"?"E":e.pod;
   return `<div class="decidir"><div><b>En la DDJJ:</b> «${esc(e.cargo||"—")}»${e.n||e.fecha?` (${esc(escTxt(e))})`:""}, cargada como ${esc(delPoder(e.pod))}.</div>${p.cod[2]==="1"?`<div><b>En la web del Poder Ejecutivo:</b> figura publicada con este nombre.</div>`:""}<div><b>Por qué se marcó:</b> ${esc(p.dudaPoder)}.</div>${puede?`<div class="dec-acc">${ops.map(x=>`<button class="btn sm" type="button" data-poder="${esc(p.dudaK)}" data-v="${x}">Es del ${esc(PN[x].t)}<small> · ${x===qued?"queda donde está":"pasa al "+esc(PN[x].n)}</small></button>`).join("")}${p.cod[2]==="1"&&!CON_WEB.has(e.pod)?`<button class="btn sm" type="button" data-separar="${esc(p.rep)}" data-mismo="1">Son dos personas<small> · se separan: la de la web queda en el Ejecutivo</small></button>`:""}</div>`:""}</div>`; }
  return ""; }
-function pintarPerfil(){ const p=ACT.R&&ACT.R.personas.find(x=>x.rep===PERFIL); if(!p){ PERFIL=null; if(dlg.open) dlg.close(); return; } const L=ACT.R.L, puede=enUltima();
+function pintarPerfil(){ const p=ACT.R&&ACT.R.personas.find(x=>x.rep===PERFIL); if(!p){ PERFIL=null; if(dlg.open) dlg.close(); return; } const L=ACT.R.L, puede=editable();
  const podN=(p.alc||[]).find(x=>(x==="J"||x==="L")&&ACT.R.conNom[x])||"E", fd=L.a?fechaNominaDe(ACT.s,podN):"", c=ACT.cmp&&ACT.cmp.cambios.get(p);
  const rev=p.inconsist||p.revCargo||p.dudaPoder?`<div class="banda warn banda-dec" style="margin:0"><b>${p.dudaPoder&&!p.inconsist&&!p.revCargo?"Duda de poder":"Inconsistencia"}</b>${htmlDecidir(p,puede)}</div>`:"";
  const FU=fuentesDatos(ACT.s);
- $("#dlgCont").innerHTML=htmlPerfil(Object.assign({},p,{otros:p.otrosNombres}),{org:p.cod[1]==="1"?"":textoOrg(p,FU),fu:{a:p.sinNom?"sin nómina de ese poder":podN!=="E"?"nómina del "+PN[podN].t:FU.a?`PeopleNet${FU.a.fd?", "+FU.a.fd:""}${FU.a.entes.length?", y "+(FU.a.entes.length>1?"las listas de ":"la lista de ")+yLista(FU.a.entes):""}`:"",p:FU.p&&FU.p.anios?`${/ y /.test(FU.p.anios)?"índices":"índice"} ${FU.p.anios}${FU.p.falta?"; "+FU.p.falta:""}`:"",u:p.sinWeb?"es la del Poder Ejecutivo":FU.u?"cargado el "+FU.u.cargada:""},conA:!p.sinNom&&!!L.a,conP:!!L.p,conU:!p.sinWeb&&!!L.u,fd,ref:L.a?refNominaDe(ACT.s,podN):"",ddjjs:L.p?ddjjsDe(p):[],partes:idsDe(ACT.s,"p").map(id=>(LS().get(id)||{}).clave).filter(Boolean).join(" y "),botones:puede,rev,sep:(p.porNombre||p.manual)&&puede?`${p.manual?"Confirmado a mano":"Unido por el nombre"} con lo que figura en otra lista. <button class="btn lnk sm" type="button" data-separar="${esc(p.rep)}">Separar</button>`:"",cambio:c?c.txt:"",hist:historialDe(p),notif:p.sinNom?(NOTIF_P=null,`<p style="margin:0">Sin la nómina del ${esc(p.alc[0]==="J"?"Poder Judicial":"Poder Legislativo")} no se puede saber si debe algo: no se arma la notificación.</p>`):!puede||!L.a||!L.p?(NOTIF_P=null,`<p style="margin:0">${!puede?"Es una semana anterior: la notificación se arma desde la última semana.":`Falta ${!L.a?"la nómina":"el índice del protocolo"}: sin esa lista no se puede armar la notificación.`}</p>`):htmlNotificar(p,M().notificacion||"",true),semana:isoAFecha(ACT.s.s),tit:"dlgTit",cerrar:"cerrarDlg"}); }
+ $("#dlgCont").innerHTML=htmlPerfil(Object.assign({},p,{otros:p.otrosNombres}),{org:p.cod[1]==="1"?"":textoOrg(p,FU),fu:{a:p.sinNom?"sin nómina de ese poder":podN!=="E"?"nómina del "+PN[podN].t:FU.a?`PeopleNet${FU.a.fd?", "+FU.a.fd:""}${FU.a.entes.length?", y "+(FU.a.entes.length>1?"las listas de ":"la lista de ")+yLista(FU.a.entes):""}`:"",p:FU.p&&FU.p.anios?`${/ y /.test(FU.p.anios)?"índices":"índice"} ${FU.p.anios}${FU.p.falta?"; "+FU.p.falta:""}`:"",u:p.sinWeb?"es la del Poder Ejecutivo":FU.u?"cargado el "+FU.u.cargada:""},conA:!p.sinNom&&!!L.a,conP:!!L.p,conU:!p.sinWeb&&!!L.u,fd,ref:L.a?refNominaDe(ACT.s,podN):"",ddjjs:L.p?ddjjsDe(p):[],partes:idsDe(ACT.s,"p").map(id=>(LS().get(id)||{}).clave).filter(Boolean).join(" y "),botones:puede,rev,sep:(p.porNombre||p.manual)?`${p.manual?"Confirmado a mano":"Unido por el nombre"} con lo que figura en otra lista.${puede?` <button class="btn lnk sm" type="button" data-separar="${esc(p.rep)}">Separar</button>`:""}`:"",cambio:c?c.txt:"",hist:historialDe(p),notif:p.sinNom?(NOTIF_P=null,`<p style="margin:0">Sin la nómina del ${esc(p.alc[0]==="J"?"Poder Judicial":"Poder Legislativo")} no se puede saber si debe algo: no se arma la notificación.</p>`):!enUltima()||!L.a||!L.p?(NOTIF_P=null,`<p style="margin:0">${!enUltima()?"Es una semana anterior: la notificación se arma desde la última semana.":`Falta ${!L.a?"la nómina":"el índice del protocolo"}: sin esa lista no se puede armar la notificación.`}</p>`):htmlNotificar(p,M().notificacion||"",!SOLO_VER()),semana:isoAFecha(ACT.s.s),tit:"dlgTit",cerrar:"cerrarDlg"}); }
 /* Cambiar el texto de la notificación: se guarda con lo demás y viaja a la consulta al publicar. */
 function editarNotif(){ const sec=$("#pfNotif"); if(!sec) return;
  sec.innerHTML=`<h3>El texto de la notificación</h3><p class="ayuda" style="margin:0">Lo de entre llaves se completa solo con los datos de la persona: {sr} (Sr. o Sra.), {nombre}, {dni}, {cuil}, {puesto} (cada cargo con su organismo, uno por renglón), {cargo}, {organismo}, {motivo} (por qué se la notifica), {fecha}, {lo} (lo o la), {o} (notificad{o}) y {ddjj} (la declaración jurada correspondiente, o las dos en la doble falta). Lo de entre corchetes queda para completar a mano.</p>
   <textarea class="notif-ed" id="notifEd" aria-label="El texto de la notificación">${esc(M().notificacion||NOTIF_BORRADOR)}</textarea>
   <div class="row"><button class="btn pri" type="button" data-acc="guardarNotif">Guardar el texto</button><button class="btn" type="button" data-acc="cancelarNotif">Cancelar</button>${M().notificacion?`<button class="btn lnk sm" type="button" data-acc="borradorNotif">Volver al borrador</button>`:""}</div>`;
  $("#notifEd").focus(); }
-async function guardarNotif(v){ M().notificacion=v; await guardarMeta(); pintarPerfil(); }
+async function guardarNotif(v){ if(SOLO_VER()) return; M().notificacion=v; await guardarMeta(); pintarPerfil(); }
 /* La clave de la consulta. Los datos se publican cifrados con AES-GCM, con una llave que sale
    de la clave por PBKDF2: el archivo del R: no se puede leer sin ella. La clave no se guarda en
    ningún lado; se pide cada vez que se publica. */
@@ -2642,7 +2801,7 @@ function htmlConsulta(d){ const json=JSON.stringify(d).split("</").join("<\\/");
 </body></html>`; }
 function leerManija(){ if(!db) return Promise.resolve(null); return pedir("meta","readonly",s=>s.get("consultaArchivo")).catch(()=>null); }
 function guardarManija(h){ if(!db) return Promise.resolve(); return pedir("meta","readwrite",s=>s.put(h,"consultaArchivo")).catch(()=>{}); }
-async function publicar(){ if(!hayDatos()||DEMO||!enUltima()||!(ACT.R.L.a&&ACT.R.L.p&&ACT.R.L.u)) return;
+async function publicar(){ if(soloVer()) return; if(!hayDatos()||DEMO||!enUltima()||!(ACT.R.L.a&&ACT.R.L.p&&ACT.R.L.u)) return;
  const clave=await pedirClave(); if(clave==null) return;
  let d=null; const armar=async()=>{ d=await sobreConsulta(clave); return htmlConsulta(d); };
  const anotar=async()=>{ M().publicada={semana:d.semana,t:d.publicada}; await guardarMeta(); pintarPublicar(); };
@@ -2691,7 +2850,7 @@ function validarCopia(o){ const mal=t=>{ throw new Error(t); };
  return o; }
 let COPIA=null;
 const COPIA_CONFLICTO=()=>dialogoAviso("No se abrió la copia","Otra ventana del cotejo guardó cambios después de que se abrió esta. Recargá para tomar lo más nuevo y después abrí la copia.",'<button class="btn" type="button" data-acc="recargar">Recargar</button> ');
-async function abrirCopia(fl){ if(WEB&&!NUBE) return pasoEntrarWeb(); if(conflicto) return COPIA_CONFLICTO(); if(NUBE&&NUBE.estado==="error"&&!META.semanas.length) return dialogoAviso("No se abrió la copia",SIN_COMPROBAR()); if(NUBE?!compartidoVacio():(db&&await pedir("meta","readonly",s=>s.get("nube")).catch(()=>null))) return dialogoAviso("Con el cotejo compartido no se abre una copia","Abrirla pisaría lo que decidieron los demás. Lo de todos ya está en el compartido."); let o; try{ o=validarCopia(JSON.parse(decodificar(await fl.arrayBuffer()))); }catch(e){ dialogoAviso("No se puede abrir esa copia",e instanceof SyntaxError||!(e&&e.message)?"El archivo no es una copia del cotejo.":e.message); return; }
+async function abrirCopia(fl){ if(soloVer()) return; if(WEB&&!NUBE) return pasoEntrarWeb(); if(conflicto) return COPIA_CONFLICTO(); if(NUBE&&NUBE.estado==="error"&&!META.semanas.length) return dialogoAviso("No se abrió la copia",SIN_COMPROBAR()); if(NUBE?!compartidoVacio():(db&&await pedir("meta","readonly",s=>s.get("nube")).catch(()=>null))) return dialogoAviso("Con el cotejo compartido no se abre una copia","Abrirla pisaría lo que decidieron los demás. Lo de todos ya está en el compartido."); let o; try{ o=validarCopia(JSON.parse(decodificar(await fl.arrayBuffer()))); }catch(e){ dialogoAviso("No se puede abrir esa copia",e instanceof SyntaxError||!(e&&e.message)?"El archivo no es una copia del cotejo.":e.message); return; }
  COPIA=o; const ns=o.meta.semanas.length, ult=o.meta.semanas[ns-1], mias=META.semanas.length;
  $("#dlgCont").innerHTML=`<div class="dlg-cab"><h2 id="dlgTit">Abrir la copia</h2></div><div class="dlg-cuerpo"><p style="margin:0">La copia se guardó el <b>${fechaHora(o.guardada)}</b> y tiene ${ns===1?"una semana":nf(ns)+" semanas"}${ult?`, la última del ${isoAFecha(ult.s)}`:""}.</p>
   <p style="margin:0">${NUBE?"<b>El cotejo compartido está vacío</b>: lo de la copia se sube a GitHub y lo ven todos.":mias?`<b>Reemplaza lo que hay en esta computadora</b> (${mias===1?"una semana":nf(mias)+" semanas"}, la última del ${isoAFecha(META.semanas[mias-1].s)}). Si no estás seguro, guardá antes una copia de lo de acá.`:"En esta computadora no hay nada cargado todavía."}</p></div>
@@ -2702,7 +2861,7 @@ const SIN_COMPROBAR=()=>{ const e=NUBE&&NUBE.estado==="error"?NUBE.error:"";
  return e==="red"?"Sin conexión con GitHub no se puede comprobar que el cotejo compartido siga vacío. Probá de nuevo cuando vuelva."
   :e?"No se pudo comprobar en GitHub que el cotejo compartido siga vacío. "+txtDlg(e)
   :"No se pudo comprobar en GitHub que el cotejo compartido siga vacío. Probá de nuevo en un momento."; };
-async function reemplazar(){ const o=COPIA; if(!o) return;
+async function reemplazar(){ const o=COPIA; if(!o) return; if(soloVer()){ COPIA=null; return; }
  /* Con el compartido, lo de acá es de la última vuelta, que pudo haber fallado: se comprueba en GitHub que siga vacío,
     con una vuelta nueva. Mientras, «Cancelar» cancela. */
  if(NUBE){ const f=$("#dlgCont").firstElementChild, bt=$("#dlgCont [data-acc=reemplazar]"), t0=new Date().toISOString();
@@ -2766,7 +2925,7 @@ const deB64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
 const canon=x=>JSON.stringify(x,(k,v)=>esObj(v)?Object.keys(v).sort().reduce((o,c)=>(o[c]=v[c],o),{}):v);
 const igual=(a,b)=>canon(a)===canon(b);
 const normU=s=>sinTildes(s).trim().replace(/\s+/g," ").toLowerCase();
-const TXT_NUBE={red:"No hay conexión con GitHub. Lo que se haga acá queda guardado y sube cuando vuelva.",
+const TXT_NUBE={soloVer:"Con el perfil de Consulta no se sube nada a GitHub.",red:"No hay conexión con GitHub. Lo que se haga acá queda guardado y sube cuando vuelva.",
  token:"La llave de GitHub de esta computadora no sirve: venció, la borraron o está mal copiada.",
  acceso:"La llave de GitHub no tiene acceso al repositorio cotejo-ddjj-datos.",
  permiso:"La llave de GitHub deja leer pero no escribir: le falta el permiso «Contents: Read and write».",
@@ -2797,8 +2956,10 @@ const TXT_WEB={red:"No hay conexión con GitHub. Lo que hagas sube cuando vuelva
  pierriCambioAdmin:"Tu clave de Ley Pierri cambió después de que te trajeron al cotejo. Pedile a alguien que esté adentro (con el cotejo abierto) que abra «Usuarios» → «Traer las cuentas de Ley Pierri», y escribí ahí tu usuario y tu clave nueva.",
  pierriFuera:"Tu cuenta de Ley Pierri todavía no está en el cotejo. Alguien que esté adentro (con el cotejo abierto) abre «Usuarios» → «Traer las cuentas de Ley Pierri», y quien administra Ley Pierri escribe ahí su usuario y su clave.",
  pierriFueraAdmin:"Tu cuenta de Ley Pierri todavía no está en el cotejo. Pedile a alguien que esté adentro (con el cotejo abierto) que abra «Usuarios» → «Traer las cuentas de Ley Pierri», y escribí ahí tu usuario y tu clave."};
-const txtNube=e=>{ const c=e&&e.c||e; return (WEB&&TXT_WEB[c])||TXT_NUBE[c]||TXT_NUBE.http; };
-const QUEDA_ACA=()=>WEB?" Lo de esta página sube cuando se pueda: no la cierres.":" Lo de esta computadora queda guardado acá.";
+const TXT_VER={red:"No hay conexión con GitHub: lo que se ve es lo último que se bajó. Se actualiza sola cuando vuelva.",
+ http:"GitHub contestó con un error: lo que se ve es lo último que se bajó. Se vuelve a intentar sola."};
+const txtNube=e=>{ const c=e&&e.c||e; return (SOLO_VER()&&TXT_VER[c])||(WEB&&TXT_WEB[c])||TXT_NUBE[c]||TXT_NUBE.http; };
+const QUEDA_ACA=()=>SOLO_VER()?"":WEB?" Lo de esta página sube cuando se pueda: no la cierres.":" Lo de esta computadora queda guardado acá.";
 
 /* ---------- GitHub ---------- */
 async function gh(metodo,ruta,cuerpo,crudo,tok){ const t=tok||tokenGuardado(); if(!t) throw errN("token"); let r;
@@ -2844,7 +3005,8 @@ async function leerUsuarios(){ const a=await leerGH(R_USUARIOS); if(!a) return n
  if(!esObj(o)||!Array.isArray(o.usuarios)) throw errN("danado"); return {sha:a.sha,o}; }
 const textoB=o=>new TextEncoder().encode(JSON.stringify(o,null,1)+"\n");
 /* Cambia usuarios.json; si otro lo cambió entretanto, lo vuelve a leer y repite. */
-async function cambiarUsuarios(fn,msj){ for(let i=0;i<4;i++){ const us=await leerUsuarios(); if(!us) throw errN("danado"); const r=await fn(us.o);
+async function cambiarUsuarios(fn,msj){ for(let i=0;i<4;i++){ const us=await leerUsuarios(); if(!us) throw errN("danado"); const antes=JSON.stringify(us.o), r=await fn(us.o);
+  if(JSON.stringify(us.o)===antes) return r;
   if(await escribirGH(R_USUARIOS,textoB(us.o),us.sha,msj)!==null) return r; } throw errN("ocupado"); }
 
 /* ---------- las cuentas de Ley Pierri ----------
@@ -2954,13 +3116,15 @@ const cuentasDe=m=>{ const o={}; (m.semanas||[]).forEach(s=>{ if(s.res&&typeof s
 const ponerCuentas=(m,cu)=>{ if(!esObj(cu)) return; (m.semanas||[]).forEach(s=>{ const c=cu[s.s]; if(!s.res&&esObj(c)&&esObj(c.res)&&typeof c.resK==="string"){ s.res=c.res; s.resK=c.resK; } }); };
 
 /* ---------- lo guardado en esta computadora ---------- */
-const registroNube=(x,cambia)=>Object.assign({u:x.u,n:x.n,pierri:x.pierri,base:x.base,sha:x.sha,ult:x.ult,vuelta:x.vuelta,subidas:[...x.subidas]},cambia||{});
+const registroNube=(x,cambia)=>Object.assign({u:x.u,n:x.n,pierri:x.pierri,rol:x.rol||"",base:x.base,sha:x.sha,ult:x.ult,vuelta:x.vuelta,subidas:[...x.subidas]},cambia||{});
 async function guardarNubeLocal(x){ x=x||NUBE; if(!db||!x||x!==NUBE) return; try{ await pedir("meta","readwrite",s=>s.put(registroNube(x),"nube")); }catch(e){} }
 async function cargarNube(){ if(!db) return; try{ const n=await pedir("meta","readonly",s=>s.get("nube")), k=await pedir("meta","readonly",s=>s.get("llave"));
+  // una sesión de Ley Pierri guardada antes de que el cotejo guardara el perfil: se vuelve a entrar, para tomarlo
   if(!(n&&n.u&&k)){ NUBE=null; return; }
-  if(NUBE&&NUBE.u===n.u) Object.assign(NUBE,{base:n.base||null,sha:n.sha||null,vuelta:n.vuelta||0,subidas:new Set(n.subidas||[])});
-  else NUBE={u:n.u,n:n.n||"",pierri:!!n.pierri,llave:k,base:n.base||null,sha:n.sha||null,vuelta:n.vuelta||0,ult:n.ult||"",subidas:new Set(n.subidas||[]),estado:"",error:"",prog:""}; }catch(e){} }
-const sesionNueva=async(u,crudo,x)=>(x=x||{},{u,n:x.n||"",pierri:!!x.pierri,llave:await llaveDatos(crudo),base:null,sha:null,vuelta:0,ult:"",subidas:new Set(),estado:"",error:"",prog:""});
+  if(NUBE&&NUBE.u===n.u) Object.assign(NUBE,typeof n.rol==="string"?{rol:n.rol}:{},{base:n.base||null,sha:n.sha||null,vuelta:n.vuelta||0,subidas:new Set(n.subidas||[])});
+  else if(n.pierri&&typeof n.rol!=="string"){ NUBE=null; return; }
+  else NUBE={u:n.u,n:n.n||"",pierri:!!n.pierri,rol:n.rol||"",llave:k,base:n.base||null,sha:n.sha||null,vuelta:n.vuelta||0,ult:n.ult||"",subidas:new Set(n.subidas||[]),estado:"",error:"",prog:""}; }catch(e){} }
+const sesionNueva=async(u,crudo,x)=>(x=x||{},{u,n:x.n||"",pierri:!!x.pierri,rol:x.rol||"",llave:await llaveDatos(crudo),base:null,sha:null,vuelta:0,ult:"",subidas:new Set(),estado:"",error:"",prog:""});
 /* Quien crea el compartido: lo de esta computadora es lo que se sube. */
 /* Crear el compartido: primero suben las listas y el estado, y al final usuarios.json, que es lo que dice que el
    compartido existe. Si algo se corta antes, el repositorio queda sin usuarios.json y se puede volver a crear: el
@@ -2979,7 +3143,7 @@ async function crearCompartido(us,u,crudo,x){ const n=await sesionNueva(u,crudo,
 const quienNube=()=>NUBE?NUBE.n||NUBE.u:"";
 /* La llave del cotejo de quien entró, para sellarla para otro: con su clave (y, si su cuenta es de Ley Pierri, entrando a Ley Pierri). */
 async function crudoDe(x,clave){ if(!esObj(x)) return null; if(!x.pierri) return desenvolver(x,clave);
- const P=await entrarPierri(x.u,clave); if(!P) return null; x.n=P.n;   // el nombre, el de Ley Pierri (usuarios.json no está firmado)
+ const P=await entrarPierri(x.u,clave); if(!P) return null; x.n=P.n; x.r=P.r;   // el nombre y el perfil, los de Ley Pierri (usuarios.json no está firmado)
  try{ return await abrirSellado(P.priv,x,INFO_COTEJO); }catch(e){ throw errN(P.r==="admin"?"pierriCambioAdmin":"pierriCambio"); } }
 async function salirNube(){ clearTimeout(T_SUBIR); NUBE=null; TRAER=null; if(WEB){ TOKEN_MEM=""; location.reload(); return; }   // lo que esté en camino ve que ya no hay sesión y se corta
  if(db){ try{ await pedir("meta","readwrite",s=>s.delete("nube")); await pedir("meta","readwrite",s=>s.delete("llave")); }catch(e){} }
@@ -3037,13 +3201,15 @@ async function unaVuelta(n){
   if(n!==NUBE) return;
   // en la web las listas no se bajan todas: las que nombra lo de GitHub ya están subidas
   if(WEB&&rem) idsNube(rem).forEach(id=>n.subidas.add(id));
-  const antes=paraNube(META), junto=rem?juntar(n.base,antes,rem):antes;
+  // sólo para ver: no se junta nada de acá; si algo cambió acá por error, vuelve a ser lo compartido
+  const antes=paraNube(META), junto=rem?(soloVerN(n)?clonar(rem):juntar(n.base,antes,rem)):antes;
   const ids=await traerListas(n,junto); if(n!==NUBE) return;
   // lo bajado pasa a ser la base: si la subida choca y se repite, se junta contra esto y no contra lo de antes
   if(rem){ const base={base:clonar(rem),sha:a.sha,vuelta:v};
    if(!igual(junto,antes)){ if(!quieto()){ n.esperando=true; throw errN("pausa"); } await aplicar(n,junto,antes,base,cuentas); }
    else if(!(a.sha===n.sha&&n.base)){ Object.assign(n,base); await guardarNubeLocal(n); } }
   if(rem&&igual(junto,rem)) return;
+  if(soloVerN(n)) throw errN("soloVer");
   await subirListas(n,ids,!!a); if(n!==NUBE) return;
   const nv=Math.max(v,n.vuelta||0)+1, sha=await escribirGH(R_ESTADO,await sellar({vuelta:nv,meta:junto,cuentas:cuentasDe(META)},n.llave),a?a.sha:null,`${n.u}: lo cargado y lo decidido`);
   if(sha!==null){ if(n!==NUBE) return; Object.assign(n,{base:clonar(junto),sha,vuelta:nv}); await guardarNubeLocal(n); return; } }
@@ -3071,15 +3237,15 @@ function pintarNube(){ const c=$("#chipNube"), d=$("#nube"); if(!c||!d) return; 
  if(!n||DEMO) c.className="chip oculto";
  else { const [cl,t]=n.estado==="trabajando"?["t-info","Compartido · "+(n.prog||"actualizando…")]:n.estado==="error"&&n.error==="red"?["t-warn","Sin conexión"+(pend?(WEB?" · no cierres la página":" · lo de acá sube después"):"")]:n.estado==="error"?["t-mal","Compartido · no se pudo actualizar"]:pend?["t-info","Compartido · por subir"]:["t-ok","Compartido · al día"];
   c.className="chip "+cl; c.textContent=t; c.title="El cotejo compartido con el equipo. Tocá para ver cómo está."; }
- const ba=$("#bAbrirCopia"); if(ba) ba.disabled=!!DEMO||(WEB&&!n)||(!!n&&!compartidoVacio());
- const cd=$("#copiaD"); if(cd) cd.textContent=DEMO?"En el ejemplo no se guarda ni se abre una copia.":n?(compartidoVacio()?"El cotejo compartido está vacío: con «Abrir una copia» se lo llena con lo de una copia guardada, y lo ven todos.":n.estado==="error"&&!META.semanas.length?(n.error==="red"?"Sin conexión con GitHub no se puede comprobar si el cotejo compartido sigue vacío: una copia se abre cuando vuelva.":"No se pudo comprobar en GitHub si el cotejo compartido sigue vacío (arriba dice por qué): una copia se abre cuando se arregle."):"Una copia guarda en un archivo lo que hay en el cotejo compartido, de respaldo. Con el compartido ya cargado no se abre una copia: pisaría lo que decidieron los demás."):WEB?"Una copia guarda en un archivo lo que hay en el cotejo compartido, de respaldo. Se guarda después de entrar.":"Lo cargado queda en esta computadora. Para pasarlo a otra, o para tener un respaldo, se guarda una copia en un archivo y se abre en la otra.";
+ const ba=$("#bAbrirCopia"); if(ba) ba.disabled=!!DEMO||(WEB&&!n)||(!!n&&!compartidoVacio())||SOLO_VER();
+ const cd=$("#copiaD"); if(cd) cd.textContent=DEMO?"En el ejemplo no se guarda ni se abre una copia.":SOLO_VER()?"Una copia guarda en un archivo lo que hay en el cotejo compartido, de respaldo. Con el perfil de Consulta no se abre una copia.":n?(compartidoVacio()?"El cotejo compartido está vacío: con «Abrir una copia» se lo llena con lo de una copia guardada, y lo ven todos.":n.estado==="error"&&!META.semanas.length?(n.error==="red"?"Sin conexión con GitHub no se puede comprobar si el cotejo compartido sigue vacío: una copia se abre cuando vuelva.":"No se pudo comprobar en GitHub si el cotejo compartido sigue vacío (arriba dice por qué): una copia se abre cuando se arregle."):"Una copia guarda en un archivo lo que hay en el cotejo compartido, de respaldo. Con el compartido ya cargado no se abre una copia: pisaría lo que decidieron los demás."):WEB?"Una copia guarda en un archivo lo que hay en el cotejo compartido, de respaldo. Se guarda después de entrar.":"Lo cargado queda en esta computadora. Para pasarlo a otra, o para tener un respaldo, se guarda una copia en un archivo y se abre en la otra.";
  const lw=$("#lnkWeb"); if(lw) lw.classList.toggle("oculto",WEB||!!DEMO);
  const bt=$("#bTema"); if(bt&&window.SIGEC_TEMA){ bt.classList.toggle("oculto",!WEB); bt.textContent=SIGEC_TEMA.actual()==="oscuro"?"☀ Claro":"☾ Oscuro"; }
  if(!n&&WEB){ d.innerHTML=`<p class="ayuda">El cotejo está sólo en GitHub, cifrado: se entra con tu usuario y tu clave, y en esta computadora no quedan los datos.</p><div class="row" style="margin-bottom:14px"><button class="btn pri" type="button" data-acc="nube" ${DEMO?"disabled":""}>Entrar</button></div>`; return; }
  if(!n){ d.innerHTML=`<p class="ayuda"><b>El cotejo ahora se abre desde GitHub</b>, siempre en su última versión: <a href="${COTEJO_WEB}" target="_blank" rel="noopener">abrir el cotejo</a>. Si el compartido todavía no existe, «Compartir con el equipo» lo crea con lo de esta computadora (o «Guardar una copia» y se elige al crearlo allá). Si ya existe, entrar acá reemplaza lo de esta computadora por lo compartido.</p><p class="ayuda">Para que todo el equipo vea lo mismo, el cotejo se comparte en un repositorio privado de GitHub, cifrado: las listas se cargan una vez y lo que decide cada uno lo ven todos. Cada persona entra con su usuario y su clave.</p><div class="row" style="margin-bottom:14px"><button class="btn pri" type="button" data-acc="nube" ${DEMO?"disabled":""}>Compartir con el equipo</button></div>`; return; }
  const est=n.estado==="trabajando"?`Actualizando${n.prog?": "+n.prog:""}…`:n.estado==="error"?txtNube(n.error)+(n.error==="red"?"":QUEDA_ACA()):pend?"Hay cambios de esta computadora por subir.":`Al día${n.ult?" desde las "+fechaHora(n.ult).slice(11):""}. Se actualiza solo cada minuto y cada vez que alguien decide algo.`;
- d.innerHTML=`<p style="margin:0 0 4px">Compartido con el equipo en GitHub, cifrado. Entraste como <b>${esc(n.n||n.u)}</b>${n.pierri?", con tu cuenta de Ley Pierri":""}.</p><p class="ayuda" role="status">${esc(est)}</p>
-  <div class="row" style="margin-bottom:14px"><button class="btn" type="button" data-acc="nubeAhora" ${n.estado==="trabajando"?"disabled":""}>Actualizar ahora</button><button class="btn" type="button" data-acc="nubeUsuarios">Usuarios</button><button class="btn" type="button" data-acc="nubeClave">Cambiar mi clave</button>${n.estado==="error"&&["token","acceso","permiso"].includes(n.error)?`<button class="btn" type="button" data-acc="nubeToken">Cambiar la llave de GitHub</button>`:""}<button class="btn lnk sm" type="button" data-acc="nubeSalir">Salir</button></div>${WEB?"":`<p class="ayuda" style="margin:0 0 12px">El cotejo ahora se abre desde GitHub: <a href="${COTEJO_WEB}" target="_blank" rel="noopener">abrir el cotejo</a>.</p>`}`; }
+ d.innerHTML=`<p style="margin:0 0 4px">Compartido con el equipo en GitHub, cifrado. Entraste como <b>${esc(n.n||n.u)}</b>${n.pierri?", con tu cuenta de Ley Pierri":""}${soloVerN(n)?" (Consulta: sólo para ver)":""}.</p><p class="ayuda" role="status">${esc(est)}</p>
+  <div class="row" style="margin-bottom:14px"><button class="btn" type="button" data-acc="nubeAhora" ${n.estado==="trabajando"?"disabled":""}>Actualizar ahora</button>${soloVerN(n)?"":`<button class="btn" type="button" data-acc="nubeUsuarios">Usuarios</button>`}<button class="btn" type="button" data-acc="nubeClave">Cambiar mi clave</button>${n.estado==="error"&&["token","acceso","permiso"].includes(n.error)?`<button class="btn" type="button" data-acc="nubeToken">Cambiar la llave de GitHub</button>`:""}<button class="btn lnk sm" type="button" data-acc="nubeSalir">Salir</button></div>${WEB?"":`<p class="ayuda" style="margin:0 0 12px">El cotejo ahora se abre desde GitHub: <a href="${COTEJO_WEB}" target="_blank" rel="noopener">abrir el cotejo</a>.</p>`}`; }
 
 /* ---------- entrar ---------- */
 const campoN=(id,t,tipo,ac,val)=>`<div class="clave"><label for="${id}">${t}</label><input id="${id}" type="${tipo}" autocomplete="${ac}" value="${esc(val||"")}" spellcheck="false"></div>`;
@@ -3171,7 +3337,7 @@ async function enviarNube(){ const P=NUBE_PASO, f=$("#fNube"); if(!f) return;
   catch(e){ TOKEN_MEM=""; return malNube(txtDlg(e)); }
   if(!crudo){ TOKEN_MEM=""; return malNube("El usuario o la clave no son correctos.","#nC"); }
   ocupadoNube("Bajando lo compartido…");
-  try{ await unirse(await sesionNueva(x.u,crudo,x.pierri?{n:x.n||x.u,pierri:true}:{})); }catch(e){ TOKEN_MEM=""; if(e&&e.c==="cancelado") return; return malNube(txtDlg(e)); }
+  try{ await unirse(await sesionNueva(x.u,crudo,x.pierri?{n:x.n||x.u,pierri:true,rol:x.r||""}:{})); }catch(e){ TOKEN_MEM=""; if(e&&e.c==="cancelado") return; return malNube(txtDlg(e)); }
   // la llave queda en esta computadora sólo cuando ya se sabe que el usuario y la clave son buenos
   if(tk) await guardarToken(x.u,c,tk);
   try{ if(!WEB) localStorage.setItem(QUIEN_K,quienNube()); localStorage.setItem(USUARIO_K,x.u); }catch(e){}
@@ -3197,6 +3363,7 @@ async function enviarNube(){ const P=NUBE_PASO, f=$("#fNube"); if(!f) return;
   ocupadoNube("Entrando a Ley Pierri…"); let P, cs=[], traidas=[];
   try{ const leer=await lectorPierri(); P=await entrarPierri(u,c,leer); if(P&&P.r==="admin"&&vivo()) cs=await cuentasPierri(P,leer); }catch(e){ return malNube(txtDlg(e)); }
   if(!P) return malNube("Ese usuario y esa clave no abren ninguna cuenta de Ley Pierri.","#nC");
+  if(P.r==="veedor") return malNube("Con un perfil de Consulta de Ley Pierri no se crea el cotejo compartido: lo crea alguien de Administración o de Revisión.");
   // «Cancelar» mientras se entraba a Ley Pierri: no se crea nada
   if(!vivo()) return;
   try{ await tomarCopiaWeb(); }catch(e){ return malNube(e instanceof SyntaxError||!(e&&e.message)?"El archivo no es una copia del cotejo.":e.message); }
@@ -3207,7 +3374,7 @@ async function enviarNube(){ const P=NUBE_PASO, f=$("#fNube"); if(!f) return;
    const us={app:"cotejo-ddjj-compartido",version:1,creado:new Date().toISOString(),usuarios,fuera:[]};
    if(!vivo()) return;
    // desde acá se completa aunque se cierre el cuadro: si se corta, se puede volver a crear
-   await crearCompartido(us,P.u,crudo,{n:yo.n,pierri:true}); if(WEB&&TOKEN_NUEVO){ await guardarToken(P.u,c,TOKEN_NUEVO.token); TOKEN_NUEVO=null; } }
+   await crearCompartido(us,P.u,crudo,{n:yo.n,pierri:true,rol:P.r}); if(WEB&&TOKEN_NUEVO){ await guardarToken(P.u,c,TOKEN_NUEVO.token); TOKEN_NUEVO=null; } }
   catch(e){ return malNube(txtDlg(e)); }
   const v=vivo(); if(v) dlg.close(); await pintar(); sincronizar(); if(!v) return;
   dialogoAviso("Listo",traidas.length?`Se trajeron ${traidas.length===1?"una cuenta":nf(traidas.length)+" cuentas"} de Ley Pierri: ${yLista(traidas)}. Cada uno entra al cotejo con su usuario y su clave de Ley Pierri; desde su computadora necesita además la llave de GitHub, una sola vez.`
@@ -3235,9 +3402,10 @@ async function enviarNube(){ const P=NUBE_PASO, f=$("#fNube"); if(!f) return;
   catch(e){ return malNube(txtDlg(e)); }
   if(!crudo) return malNube("El usuario o la clave no son correctos.","#nC");
   ocupadoNube("Bajando lo compartido…");
-  try{ await unirse(await sesionNueva(x.u,crudo,x.pierri?{n:x.n||x.u,pierri:true}:{})); }catch(e){ if(e&&e.c==="cancelado") return; return malNube(txtDlg(e)); }
+  try{ await unirse(await sesionNueva(x.u,crudo,x.pierri?{n:x.n||x.u,pierri:true,rol:x.r||""}:{})); }catch(e){ if(e&&e.c==="cancelado") return; return malNube(txtDlg(e)); }
   try{ if(!WEB) localStorage.setItem(QUIEN_K,quienNube()); localStorage.setItem(USUARIO_K,x.u); }catch(e){}
   if(vivo()) dlg.close(); await pintar(); return sincronizar(); }
+ if(P==="agregar"&&SOLO_VER()) return;
  if(P==="agregar"){ const u=valN("#nU").trim().replace(/\s+/g," "), c=valN("#nC"), mia=valN("#nMia");
   if(!u) return malNube("Escribí el usuario de la persona.","#nU"); if(c.length<8) return malNube("La clave tiene que tener al menos 8 caracteres.","#nC"); if(c!==valN("#nC2")) return malNube("Las dos claves no son iguales.","#nC2"); if(!mia) return malNube("Escribí tu clave.","#nMia");
   ocupadoNube("Agregando…");
@@ -3259,7 +3427,7 @@ async function enviarNube(){ const P=NUBE_PASO, f=$("#fNube"); if(!f) return;
      const crudo=await desenvolver(o.usuarios[i],a); if(!crudo) return "mal";
      o.usuarios[i]=await envolver(o.usuarios[i].u,crudo,c,o.usuarios[i].por||o.usuarios[i].u); return ""; },`${NUBE.u} cambia su clave`);
    if(r==="mal") return malNube("Tu clave de ahora no es correcta.","#nA"); if(r==="fuera") return malNube("Tu usuario ya no está en el cotejo compartido.");
-   if(r==="pierri"){ Object.assign(NUBE,{pierri:true,n:suya.n||NUBE.n}); await guardarNubeLocal(); pintarNube(); if(vivo()) pasoClave(); return; } }
+   if(r==="pierri"){ if(vivo()) pasoClave(true); return; } }
   catch(e){ return malNube(txtDlg(e)); }
   if(WEB&&TOKEN_MEM) await guardarToken(NUBE.u,c,TOKEN_MEM);
   if(!vivo()) return;
@@ -3267,29 +3435,32 @@ async function enviarNube(){ const P=NUBE_PASO, f=$("#fNube"); if(!f) return;
  /* Una cuenta de Ley Pierri cuya clave cambió allá: desde una sesión abierta, se le vuelve a sellar la llave del cotejo
     con su llave nueva. No hace falta el administrador. */
  if(P==="claveP"){ const c=valN("#nC"); if(!c) return malNube("Escribí tu clave de Ley Pierri.","#nC"); ocupadoNube("Entrando a Ley Pierri…");
-  let r="";
+  let r="", diferido=false;
   try{ const Pp=await entrarPierri(NUBE.u,c); if(!Pp) return malNube("Esa clave no abre tu cuenta de Ley Pierri.","#nC");
    if(!await llaveVale(NUBE)) throw errN("otroCotejo"); const crudo=await llaveCruda();
    r=await cambiarUsuarios(async o=>{ const i=o.usuarios.findIndex(v=>esObj(v)&&normU(v.u)===normU(NUBE.u)); if(i<0) return "fuera"; const x=o.usuarios[i];
      if(x.pierri&&x.pub===Pp.pub) return "igual";
      o.usuarios[i]=await entradaPierri({u:normP(x.u),n:Pp.n,r:Pp.r,pub:Pp.pub},crudo,x.por||Pp.n); return ""; },`${NUBE.u} actualiza su cuenta de Ley Pierri`);
    if(r==="fuera") return malNube("Tu usuario ya no está en el cotejo compartido.");
-   Object.assign(NUBE,{pierri:true,n:Pp.n}); await guardarNubeLocal(); pintarNube(); if(WEB&&TOKEN_MEM) await guardarToken(NUBE.u,c,TOKEN_MEM); }
-  catch(e){ return malNube(txtDlg(e)); }
+   // si con esto la sesión pasara a sólo ver y tiene algo sin subir, sigue como está hasta que suba (se perdería)
+   diferido=pendiente()&&!SOLO_VER()&&soloVerN({pierri:true,rol:Pp.r});
+   if(!diferido){ Object.assign(NUBE,{pierri:true,n:Pp.n,rol:Pp.r}); await guardarNubeLocal(); await pintar(); }
+   if(WEB&&TOKEN_MEM) await guardarToken(NUBE.u,c,TOKEN_MEM); }
+  catch(e){ return malNube(SOLO_VER()&&e&&e.c==="permiso"?"Tu llave de GitHub es sólo de lectura, como corresponde al perfil de Consulta: la clave nueva la toma alguien de Administración o de Revisión, con «Usuarios» → «Traer las cuentas de Ley Pierri».":txtDlg(e)); }
   if(!vivo()) return;
-  return dialogoAviso("Listo",r==="igual"?"Tu cuenta ya estaba al día: entrás al cotejo con esa clave.":"El cotejo ya toma tu clave nueva de Ley Pierri: desde una computadora nueva se entra con ella."); } }
-function pasoAgregar(){ formNube("agregar","Agregar a alguien",`<p style="margin:0">La persona entra con este usuario y esta clave; después la puede cambiar. Desde su computadora necesita además la llave de GitHub, una sola vez.</p>
+  return dialogoAviso("Listo",diferido?"Tu cuenta de Ley Pierri tiene el perfil de Consulta: lo que hiciste acá y todavía no subió sube primero. Desde la próxima vez que entres, el cotejo es sólo para ver.":r==="igual"?"Tu cuenta ya estaba al día: entrás al cotejo con esa clave.":"El cotejo ya toma tu clave nueva de Ley Pierri: desde una computadora nueva se entra con ella."); } }
+function pasoAgregar(){ if(soloVer()) return; formNube("agregar","Agregar a alguien",`<p style="margin:0">La persona entra con este usuario y esta clave; después la puede cambiar. Desde su computadora necesita además la llave de GitHub, una sola vez.</p>
   ${campoN("nU","Su usuario (su nombre o apellido)","text","off")}${campoN("nC","Una clave para esa persona, de al menos 8 caracteres","password","new-password")}${campoN("nC2","La misma clave, otra vez","password","new-password")}${campoN("nMia",NUBE.pierri?"Tu clave de Ley Pierri, para confirmar":"Tu clave, para confirmar","password","current-password")}`,"Agregar"); }
-function pasoClave(){ if(NUBE.pierri) return formNube("claveP","Tu clave de Ley Pierri",`<p style="margin:0">Entrás con tu clave de Ley Pierri, así que se cambia allá. Si ya la cambiaste, escribí acá la nueva: el cotejo la toma, y desde una computadora nueva vas a entrar con ella. Conviene hacerlo con el cotejo abierto: cambiarla en Ley Pierri y enseguida tocar acá «Actualizar».</p>${campoN("nC","Tu clave de Ley Pierri, la de ahora","password","current-password")}`,"Actualizar");
+function pasoClave(aPierri){ if(aPierri||NUBE.pierri) return formNube("claveP","Tu clave de Ley Pierri",`<p style="margin:0">Entrás con tu clave de Ley Pierri, así que se cambia allá. Si ya la cambiaste, escribí acá la nueva: el cotejo la toma, y desde una computadora nueva vas a entrar con ella. Conviene hacerlo con el cotejo abierto: cambiarla en Ley Pierri y enseguida tocar acá «Actualizar».</p>${campoN("nC","Tu clave de Ley Pierri, la de ahora","password","current-password")}`,"Actualizar");
  formNube("clave","Cambiar mi clave",`<p style="margin:0">Cambia la clave con que entrás vos, <b>${esc(NUBE.u)}</b>.</p>${campoN("nA","Tu clave de ahora","password","current-password")}${campoN("nC","La clave nueva, de al menos 8 caracteres","password","new-password")}${campoN("nC2","La clave nueva, otra vez","password","new-password")}`,"Cambiar la clave"); }
-async function pasoUsuarios(){ formNube("buscando","Usuarios",`<p style="margin:0" role="status">Buscando los usuarios…</p>`,"");
+async function pasoUsuarios(){ if(soloVer()) return; formNube("buscando","Usuarios",`<p style="margin:0" role="status">Buscando los usuarios…</p>`,"");
  let us; try{ us=await leerUsuarios(); }catch(e){ if(NUBE_PASO!=="buscando"||!dlg.open||!NUBE) return; return formNube("error","Usuarios",`<p style="margin:0">${esc(txtDlg(e))}</p>`,""); }
  if(NUBE_PASO!=="buscando"||!dlg.open||!NUBE) return; const L=us?us.o.usuarios.filter(esObj):[];
  formNube("usuarios","Usuarios",`<p style="margin:0">Quienes pueden entrar al cotejo compartido con su usuario y su clave.</p>
   <ul class="lista-u">${L.map(v=>`<li><span><b>${esc(v.n||v.u)}</b><span class="ayuda" style="margin:0"> · ${v.pierri?`cuenta de Ley Pierri «${esc(v.u)}»${ROLES_P[v.rol]?` (${ROLES_P[v.rol]})`:""}${v.por?`, la trajo ${esc(v.por)}`:""}`:v.por&&normU(v.por)!==normU(v.u)?`lo agregó ${esc(v.por)}`:"creó el compartido"}${v.t?`, el ${fechaDe(new Date(v.t))}`:""}</span></span>${normU(v.u)===normU(NUBE.u)?`<span class="ayuda" style="margin:0">vos</span>`:`<button class="btn lnk sm" type="button" data-sacar="${esc(v.u)}">Sacar</button>`}</li>`).join("")}</ul>
   ${L.length===1&&L[0].pierri?`<p class="aviso" style="margin:0">Hay una sola cuenta y es de Ley Pierri: si su clave cambia allá sin el cotejo abierto, nadie lo puede volver a abrir. Conviene agregar a alguien más.</p>`:""}
   <p class="ayuda" style="margin:0">Sacar a alguien le impide entrar desde una computadora nueva. En la que ya entró puede seguir: para cortarlo del todo, borrá también su llave de GitHub.</p>`,"",`<button class="btn" type="button" data-acc="nubeAgregar">Agregar a alguien</button> <button class="btn" type="button" data-acc="nubeTraer">Traer las cuentas de Ley Pierri</button>`); }
-async function sacarUsuario(u){ if(!NUBE||normU(u)===normU(NUBE.u)) return; if(!window.confirm(`¿Sacar a ${u} del cotejo compartido?`)) return;
+async function sacarUsuario(u){ if(SOLO_VER()) return; if(!NUBE||normU(u)===normU(NUBE.u)) return; if(!window.confirm(`¿Sacar a ${u} del cotejo compartido?`)) return;
  // queda anotada en «fuera» (también una cuenta propia del cotejo con el nombre de una de Ley Pierri), para que «Traer» no la vuelva a tildar
  try{ await cambiarUsuarios(async o=>{ const x=o.usuarios.find(v=>esObj(v)&&normU(v.u)===normU(u)); o.usuarios=o.usuarios.filter(v=>v!==x);
    if(x){ o.fuera=(Array.isArray(o.fuera)?o.fuera:[]).filter(f=>f!==normP(x.u)).concat(normP(x.u)); } },`${NUBE.u} saca a ${u}`); }catch(e){ return dialogoAviso("No se pudo sacar",txtDlg(e)); }
@@ -3300,7 +3471,7 @@ async function sacarUsuario(u){ if(!NUBE||normU(u)===normU(NUBE.u)) return; if(!
    sacada a mano queda sin tildar las veces siguientes (usuarios.json, «fuera»). Lo elegido vale contra la lista que
    se mostró: si alguien cambió los usuarios mientras tanto, no se guarda y se pide volver a abrir. */
 let TRAER=null;
-function pasoTraer(){ TRAER=null; formNube("traer","Traer las cuentas de Ley Pierri",`<p style="margin:0">Las trae quien administra Ley Pierri, con su usuario y su clave de allá. Cada persona entra después al cotejo con su usuario y su clave de Ley Pierri. El cotejo no cambia nada en Ley Pierri.</p>
+function pasoTraer(){ if(soloVer()) return; TRAER=null; formNube("traer","Traer las cuentas de Ley Pierri",`<p style="margin:0">Las trae quien administra Ley Pierri, con su usuario y su clave de allá. Cada persona entra después al cotejo con su usuario y su clave de Ley Pierri. El cotejo no cambia nada en Ley Pierri.</p>
   ${campoN("nPU","Usuario de administración de Ley Pierri","text","username",NUBE.pierri?NUBE.u:"")}${campoN("nPC","Su clave","password","current-password")}`,"Seguir"); }
 function pasoTraer2(o){ const fuera=Array.isArray(o.fuera)?o.fuera:[], act=new Set(TRAER.cs.map(c=>c.u));
  const filas=TRAER.cs.map(c=>{ const en=o.usuarios.find(v=>esObj(v)&&normU(v.u)===normU(c.u)), yo=normU(c.u)===normU(NUBE.u), fijo=yo&&en&&en.pierri;
@@ -3311,7 +3482,7 @@ function pasoTraer2(o){ const fuera=Array.isArray(o.fuera)?o.fuera:[], act=new S
  const salen=o.usuarios.filter(v=>esObj(v)&&v.pierri&&!act.has(normP(v.u)));
  formNube("traer2","Traer las cuentas de Ley Pierri",`<p style="margin:0">Las cuentas activas de Ley Pierri. Las tildadas pueden entrar al cotejo con su usuario y su clave de allá.</p>
   <ul class="lista-u">${filas.join("")}</ul>${salen.length?`<p class="aviso" style="margin:0">Ya no están activas en Ley Pierri y salen del cotejo: ${esc(yLista(salen.map(v=>v.n||v.u)))}.</p>`:""}`,"Guardar"); }
-async function enviarTraer(P,f){ const vivo=()=>dlg.open&&f.isConnected, malNube=(t,foco)=>malNubeEn(f,t,foco), ocupadoNube=t=>ocupadoNubeEn(f,t);
+async function enviarTraer(P,f){ if(SOLO_VER()) return; const vivo=()=>dlg.open&&f.isConnected, malNube=(t,foco)=>malNubeEn(f,t,foco), ocupadoNube=t=>ocupadoNubeEn(f,t);
  if(P==="traer"){ const pu=valN("#nPU"), pc=valN("#nPC"); if(!pu.trim()) return malNube("Escribí el usuario de administración de Ley Pierri.","#nPU"); if(!pc) return malNube("Escribí su clave.","#nPC");
   ocupadoNube("Abriendo Ley Pierri…"); let A, cs, us, crudo;
   try{ const leer=await lectorPierri(); A=await entrarPierri(pu,pc,leer); if(!A) return malNube("Ese usuario y esa clave no abren ninguna cuenta de Ley Pierri.","#nPC");
@@ -3335,7 +3506,8 @@ async function enviarTraer(P,f){ const vivo=()=>dlg.open&&f.isConnected, malNube
    if(await escribirGH(R_USUARIOS,textoB(o),T.sha,`${NUBE.u} trae las cuentas de Ley Pierri`)===null) return malNube(txtDlg("cambiaron")); }
   catch(e){ return malNube(txtDlg(e)); }
   // la propia cuenta pasó a ser la de Ley Pierri
-  const yoP=T.cs.find(c=>c.u===normP(NUBE.u)); if(yoP&&marc.has(yoP.u)){ Object.assign(NUBE,{pierri:true,n:yoP.n}); await guardarNubeLocal(); pintarNube(); }
+  const yoP=T.cs.find(c=>c.u===normP(NUBE.u)); if(yoP&&marc.has(yoP.u)&&!(pendiente()&&soloVerN({pierri:true,rol:yoP.r}))){ Object.assign(NUBE,{pierri:true,n:yoP.n,rol:yoP.r}); await guardarNubeLocal(); await pintar(); }
+  // (si con eso esta sesión pasara a sólo ver y tiene algo sin subir, sigue como está hasta que suba: el perfil vale al volver a entrar)
   TRAER=null; if(!vivo()) return;
   return dialogoAviso("Listo",`En el cotejo hay ${n===1?"una cuenta":nf(n)+" cuentas"} de Ley Pierri. Cada una entra con su usuario y su clave de Ley Pierri; desde una computadora nueva necesita además la llave de GitHub, una sola vez. Si alguien cambia la clave en Ley Pierri, en una computadora donde ya entró toca «Cambiar mi clave»; si no, se vuelven a traer.`); } }
 // una vuelta en curso no cuenta por sí sola: si sube algo, pendiente() ya da verdadero (lo de acá difiere de la base)
@@ -3344,7 +3516,7 @@ function pasoSalir(){ const pend=WEB?sinSubir():pendiente();
  if(WEB){ $("#dlgCont").innerHTML=`<div class="dlg-cab"><h2 id="dlgTit">Salir del cotejo</h2></div><div class="dlg-cuerpo"><p style="margin:0">Se cierra la sesión y se borra de esta página lo que se bajó. Para volver, se entra de nuevo con el usuario y la clave.</p>${pend?`<p class="aviso" style="margin:0">Hay cambios que todavía no subieron a GitHub: si salís ahora, se pierden. Tocá «Actualizar ahora» y esperá a que diga «al día».</p>`:""}</div>
    <div class="dlg-pie"><span></span><div class="row"><button class="btn" type="button" data-acc="cerrarDlg">Cancelar</button><button class="btn ${pend?"":"pri"}" type="button" data-acc="nubeSalirSi">${pend?"Salir igual":"Salir"}</button></div></div>`;
   if(!dlg.open) dlg.showModal(); return; }
- $("#dlgCont").innerHTML=`<div class="dlg-cab"><h2 id="dlgTit">Salir del cotejo compartido</h2></div><div class="dlg-cuerpo"><p style="margin:0">Lo cargado queda en esta computadora, pero deja de subir y de bajar. Para volver a entrar se pide el usuario y la clave.</p>${pend?`<p class="aviso" style="margin:0">Hay cambios de esta computadora que todavía no subieron: si salís ahora, los demás no los ven.</p>`:""}</div>
+ $("#dlgCont").innerHTML=`<div class="dlg-cab"><h2 id="dlgTit">Salir del cotejo compartido</h2></div><div class="dlg-cuerpo"><p style="margin:0">${SOLO_VER()?"Lo bajado queda en esta computadora y deja de actualizarse.":"Lo cargado queda en esta computadora, pero deja de subir y de bajar."} Para volver a entrar se pide el usuario y la clave.</p>${pend?`<p class="aviso" style="margin:0">Hay cambios de esta computadora que todavía no subieron: si salís ahora, los demás no los ven.</p>`:""}</div>
   <div class="dlg-pie"><span></span><div class="row"><button class="btn" type="button" data-acc="cerrarDlg">Cancelar</button><button class="btn pri" type="button" data-acc="nubeSalirSi">Salir</button></div></div>`;
  if(!dlg.open) dlg.showModal(); }
 
@@ -3439,7 +3611,7 @@ function conOrganismo(){ const v=FILTRO.min; if(!v) return; if(FILTRO.grp&&!hayE
  if(FILTRO.r.a==="0"&&!hayEnOrg(v,false)) FILTRO.r.a="";
  if(!hayEnOrg(v,true)){ if(FILTRO.r.a==="1") FILTRO.r.a=""; if(FILTRO.sit==="pendiente") FILTRO.sit=""; } }
 function sinContradiccion(a){ const v=FILTRO.min; if(a==="0"){ FILTRO.grp=null; if(v&&!hayEnOrg(v,false)) FILTRO.min=""; } else if(a==="1"&&v&&!hayEnOrg(v,true)) FILTRO.min=""; }
-function mostrarPersonas(){ const f=document.activeElement, sel=f&&f.dataset?(f.dataset.preg!=null?`[data-preg="${f.dataset.preg}"]`:f.dataset.atajo?`[data-atajo="${f.dataset.atajo}"]`:f.dataset.sit?`[data-sit="${f.dataset.sit}"]`:""):"";
+function mostrarPersonas(){ const f=document.activeElement, sel=f&&f.dataset?(f.dataset.preg!=null?`[data-preg="${f.dataset.preg}"]`:f.dataset.atajo?`[data-atajo="${f.dataset.atajo}"]`:f.dataset.sit?`[data-sit="${f.dataset.sit}"]`:f.dataset.filtro!=null?`[data-filtro="${f.dataset.filtro}"]`:""):"";
  FILTRO.n=150; pintarResumen(); pintarSelMin(); pintarFiltros(); pintarPersonas();
  if(sel){ const n=$(sel); if(n&&!n.disabled) n.focus({preventScroll:true}); } }
 const irA=sel=>{ const e=$(sel); if(!e) return; const pn=e.closest("[data-panel]");
@@ -3466,6 +3638,7 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("button");
  if(d.ente!=null){ const [nom,si]=d.ente.split("|"); await marcarEnte(nom,si==="1"); const f=si==="1"?$("#aMin [data-ente]"):[...document.querySelectorAll("#tablaMin [data-ente]")].find(x=>x.dataset.ente.startsWith(nom+"|")); if(f) f.focus({preventScroll:true}); return; }
  if(d.alc){ ALC=d.alc; FILTRO.r=rVacia(); FILTRO.sit=""; FILTRO.min=""; FILTRO.grp=null; FILTRO.n=150; await pintar();
   if(d.q) irA("#barraRes"); else { const c=$(`#tablaPod [data-alc="${ALC}"]`); if(c) c.focus({preventScroll:true}); } return; }
+ if(d.incomp){ ALC=d.incomp; FILTRO.r=rVacia(); FILTRO.sit="incomp"; FILTRO.min=""; FILTRO.grp=null; if(!d.q){ FILTRO.q=""; $("#buscar").value=""; } FILTRO.n=150; await pintar(); ponerTab("buscar"); irA("#barraRes"); return; }
  if(d.revpod){ ALC=d.revpod; FILTRO.r=rVacia(); FILTRO.sit="incons"; FILTRO.min=""; FILTRO.grp=null; FILTRO.q=""; $("#buscar").value=""; await pintar(); ponerTab("buscar"); irA("#barraRes"); return; }
  if(d.unir){ const [a,c]=d.unir.split("‖"); await unirCon(a,c); return seguirEnFila(iFila); }
  if(d.revisar!=null){ await revisar(d.revisar,true); return seguirEnFila(iFila); }
