@@ -3,7 +3,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Primer testimonio — Escribanía General de Gobierno</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 /* Modo oscuro de SIGEC. Una sola preferencia, sigec.tema, que vale para la cáscara y para
@@ -215,14 +215,69 @@ html[data-theme="dark"] button.go:disabled{background:#2E4A43;color:#8AA69E}
   .preview .esc .candado{display:block;font-family:Montserrat,system-ui,sans-serif;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;color:#4A5568}
   .preview .esc .corte{display:block;text-align:center;font-family:Montserrat,system-ui,sans-serif;font-size:11px;letter-spacing:.08em;color:#65748C;margin:4px 0}
   .swatch.esc{background:#F7F9FA;border:1.5px dashed #8E9BAA}
+
+/* ── DISEÑO D (02/11/2026) ───────────────────────────────────────────────────────────
+   La capa común de SIGEC. Va al final para pisar lo de arriba sin reescribirlo. El verde
+   del primer testimonio queda en el ícono, el botón y los acentos; el botón va un tono más
+   oscuro (#2E7A68) porque con letra blanca el de siempre no se leía bien. Sin la banda verde
+   ni la de logos: el logo queda en el inicio del menú. */
+:root{
+  --ink:#172033; --muted:#5B6478; --line:#E4E7EC; --campo:#D0D5DD; --paper:#FFFFFF; --bg:#F6F7F9;
+  --warn:#B54708; --warn-bg:#FFFAEB; --warn-borde:#FEC84B; --boton:#2E7A68; --boton-hover:#256656; --boton-tx:#FFFFFF;
+}
+html[data-theme="dark"]{
+  --ink:#E6EAF2; --muted:#98A2B3; --line:#262F42; --campo:#344054; --paper:#161C2B; --bg:#0F1420;
+  --warn:#FEC84B; --warn-bg:#33240A; --warn-borde:#7A5A0E; --boton:#5FB8A1; --boton-hover:#79C8B3; --boton-tx:#0E1A2B;
+  --agua-pale:#14241F;
+}
+body{font-family:"Plus Jakarta Sans","Segoe UI",system-ui,sans-serif}
+header.top{background:none;color:var(--ink);padding:28px 0 20px}
+header.top .wrap{display:flex;align-items:flex-start;gap:16px;padding-bottom:0}
+header.top .tile{flex:0 0 auto;width:50px;height:50px;border-radius:14px;display:grid;place-items:center;background:#2E7A68;color:#fff}
+html[data-theme="dark"] header.top .tile{background:#5FB8A1;color:#0E1A2B}
+header.top .tx{min-width:0}
+.eyebrow,.franja,.logos{display:none !important}
+h1{font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.15;color:var(--ink)}
+.alias{color:var(--muted);font-size:14px;margin-top:3px}
+.alias em{color:var(--ink)}
+.sub{color:var(--muted);font-size:14.5px;margin-top:8px}
+.embebido header.top{padding:24px 0 18px}
+html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea{background:#121826;border-color:var(--campo)}
+.embebido header.top .wrap{align-items:center}
+.embebido h1{font-size:24px}
+.card{border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.card h2{font-size:17px;color:var(--ink)}
+.step{font-size:13px;letter-spacing:0;text-transform:none;color:var(--muted);font-weight:600}
+#drop{border:1.5px dashed var(--campo);background:var(--paper);border-radius:14px}
+#drop:hover,#drop.over{background:var(--agua-pale)}
+label{font-size:13.5px;font-weight:600;color:var(--ink);letter-spacing:0}
+.fieldnote{font-size:13px}
+input[type=text],input[type=number],select,textarea{padding:10px 12px;border:1px solid var(--campo);border-radius:10px;font-size:15px}
+input:focus,select:focus,textarea:focus{outline:3px solid rgba(62,148,128,.22)}
+.del,.add,.barrita button,.regfila button{border-radius:9px}
+.loaded,.detect,.info,.numero,.flag{border-radius:12px}
+.loaded{border-left-width:1px}
+.preview{border-radius:12px;border-width:1px}
+button.go{border-radius:11px;min-height:50px;background:var(--boton);color:var(--boton-tx);font-weight:700;box-shadow:0 1px 2px rgba(16,24,40,.12)}
+button.go:hover{background:var(--boton-hover)}
+.nota{border-left:0;border:1px solid var(--warn-borde);background:var(--warn-bg);color:var(--warn);border-radius:12px}
+.flag,.numero.aviso{background:var(--warn-bg);border-color:var(--warn-borde);color:var(--warn)}
+.numero.aviso b{color:var(--warn)}
+.comps-head{font-size:13px;letter-spacing:0;text-transform:none;font-weight:600}
+.err-caja{border-width:1px;border-radius:12px}
+.preview .esc .candado{font-family:"Plus Jakarta Sans",system-ui,sans-serif;letter-spacing:.02em;text-transform:none;font-size:12px}
+.preview .esc .corte{font-family:"Plus Jakarta Sans",system-ui,sans-serif}
 </style>
 
 <header class="top">
   <div class="wrap">
+    <span class="tile" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M10 8h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2"/></svg></span>
+    <div class="tx">
     <p class="eyebrow">Escribanía General de Gobierno · Provincia de Córdoba</p>
     <h1>Primer testimonio</h1>
     <p class="alias">también llamado <em>primer testimoniador</em></p>
     <p class="sub">Cargás la escritura de protocolo en Word y la app la devuelve convertida en primer testimonio: le pone el folio y el “PRIMER TESTIMONIO” arriba, y abajo el cierre con las firmas, la escribana, la fórmula de concordancia y las fojas de actuación. Lee sola los comparecientes y el cargo de la escribana, así que casi todo viene completado. El cuerpo de la escritura no se toca: queda con la misma fuente, los mismos márgenes y el mismo interlineado.</p>
+    </div>
   </div>
 </header>
 <script>
@@ -1244,24 +1299,54 @@ pintarRegistro();
 actualizar();
 </script>
 
-<!-- Volver a SIGEC. Solo aparece cuando la herramienta se abrio sola: adentro del menu no
-     hace falta, porque la barra lateral ya esta. Antes, si abrias una herramienta aparte,
-     no habia ninguna forma de volver. -->
+<!-- Volver a SIGEC (diseño D, 02/11/2026). Sólo cuando la herramienta se abrió sola: adentro
+     del menú está el lateral. Es una barra azul arriba y no un botón flotante: el flotante
+     tapaba botones de la herramienta («Imprimir recibo»). Lleva el claro/oscuro, que adentro
+     del menú está en el pie del lateral. Es igual en todas las herramientas: sólo cambia
+     NOMBRE. -->
 <script>
 (function(){
   try{ if(window.self !== window.top) return; }catch(e){ return; }
-  var a=document.createElement('a');
-  a.href='../../index.html';
-  a.textContent='\u2190 Volver a SIGEC';
-  a.setAttribute('style','position:fixed;left:14px;bottom:14px;z-index:9999;'
-    +'font-family:Montserrat,system-ui,sans-serif;font-size:12.5px;font-weight:600;'
-    +'text-decoration:none;padding:8px 14px;border-radius:999px;'
-    +'background:#1B2F5E;color:#fff;box-shadow:0 2px 10px rgba(27,47,94,.28)');
-  function poner(){ if(document.body) document.body.appendChild(a); }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',poner);
-  else poner();
+  var NOMBRE='Primer testimonio';
+  document.documentElement.classList.add('suelto');
+  var css='.sigec-suelta{flex:0 0 100%;width:100%;display:flex;align-items:center;gap:12px;min-height:58px;box-sizing:border-box;'
+    +'padding:8px 14px;background:#172A52;color:#fff;border-bottom:2px solid #C9A84C;'
+    +'font:600 14px/1.3 "Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;position:relative;z-index:60}'
+    +'html[data-theme="dark"] .sigec-suelta{background:#0E1A33}'
+    +'.sigec-suelta a,.sigec-suelta button{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 12px 0 7px;border:0;'
+    +'border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font:inherit;text-decoration:none;cursor:pointer;flex:0 0 auto}'
+    +'.sigec-suelta a:hover,.sigec-suelta button:hover{background:rgba(255,255,255,.15)}'
+    +'.sigec-suelta .s{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:#C9A84C;color:#172A52;'
+    +'font-weight:800;font-size:13px}'
+    +'.sigec-suelta .n{font-size:16px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+    +'.sigec-suelta button{margin-left:auto;padding:0 12px}'
+    +'.sigec-suelta svg{display:block}'
+    +'.sigec-suelta :focus-visible{outline:2px solid #C9A84C;outline-offset:2px}'
+    +'@media(max-width:560px){.sigec-suelta button span{display:none}}'
+    +'@media print{.sigec-suelta{display:none!important}}';
+  var LUNA='M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z';
+  var SOL='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4';
+  function poner(){
+    var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
+    var bar=document.createElement('div'); bar.className='sigec-suelta';
+    var a=document.createElement('a'); a.href='../../index.html'; a.title='Ir al menú de SIGEC';
+    a.innerHTML='<span class="s" aria-hidden="true">S</span>Volver a SIGEC';
+    var n=document.createElement('span'); n.className='n'; n.textContent=NOMBRE;
+    var b=document.createElement('button'); b.type='button';
+    function pintar(){
+      var osc=window.SIGEC_TEMA&&SIGEC_TEMA.actual()==='oscuro', t=osc?'Modo claro':'Modo oscuro';
+      b.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        +'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(osc?SOL:LUNA)+'"/></svg><span></span>';
+      b.lastChild.textContent=t; b.title=t; b.setAttribute('aria-label',t);
+    }
+    b.addEventListener('click',function(){ if(window.SIGEC_TEMA) SIGEC_TEMA.alternar(); });
+    document.addEventListener('sigec:tema',pintar); pintar();
+    bar.appendChild(a); bar.appendChild(n); bar.appendChild(b);
+    document.body.insertBefore(bar,document.body.firstChild);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',poner); else poner();
 })();
 </script>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 28/10/2026</p>
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 02/11/2026</p>
 </html>

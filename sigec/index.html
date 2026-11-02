@@ -6,7 +6,7 @@
 <title>SIGEC — Escribanía General de Gobierno</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <script>
 /* Modo oscuro de SIGEC. Una sola preferencia, sigec.tema, que vale para la cáscara y para
    todas las herramientas, estén sueltas o adentro del marco. Va en el <head> para que la
@@ -28,191 +28,193 @@
 })();
 </script>
 <style>
-/* --- modo oscuro: se redefinen los tokens y los pocos colores que estaban a mano --- */
-html[data-theme="dark"]{
- --navy:#16233F;--navy-d:#0C1526;--cel:#6E93BE;--cel-s:#1E2C42;--gold:#C9A84C;--bone:#12181F;
- --line:#2E3A47;--muted:#94A3B5;--ok:#3FBF80;--ok-bg:#14301F;
-}
-html[data-theme="dark"] body{color:#E4E9EE}
-html[data-theme="dark"] .nav{background:#1B232C}
-html[data-theme="dark"] .nav a{color:#C2CCD8}
-html[data-theme="dark"] .nav a.on{color:#DCE7F5}
-html[data-theme="dark"] .nav a.prep{color:#6B7684}
-html[data-theme="dark"] .nav .pie{color:#7C8794}
-html[data-theme="dark"] .nav .otros{color:#8D98A6}
-html[data-theme="dark"] .nav .otros:hover,html[data-theme="dark"] .nav .otros[aria-expanded="true"]{color:#C2CCD8;background:rgba(255,255,255,.06)}
-html[data-theme="dark"] .barra{background:#1B232C}
-html[data-theme="dark"] .barra button{background:#232D38;color:#C2CCD8;border-color:var(--line)}
-html[data-theme="dark"] .tj{background:#1B232C}
-html[data-theme="dark"] .tj.prep{background:#161D25}
-html[data-theme="dark"] .et.pr{color:#E8C37A;background:#3A2C10}
-html[data-theme="dark"] .et.uso{color:#7FD9A6;background:#14301F}
-html[data-theme="dark"] .et.prep{color:#8A94A2;box-shadow:inset 0 0 0 1.5px #38434F}
-html[data-theme="dark"] .nav a .pp.uso{color:#7FD9A6}
-html[data-theme="dark"] .nav a .pp.pr{color:#E8C37A}
-html[data-theme="dark"] .nav a .pp.prep{color:#6B7684}
-html[data-theme="dark"] .tj .n{color:var(--c,#DCE7F5)}
-html[data-theme="dark"] .tj.prep .n{color:#7C8794}
-html[data-theme="dark"] .inicio h1{color:#DCE7F5}
-html[data-theme="dark"] .inicio .logos{background:#F3F5F8}
-html[data-theme="dark"] .aviso{background:#1B2A3D;color:#A9C6E6;border-left-color:var(--cel)}
-html[data-theme="dark"] iframe{background:#12181F}
+/* Diseño D (02/11/2026, elegido por Baltasar entre seis propuestas): el menú lateral en azul,
+   de arriba abajo, con el dorado marcando dónde estás; cada herramienta con su ícono en su
+   color y un punto que dice el estado. Adentro, fondo gris claro y tarjetas blancas. */
+:root{--lado:#172A52;--lado-tx:#D9E2F0;--lado-mut:#8EA3C4;--lado-hov:rgba(255,255,255,.07);--lado-act:rgba(255,255,255,.11);
+ --oro:#C9A84C;--bg:#F6F7F9;--card:#FFFFFF;--ink:#172033;--mut:#5B6478;--line:#E4E7EC;--line-s:#F0F2F5;
+ --uso-tx:#067647;--uso-bg:#ECFDF3;--uso-pt:#17B26A;--pr-tx:#B54708;--pr-bg:#FFFAEB;--pr-pt:#F79009;--foco:#C9A84C}
+/* oscuro: cambia todo el fondo; el lateral se oscurece un poco más */
+html[data-theme="dark"]{--lado:#0E1A33;--bg:#0F1420;--card:#161C2B;--ink:#E6EAF2;--mut:#98A2B3;--line:#262F42;--line-s:#1D2535;
+ --uso-tx:#75E0A7;--uso-bg:#0E2A1C;--pr-tx:#FEC84B;--pr-bg:#33240A}
 
-:root{--navy:#1B2F5E;--navy-d:#0F1C3A;--cel:#A8C8E8;--cel-s:#E8F0F9;--gold:#C9A84C;--bone:#EEF2F5;
- --line:#D8E0EA;--muted:#65748C;--ok:#1F6B3C;--ok-bg:#E6F3EB}
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
-body{font-family:Montserrat,system-ui,sans-serif;background:var(--bone);color:#1E2634;font-size:15px;
- display:flex;flex-direction:column;height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+body{font-family:"Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--ink);
+ font-size:15px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--foco);outline-offset:2px}
+svg{display:block;flex:0 0 auto}
+[hidden]{display:none!important}
 
-/* barra superior */
-.top{background:var(--navy);color:#fff;display:flex;align-items:center;gap:14px;padding:11px 18px;flex:0 0 auto}
-.top .marca{display:flex;align-items:baseline;gap:10px;min-width:0;
- background:none;border:0;padding:4px 6px;margin-left:-6px;border-radius:7px;
- font-family:inherit;text-align:left;cursor:pointer}
-.top .marca:hover{background:rgba(255,255,255,.12)}
-.top .sigla{font-size:17px;font-weight:700;letter-spacing:.02em}
-.top .org{font-size:12.5px;color:#A9BFDA;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.top .user{margin-left:auto;font-size:12px;color:#A9BFDA;display:flex;align-items:center;gap:10px}
-.top button{background:rgba(255,255,255,.1);border:1px solid rgba(168,200,232,.35);color:#D5E1F0;
- border-radius:6px;padding:5px 10px;font-family:inherit;font-size:12px;font-weight:600;cursor:pointer}
-.top button:hover{background:rgba(255,255,255,.18)}
-.franja{height:3px;background:var(--gold);flex:0 0 auto}
+.app{display:flex;height:100vh}
 
-/* cuerpo */
-.cuerpo{flex:1;display:grid;grid-template-columns:224px minmax(0,1fr);min-height:0}
-/* Plegado: UNA sola columna, no dos con la primera en cero. Con dos columnas el panel
-   caía en la de 0 px —el menú, oculto, dejaba de ocupar la suya— y la herramienta
-   quedaba de ancho cero: pantalla en blanco, con los botones de la barra desbordando
-   afuera. Es la misma forma que ya usa el modo angosto de abajo. */
-.cuerpo.plegado{grid-template-columns:minmax(0,1fr)}
-@media(max-width:820px){.cuerpo{grid-template-columns:1fr}.nav{display:none}.cuerpo.abierto{grid-template-columns:224px minmax(0,1fr)}.cuerpo.abierto .nav{display:block}}
+/* ---------- el lateral ---------- */
+.lado{flex:0 0 264px;background:var(--lado);color:var(--lado-tx);display:flex;flex-direction:column;gap:18px;
+ padding:18px 14px 14px;overflow-y:auto}
+.app.plegado .lado{display:none}
+.marca{display:flex;align-items:center;gap:12px;padding:4px 6px 16px;border:0;border-bottom:1px solid rgba(201,168,76,.45);
+ background:none;text-align:left;cursor:pointer;border-radius:0}
+.sello{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--oro);color:#172A52;
+ font-size:18px;font-weight:800}
+.marca .tx{display:flex;flex-direction:column;line-height:1.25}
+.marca .s1{font-size:17px;font-weight:800;color:#fff;letter-spacing:.01em}
+.marca .s2{font-size:12.5px;color:var(--lado-mut)}
 
-/* navegación */
-.nav{background:#fff;border-right:1px solid var(--line);overflow-y:auto;padding:14px 12px}
-.cuerpo.plegado .nav{display:none}
-.nav .grupo{font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);
- font-weight:700;margin:16px 0 7px;padding:0 8px}
-.nav .grupo:first-child{margin-top:0}
-/* El nombre arriba y el estado abajo. En una columna de 224 px no entran los dos en la
-   misma línea: "Primer testimonio" quedaba en "Primer testi…". El nombre no se recorta. */
-.nav a{display:flex;align-items:flex-start;gap:9px;text-decoration:none;color:#41506B;font-size:13.5px;
- font-weight:500;padding:8px 11px;border-radius:7px;margin-bottom:2px;cursor:pointer}
-.nav a .txt{display:flex;flex-direction:column;gap:3px;min-width:0}
-.nav a .nm{line-height:1.25}
-/* En la columna angosta el estado va como rótulo, sin píldora: la píldora es para las
-   tarjetas y la barra, donde hay lugar. El color es el mismo en los tres lados. */
-.nav a .pp{align-self:flex-start;font-size:8.5px;letter-spacing:.05em;text-transform:uppercase;font-weight:700}
-.nav a .pp.uso{color:var(--ok)}
-.nav a .pp.pr{color:#8A6A12}
-.nav a .pp.prep{color:#A3AEC0}
-.nav a .pt{width:8px;height:8px;border-radius:50%;flex:0 0 auto;background:var(--c,#A3AEC0);margin-top:5px}
-.nav a.prep .pt{background:transparent;box-shadow:inset 0 0 0 1.5px #C7CEDA}
-.nav a:hover{background:var(--bone)}
-.nav a.on{background:var(--cel-s);color:var(--navy);font-weight:700}
-.nav a.prep{color:#A3AEC0;cursor:default}
-.nav a.prep:hover{background:transparent}
-/* «Otros»: lo que todavía no ven todos. Un botón chico debajo del último producto, que
-   despliega los que tienen oculto:true (Baltasar, 23/10/2026). */
-.nav .otros{display:inline-flex;align-items:center;gap:5px;margin:12px 0 0 8px;padding:3px 7px;border:0;
- border-radius:5px;background:none;font-family:inherit;font-size:10.5px;font-weight:600;color:#9AA6B8;cursor:pointer}
-.nav .otros:hover,.nav .otros[aria-expanded="true"]{color:#41506B;background:var(--bone)}
-.nav .otros .fl{font-size:9px}
-.nav .otras{margin-top:4px}
-.nav .pie{margin-top:22px;padding:11px 9px 0;border-top:1px solid var(--line);font-size:11px;color:#9AA6B8;line-height:1.5}
+.buscar{display:flex;align-items:center;gap:10px;height:40px;padding:0 10px 0 12px;border:1px solid rgba(255,255,255,.10);
+ border-radius:10px;background:rgba(255,255,255,.06);color:var(--lado-mut)}
+.buscar:focus-within{border-color:rgba(201,168,76,.7)}
+.buscar input{flex:1;min-width:0;border:0;background:none;color:#fff;font:inherit;font-size:14px;outline:none}
+.buscar input::placeholder{color:var(--lado-mut);opacity:1}
+.kbd{font-size:12px;font-weight:600;padding:1px 6px;border-radius:5px;border:1px solid rgba(255,255,255,.16);white-space:nowrap}
 
-/* panel */
-.panel{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bone)}
-.barra{display:flex;align-items:center;gap:11px;padding:9px 16px;background:#fff;border-bottom:1px solid var(--line);flex:0 0 auto;flex-wrap:wrap}
-.barra{border-top:3px solid var(--c,transparent)}
-.barra .t{font-weight:700;color:var(--c,var(--navy));font-size:14.5px}
-.barra .s{font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.barra .acc{margin-left:auto;display:flex;gap:7px}
-.barra button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:5px 11px;
- font-family:inherit;font-size:12px;font-weight:600;color:var(--navy);cursor:pointer;white-space:nowrap}
-.barra button:hover{border-color:var(--navy)}
-.barra button.volver{border-color:var(--navy);background:var(--navy);color:#fff;font-weight:600;
- padding:6px 13px;flex:0 0 auto}
-.barra button.volver:hover{background:#25407A;border-color:#25407A}
-iframe{flex:1;width:100%;border:0;background:#fff;min-height:0}
+.nav{display:flex;flex-direction:column;gap:16px}
+.grupo{display:flex;flex-direction:column;gap:2px}
+.grupo .gt{padding:0 8px 6px;font-size:12.5px;font-weight:600;color:var(--lado-mut)}
+.item{display:flex;align-items:center;gap:11px;width:100%;padding:7px 8px;border:0;border-radius:9px;background:none;
+ color:var(--lado-tx);font-size:14.5px;font-weight:500;text-align:left;cursor:pointer}
+.item:hover{background:var(--lado-hov)}
+.item.on{background:var(--lado-act);color:#fff;font-weight:700;box-shadow:inset 3px 0 0 var(--oro)}
+.item.prep{opacity:.55;cursor:default}
+.item.prep:hover{background:none}
+.item .ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;flex:0 0 auto;
+ color:var(--i);background:var(--ib)}
+.item .nm{flex:1;min-width:0;line-height:1.3}
+.item .ext{color:var(--lado-mut)}
+.pt{width:7px;height:7px;border-radius:50%;flex:0 0 auto}
+.pt.uso{background:var(--uso-pt)}
+.pt.pr{background:var(--pr-pt)}
+.pt.prep{box-shadow:inset 0 0 0 1.5px var(--lado-mut)}
+.otros{align-self:flex-start;display:flex;align-items:center;gap:6px;padding:6px 8px;border:0;border-radius:8px;
+ background:none;color:var(--lado-mut);font-size:13.5px;font-weight:600;cursor:pointer}
+.otros:hover,.otros[aria-expanded="true"]{color:var(--lado-tx);background:var(--lado-hov)}
+.otras{display:flex;flex-direction:column;gap:2px}
+.vacio{padding:6px 8px;font-size:13.5px;color:var(--lado-mut)}
 
-/* inicio */
-.inicio{flex:1;overflow-y:auto;padding:30px 26px}
-.inicio .wrap{max-width:940px;margin:0 auto}
-.inicio .logos{background:#fff;border:1.5px solid var(--line);border-radius:11px;padding:16px 20px;margin:0 0 22px}
-.inicio .logos img{display:block;margin:0 auto;max-width:430px;width:100%;height:auto}
-.inicio h1{font-size:24px;color:var(--navy);margin:0 0 4px;font-weight:700}
-.inicio .sub{color:var(--muted);font-size:14px;margin:0 0 26px}
-.inicio .grupo{font-size:10.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);
- font-weight:700;margin:0 0 11px;padding-bottom:7px;border-bottom:2px solid var(--line)}
-.tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:26px}
-.tj{background:#fff;border:1.5px solid var(--line);border-left:5px solid var(--c,var(--line));
- border-radius:11px;padding:17px 19px 17px 17px;cursor:pointer;
- transition:border-color .12s,transform .12s,box-shadow .12s}
-.tj:hover{border-color:var(--c,var(--navy));transform:translateY(-2px);box-shadow:0 6px 18px rgba(27,47,94,.08)}
-.tj .n{font-weight:700;color:var(--c,var(--navy));font-size:16px}
-.tj .d{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.5}
-.tj.prep{border-style:dashed;border-left-color:#C7CEDA;background:#FBFCFD;cursor:default}
-.tj.prep:hover{transform:none;box-shadow:none;border-color:var(--line);border-left-color:#C7CEDA}
-.tj.prep .n{color:var(--muted)}
-.tj .et{margin-top:10px}
+.pie{margin-top:auto;display:flex;align-items:center;gap:10px;padding:12px 6px 0;border-top:1px solid rgba(255,255,255,.10)}
+.pie .tx{display:flex;flex-direction:column;line-height:1.35;min-width:0}
+.pie .q{font-size:13.5px;font-weight:600;color:#fff}
+.pie .sigec-version{font-size:12.5px;color:var(--lado-mut)}
+.tema{margin-left:auto;width:38px;height:38px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.12);
+ border-radius:10px;background:none;color:var(--lado-tx);cursor:pointer}
+.tema:hover{background:var(--lado-hov)}
 
-/* los tres estados, con el mismo chip en el menú, en la tarjeta y en la barra */
-.et{display:inline-block;font-size:9.5px;letter-spacing:.07em;text-transform:uppercase;font-weight:700;
- border-radius:999px;padding:3px 9px;white-space:nowrap}
-.et.uso{color:var(--ok);background:var(--ok-bg)}
-.et.pr{color:#8A6A12;background:#FBF3DC}
-.et.prep{color:var(--muted);background:transparent;box-shadow:inset 0 0 0 1.5px var(--line)}
-.leyenda{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:center;font-size:12px;color:var(--muted);margin:0 0 22px}
-.leyenda span span{margin-right:6px}
-.aviso{border-left:3px solid var(--cel);background:var(--cel-s);color:#2E5385;padding:13px 16px;
- border-radius:0 8px 8px 0;font-size:13px;margin:0 0 24px;line-height:1.55}
+/* ---------- la barra de arriba: dónde estás ---------- */
+.panel{flex:1;min-width:0;display:flex;flex-direction:column}
+.barra{flex:0 0 auto;min-height:60px;display:flex;align-items:center;gap:10px;padding:8px 24px 8px 14px;background:var(--card);
+ border-bottom:1px solid var(--line);font-size:14px;color:var(--mut)}
+.ico{width:36px;height:36px;display:grid;place-items:center;border:1px solid var(--line);border-radius:9px;background:var(--card);
+ color:var(--ink);cursor:pointer;flex:0 0 auto}
+.ico:hover{border-color:var(--mut)}
+.miga{display:flex;align-items:center;gap:8px;min-width:0;white-space:nowrap}
+.miga b{overflow:hidden;text-overflow:ellipsis}
+.miga button{display:flex;align-items:center;gap:8px;border:0;background:none;padding:4px 2px;color:var(--mut);cursor:pointer;font-size:14px}
+.miga button:hover{color:var(--ink);text-decoration:underline;text-underline-offset:3px}
+.miga b{color:var(--ink);font-weight:600}
+.miga .sola{color:var(--ink);font-weight:600}
+.et{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap}
+.et i{width:6px;height:6px;border-radius:50%}
+.et.uso{color:var(--uso-tx);background:var(--uso-bg)} .et.uso i{background:var(--uso-pt)}
+.et.pr{color:var(--pr-tx);background:var(--pr-bg)} .et.pr i{background:var(--pr-pt)}
+.et.prep{color:var(--mut);box-shadow:inset 0 0 0 1px var(--line)} .et.prep i{box-shadow:inset 0 0 0 1.5px var(--mut)}
+.barra .s{font-size:13.5px;color:var(--mut);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.barra .der{margin-left:auto}
+iframe{flex:1;width:100%;border:0;background:var(--bg);min-height:0}
+
+/* ---------- el inicio ---------- */
+.inicio{flex:1;overflow-y:auto;padding:36px 40px 48px}
+.inicio .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:28px}
+.cab{display:flex;align-items:flex-end;justify-content:space-between;gap:20px 28px;flex-wrap:wrap}
+.cab h1{margin:0 0 6px;font-size:30px;line-height:1.15;font-weight:800;letter-spacing:-.02em}
+.cab p{margin:0;font-size:16px;color:var(--mut)}
+.logos{background:#fff;border:1px solid var(--line);border-radius:14px;padding:12px 18px}
+.logos img{display:block;height:44px;width:auto;max-width:100%}
+.tarjetas{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(250px,100%),1fr));gap:16px}
+.tj{display:flex;flex-direction:column;gap:14px;padding:20px;background:var(--card);border:1px solid var(--line);
+ border-radius:16px;text-align:left;cursor:pointer;box-shadow:0 1px 2px rgba(16,24,40,.04);
+ transition:box-shadow .15s,border-color .15s}
+.tj:hover{box-shadow:0 10px 28px rgba(16,24,40,.10);border-color:transparent}
+.tj.prep{cursor:default;border-style:dashed;box-shadow:none}
+.tj.prep:hover{box-shadow:none;border-color:var(--line)}
+.tj .tc{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.tile{width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--c);color:#fff}
+.tj .tx{display:flex;flex-direction:column;gap:4px}
+.tj .g{font-size:12.5px;font-weight:600;color:var(--mut)}
+.tj .n{font-size:18px;font-weight:700;letter-spacing:-.01em;line-height:1.3}
+.tj .d{font-size:14px;line-height:1.5;color:var(--mut)}
+
+/* ---------- angosto: el lateral pasa a ser un cajón ---------- */
+.velo{display:none}
+@media(max-width:820px){
+ .lado{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:30;transform:translateX(-102%);
+  transition:transform .2s ease}
+ .app.plegado .lado{display:flex}
+ .app.abierto .lado{transform:none;box-shadow:8px 0 30px rgba(0,0,0,.30)}
+ .app.abierto .velo{display:block;position:fixed;inset:0;z-index:20;background:rgba(10,16,30,.45)}
+ .barra{padding:8px 12px}
+ .barra .s,#btnInicio,#mFlecha{display:none!important}
+ .inicio{padding:24px 16px 32px}
+ .cab h1{font-size:26px}
+ .logos img{height:36px}
+}
+@media(prefers-reduced-motion:reduce){.lado,.tj{transition:none}}
 </style>
 </head>
 <body>
 
-<div class="top">
-  <button id="btnMenu" title="Mostrar u ocultar el menú">☰</button>
-  <button class="marca" id="btnMarca" title="Ir a la portada de SIGEC">
-    <span class="sigla">SIGEC</span>
-    <span class="org">Escribanía General de Gobierno · Provincia de Córdoba</span>
-  </button>
-  <div class="user">
-    <button id="btnTema" title="Cambiar entre claro y oscuro">Modo oscuro</button>
-    <span id="quien">—</span>
-  </div>
-</div>
-<div class="franja"></div>
+<div class="app" id="app">
+  <aside class="lado" id="lado">
+    <button class="marca" id="btnMarca" type="button" title="Ir al inicio de SIGEC">
+      <span class="sello" aria-hidden="true">S</span>
+      <span class="tx"><span class="s1">SIGEC</span><span class="s2">Escribanía General de Gobierno</span></span>
+    </button>
 
-<div class="cuerpo" id="cuerpo">
-  <nav class="nav" id="nav"></nav>
+    <!-- Ctrl K (o ⌘K) lo enfoca desde cualquier lugar del menú; Enter abre la primera que aparece. -->
+    <label class="buscar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+      <input id="buscar" type="search" placeholder="Buscar" aria-label="Buscar una herramienta" autocomplete="off">
+      <span class="kbd" aria-hidden="true">Ctrl K</span>
+    </label>
+
+    <nav class="nav" id="nav" aria-label="Herramientas"></nav>
+
+    <div class="pie">
+      <span class="tx"><span class="q" id="quien">Escribanía</span><span class="sigec-version">Versión del 02/11/2026</span></span>
+      <button class="tema" id="btnTema" type="button"></button>
+    </div>
+  </aside>
+  <div class="velo" id="velo"></div>
 
   <div class="panel">
-    <div class="barra" id="barra" style="display:none">
-      <!-- Volver va primero y a la izquierda. Estaba al final, después de otro botón y
-           empujado por la descripción: existía y no se encontraba. -->
-      <button id="btnInicio" class="volver" title="Volver a la portada de SIGEC">← Inicio</button>
-      <span class="t" id="bTit"></span>
-      <span class="et" id="bEst"></span>
+    <div class="barra" id="barra">
+      <button class="ico" id="btnMenu" type="button" aria-label="Mostrar u ocultar el menú" title="Mostrar u ocultar el menú">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+      </button>
+      <nav class="miga" aria-label="Dónde estás">
+        <span class="sola" id="mInicio">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11l8-6.5 8 6.5M6 9.5V19h12V9.5"/></svg>
+        </span>
+        <span class="sola" id="mInicioTx">Inicio</span>
+        <button type="button" id="btnInicio" hidden title="Volver al inicio de SIGEC"></button>
+        <svg id="mFlecha" hidden width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+        <b id="bTit" hidden></b>
+      </nav>
+      <span class="et" id="bEst" hidden></span>
       <span class="s" id="bSub"></span>
-      <div class="acc">
-        <button id="btnNueva">Abrir en pestaña nueva</button>
-      </div>
+      <button class="ico der" id="btnNueva" type="button" hidden aria-label="Abrir en pestaña nueva" title="Abrir en pestaña nueva">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg>
+      </button>
     </div>
 
     <div class="inicio" id="inicio"><div class="wrap">
-      <div class="logos"><img src="egg-logos.png" alt="Escribanía de Gobierno · Provincia de Córdoba"></div>
-      <h1>Herramientas</h1>
-      <p class="sub">Elegí con qué vas a trabajar. Todo se guarda en esta computadora.</p>
-      <div class="leyenda">
-        <span><span class="et uso">En uso</span> se usa todos los días</span>
-        <span><span class="et pr">Prototipo</span> anda, pero todavía no es de uso diario</span>
-        <span><span class="et prep">En preparación</span> todavía no se puede abrir</span>
+      <div class="cab">
+        <div>
+          <h1>Herramientas</h1>
+          <p>Elegí con qué vas a trabajar. Todo se guarda en esta computadora.</p>
+        </div>
+        <div class="logos"><img src="egg-logos.png" alt="Escribanía de Gobierno · Provincia de Córdoba"></div>
       </div>
-      <div class="aviso"><b>Este es el sistema interno de la Escribanía.</b> SIIGENO resuelve el
-        trámite externo; acá se hace el trabajo notarial de adentro. Cada herramienta anda por
-        separado y se abre desde este mismo lugar.</div>
-      <div id="tarjetas"></div>
+      <div class="tarjetas" id="tarjetas"></div>
     </div></div>
 
     <iframe id="marco" title="Herramienta" allow="clipboard-write" style="display:none"></iframe>
@@ -256,60 +258,99 @@ const ESTADOS={
 const est = h => ESTADOS[h.estado] || ESTADOS.preparacion;
 const abrible = h => h.estado!=="preparacion" && !!h.url;
 
-
-/* No hay forma de fijar un usuario, así que el encabezado dice siempre "Escribanía".
-   Antes esto leía localStorage "sigec.usuario", que nadie escribía nunca. */
-$("#quien").textContent="Escribanía";
+/* El ícono de cada herramienta, por su id. Va aparte de HERRAMIENTAS para no tocar esa lista:
+   la editan los chats de cada producto. Son trazos de 24×24, sin relleno. */
+const ICONOS={
+ ddjj:"M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5M9 13h6M9 17h6",
+ recibo:"M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3",
+ turnero:"M5.5 5h13a2 2 0 0 1 2 2v11a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM3.5 10h17M8 3v4M16 3v4",
+ cotejo:"M4 6h7M4 12h7M4 18h7M14.5 7l2 2 4-4M14.5 17l2 2 4-4",
+ consulta:"M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13zM20 20l-4.8-4.8",
+ testimonio:"M10 8h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-9a2 2 0 0 1 2-2zM16 8V5a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h2",
+ rogador:"M3 21h18M5 21V10M19 21V10M9.5 21V10M14.5 21V10M2.5 10L12 4l9.5 6z",
+ sociales:"M3.5 11L12 4l8.5 7M6 9.5V20h12V9.5M10 20v-5h4v5",
+ expro:"M4 7l5-3 6 3 5-3v13l-5 3-6-3-5 3zM9 4v13M15 7v13",
+ modelos:"M12 3l9 5-9 5-9-5zM3 13l9 5 9-5"
+};
+const ICONO_COMUN="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8zM14 3v5h5";
+const svg=(d,t)=>`<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${t>18?1.9:2}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+const icono=(h,t)=>svg(ICONOS[h.id]||ICONO_COMUN,t);
+const FLECHA_AFUERA="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5";
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 
 /* ---------- claro / oscuro ---------- */
+const LUNA="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z";
+const SOL="M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4";
 function pintarTema(){
- $("#btnTema").textContent = SIGEC_TEMA.actual()==="oscuro" ? "Modo claro" : "Modo oscuro";
+ const osc=SIGEC_TEMA.actual()==="oscuro", t=osc?"Modo claro":"Modo oscuro";
+ $("#btnTema").innerHTML=svg(osc?SOL:LUNA,17);
+ $("#btnTema").title=t; $("#btnTema").setAttribute("aria-label",t);
 }
 $("#btnTema").addEventListener("click",()=>{SIGEC_TEMA.alternar();});
-document.addEventListener("sigec:tema",()=>{
- pintarTema(); pintarNav(); pintarTarjetas();
- if(ACTUAL) $("#barra").style.setProperty("--c",colorDe(ACTUAL));
- $$("[data-h]").forEach(a=>a.classList.toggle("on",ACTUAL&&a.dataset.h===ACTUAL.id));
-});
+document.addEventListener("sigec:tema",()=>{ pintarTema(); pintarNav(); pintarTarjetas(); });
 pintarTema();
 
 /* ---------- navegación lateral ---------- */
+/* En el lateral azul, el ícono va siempre en la variante clara del color: la oscura no se ve. */
 function colorDe(h){ return (SIGEC_TEMA.actual()==="oscuro" && h.colorOsc) ? h.colorOsc : h.color; }
+const claroDe=h=>h.colorOsc||h.color;
 /* Una herramienta con oculto:true no figura entre las demás ni en el inicio: queda detrás de
    «Otros», el botón chico del pie del menú. También se abre con su archivo o con el menú
    terminado en #<id> (por ejemplo «SIGEC, APP.html#cotejo»). */
 const VISIBLES=()=>HERRAMIENTAS.filter(h=>!h.oculto);
 const OCULTAS=()=>HERRAMIENTAS.filter(h=>h.oculto);
 let OTROS=false;   // «Otros» desplegado; empieza cerrado cada vez que se abre el menú
-const enlace=h=>`<a data-h="${h.id}" class="${abrible(h)?"":"prep"}${ACTUAL&&ACTUAL.id===h.id?" on":""}" style="--c:${colorDe(h)}" title="${est(h).ayuda}"><span class="pt"></span><span class="txt"><span class="nm">${h.n}</span><span class="pp ${est(h).cls}">${est(h).corto}</span></span></a>`;
+let BUSCA="";      // lo escrito en «Buscar»
+const sinTildes=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
+const coincide=h=>!BUSCA||sinTildes(h.n+" "+h.grupo).includes(sinTildes(BUSCA));
+const enlace=h=>`<button type="button" data-h="${h.id}" class="item${abrible(h)?"":" prep"}${ACTUAL&&ACTUAL.id===h.id?" on":""}" title="${esc(est(h).et+". "+est(h).ayuda)}"${ACTUAL&&ACTUAL.id===h.id?' aria-current="page"':""}>`
+ +`<span class="ic" style="--i:${claroDe(h)};--ib:${claroDe(h)}29">${icono(h,16)}</span>`
+ +`<span class="nm">${esc(h.n)}</span>`
+ +(h.externo?`<span class="ext" title="Se abre en otra pestaña">${svg(FLECHA_AFUERA,13)}</span>`:"")
+ +`<span class="pt ${est(h).cls}"></span></button>`;
 function pintarNav(){
- const grupos=[...new Set(VISIBLES().map(h=>h.grupo))];
+ const lista=VISIBLES().filter(coincide);
+ const grupos=[...new Set(lista.map(h=>h.grupo))];
+ const ocultas=OCULTAS().filter(coincide);
+ /* Buscando, las de «Otros» aparecen sólo si «Otros» ya estaba abierto: no se muestran solas. */
  $("#nav").innerHTML=grupos.map(g=>
-  `<div class="grupo">${g}</div>`+
-  VISIBLES().filter(h=>h.grupo===g).map(enlace).join("")
+  `<div class="grupo"><div class="gt">${esc(g)}</div>`+lista.filter(h=>h.grupo===g).map(enlace).join("")+`</div>`
  ).join("")
- +(OCULTAS().length?`<button type="button" class="otros" id="btnOtros" aria-expanded="${OTROS}" title="Herramientas que todavía no son para todos">Otros <span class="fl" aria-hidden="true">${OTROS?"▾":"▸"}</span></button>`
-   +(OTROS?`<div class="otras">${OCULTAS().map(enlace).join("")}</div>`:""):"")
- +`<div class="pie">Los datos quedan guardados en esta computadora.<br>Las minutas base se comparten por archivo.<br><span class="sigec-version">Versión del 29/10/2026</span></div>`;
+ +(BUSCA&&!lista.length&&!(OTROS&&ocultas.length)?`<div class="vacio">No hay ninguna con «${esc(BUSCA)}».</div>`:"")
+ +(OCULTAS().length&&!BUSCA?`<button type="button" class="otros" id="btnOtros" aria-expanded="${OTROS}" title="Herramientas que todavía no son para todos">Otros ${svg(OTROS?"M6 9l6 6 6-6":"M9 6l6 6-6 6",12)}</button>`:"")
+ +(OTROS&&ocultas.length?`<div class="otras">${ocultas.map(enlace).join("")}</div>`:"");
  $$("[data-h]").forEach(a=>a.addEventListener("click",()=>abrir(a.dataset.h)));
  const o=$("#btnOtros"); if(o) o.addEventListener("click",()=>{ OTROS=!OTROS; pintarNav(); });
 }
 
+/* ---------- buscar ---------- */
+$("#buscar").addEventListener("input",e=>{ BUSCA=e.target.value.trim(); pintarNav(); });
+$("#buscar").addEventListener("keydown",e=>{
+ if(e.key==="Enter"){ const p=$("#nav [data-h]:not(.prep)"); if(p){ e.target.value=""; BUSCA=""; e.target.blur(); abrir(p.dataset.h); } }
+ if(e.key==="Escape"){ e.target.value=""; BUSCA=""; pintarNav(); e.target.blur(); }
+});
+document.addEventListener("keydown",e=>{
+ if((e.ctrlKey||e.metaKey)&&!e.altKey&&e.key.toLowerCase()==="k"){
+  e.preventDefault();
+  if(window.innerWidth<=820) $("#app").classList.add("abierto");
+  $("#app").classList.remove("plegado");
+  $("#buscar").focus(); $("#buscar").select();
+ }
+});
+
 /* ---------- tarjetas del inicio ---------- */
 function pintarTarjetas(){
- const grupos=[...new Set(VISIBLES().map(h=>h.grupo))];
- $("#tarjetas").innerHTML=grupos.map(g=>
-  `<div class="grupo">${g}</div><div class="tarjetas">`+
-  VISIBLES().filter(h=>h.grupo===g).map(h=>
-   `<div class="tj ${abrible(h)?"":"prep"}" style="--c:${colorDe(h)}" ${abrible(h)?`data-t="${h.id}"`:""}>
-     <div class="n">${h.n}</div><div class="d">${h.d}</div>
-     <div class="et ${est(h).cls}">${est(h).et}</div></div>`).join("")
-  +`</div>`).join("");
+ $("#tarjetas").innerHTML=VISIBLES().map(h=>
+  `<button type="button" class="tj${abrible(h)?"":" prep"}" ${abrible(h)?`data-t="${h.id}"`:"disabled"} style="--c:${h.color}">
+    <span class="tc"><span class="tile">${icono(h,22)}</span><span class="et ${est(h).cls}" title="${esc(est(h).ayuda)}"><i></i>${est(h).et}</span></span>
+    <span class="tx"><span class="g">${esc(h.grupo)}</span><span class="n">${esc(h.n)}</span><span class="d">${esc(h.d)}</span></span>
+  </button>`).join("");
  $$("[data-t]").forEach(e=>e.addEventListener("click",()=>abrir(e.dataset.t)));
 }
 
 /* ---------- abrir una herramienta ---------- */
 let ACTUAL=null;
+function cerrarCajon(){ $("#app").classList.remove("abierto"); }
 function abrir(id,desdeDireccion){
  const h=HERRAMIENTAS.find(x=>x.id===id);
  if(!h||!abrible(h)) return;
@@ -319,32 +360,39 @@ function abrir(id,desdeDireccion){
  if(h.externo){ if(desdeDireccion) location.href=h.url; else window.open(h.url,"_blank","noopener"); return; }
  ACTUAL=h;
  /* Abierta desde #cotejo, se despliega «Otros» para que se vea dónde está. */
- if(h.oculto&&!OTROS){ OTROS=true; pintarNav(); }
+ if(h.oculto&&!OTROS) OTROS=true;
+ pintarNav();
  $("#marco").src=h.url;
  $("#marco").style.display="";
  $("#inicio").style.display="none";
- $("#barra").style.display="";
- $("#barra").style.setProperty("--c",colorDe(h));
- $("#bTit").textContent=h.n;
- $("#bEst").textContent=est(h).et;
- $("#bEst").className="et "+est(h).cls;
- $("#bSub").textContent=h.estado==="uso"?h.d:est(h).ayuda+" "+h.d;
- $$("[data-h]").forEach(a=>a.classList.toggle("on",a.dataset.h===id));
- if(window.innerWidth<=820) $("#cuerpo").classList.remove("abierto");
+ /* El camino: «Grupo › Herramienta». El grupo vuelve al inicio. */
+ $("#mInicio").hidden=true; $("#mInicioTx").hidden=true;
+ $("#btnInicio").hidden=false; $("#btnInicio").textContent=h.grupo;
+ $("#mFlecha").removeAttribute("hidden"); $("#bTit").hidden=false; $("#bTit").textContent=h.n;
+ $("#bEst").hidden=false; $("#bEst").className="et "+est(h).cls; $("#bEst").innerHTML="<i></i>"+est(h).et;
+ $("#bEst").title=est(h).ayuda;
+ /* Sólo un prototipo dice algo más: que lo que sale de ahí se revisa igual. */
+ $("#bSub").textContent=h.estado==="uso"?"":est(h).ayuda;
+ $("#btnNueva").hidden=false;
+ cerrarCajon();
 }
 function inicio(){
  ACTUAL=null;
  $("#marco").style.display="none"; $("#marco").src="about:blank";
- $("#inicio").style.display=""; $("#barra").style.display="none";
- $$("[data-h]").forEach(a=>a.classList.remove("on"));
+ $("#inicio").style.display="";
+ $("#mInicio").hidden=false; $("#mInicioTx").hidden=false;
+ $("#btnInicio").hidden=true; $("#mFlecha").setAttribute("hidden",""); $("#bTit").hidden=true;
+ $("#bEst").hidden=true; $("#bSub").textContent=""; $("#btnNueva").hidden=true;
+ pintarNav(); cerrarCajon();
 }
 $("#btnInicio").addEventListener("click",inicio);
 $("#btnMarca").addEventListener("click",inicio);
 $("#btnNueva").addEventListener("click",()=>{ if(ACTUAL) window.open(ACTUAL.url,"_blank"); });
+$("#velo").addEventListener("click",cerrarCajon);
 $("#btnMenu").addEventListener("click",()=>{
- const c=$("#cuerpo");
- /* Los dos modos se excluyen: si quedan las dos clases puestas —plegar en pantalla ancha
-    y después angostar la ventana— vuelven a pelearse por el ancho. */
+ const c=$("#app");
+ /* Ancho: pliega el lateral para dar lugar a la herramienta. Angosto: abre el cajón. Los
+    dos modos se excluyen, para que no se peleen si la ventana cambia de ancho. */
  if(window.innerWidth<=820){ c.classList.remove("plegado"); c.classList.toggle("abierto"); }
  else { c.classList.remove("abierto"); c.classList.toggle("plegado"); }
 });

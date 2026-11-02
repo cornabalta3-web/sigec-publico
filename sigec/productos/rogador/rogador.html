@@ -6,7 +6,7 @@
 <title>ROGADOR v2 — Escribanía General de Gobierno</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
@@ -143,14 +143,75 @@ fieldset .in{padding:12px 14px 13px}
 @keyframes s{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation:none}}
 @media(max-width:700px){.grid2{grid-template-columns:1fr}.nomen{grid-template-columns:repeat(4,1fr)}.sello{transform:none}}
+
+/* ── DISEÑO D (02/11/2026) ─────────────────────────────────────────────────────────────
+   La capa común de SIGEC. Va al final para pisar lo de arriba sin reescribirlo. El rojo del
+   sello queda en el ícono y en el botón principal; el sello girado deja lugar al encabezado
+   común. Los rótulos dejan las mayúsculas y la letra de máquina: los datos se leen en la
+   misma letra que todo lo demás, con cifras de ancho fijo. */
+:root{
+  --paper:#F6F7F9; --card:#FFFFFF; --ink:#172033; --muted:#5B6478; --rule:#E4E7EC; --rule-hard:#D0D5DD;
+  --ok:#067647; --warn:#B54708; --warn-bg:#FFFAEB; --warn-borde:#FEC84B; --miss:#FEF3F2; --boton-tx:#FFFFFF;
+}
+html[data-theme="dark"]{
+  --paper:#0F1420; --card:#161C2B; --ink:#E6EAF2; --muted:#98A2B3; --rule:#262F42; --rule-hard:#344054;
+  --ok:#75E0A7; --warn:#FEC84B; --warn-bg:#33240A; --warn-borde:#7A5A0E; --miss:#3A1714; --boton-tx:#1A0B0B;
+}
+body{font-family:"Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;font-size:15px}
+.wrap{padding:28px 24px 100px}
+header{gap:16px;margin-bottom:24px;flex-wrap:nowrap;align-items:center}
+header .tile{flex:0 0 auto;width:50px;height:50px;border-radius:14px;display:grid;place-items:center;background:#A81419;color:#fff}
+html[data-theme="dark"] header .tile{background:#E2685F;color:#1A0B0B}
+header .tx{display:flex;flex-direction:column;gap:2px;min-width:0}
+header h1{margin:0;font-size:26px;font-weight:800;letter-spacing:-.02em;line-height:1.15;color:var(--ink)}
+.tagline{font-size:15px;max-width:none}
+.embebido header h1{font-size:24px}
+.drop{border:1.5px dashed var(--rule-hard);background:var(--card);border-radius:16px}
+.drop:hover,.drop.over{background:var(--card)}
+.drop .big{font-family:inherit;font-size:19px;font-weight:700;color:var(--ink)}
+.drop .sub{font-size:14px}
+.panel{border-radius:16px;overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+.panel>h2{font-size:15px;letter-spacing:0;text-transform:none;font-weight:700;color:var(--ink);padding:13px 18px}
+.panel .in{padding:18px}
+label{font-size:13px;letter-spacing:0;text-transform:none;color:var(--ink);font-weight:600;margin-bottom:5px}
+input[type=text],input[type=password],select,textarea{font-family:inherit;font-size:14.5px;padding:9px 11px;border-radius:10px;
+  border-color:var(--rule-hard);font-variant-numeric:tabular-nums}
+html[data-theme="dark"] input,html[data-theme="dark"] select,html[data-theme="dark"] textarea{background:#121826}
+input:focus,select:focus,textarea:focus{outline:3px solid rgba(168,20,25,.18);outline-offset:0;border-color:var(--sello)}
+button{font-family:inherit;font-size:14.5px;font-weight:700;padding:10px 18px;border-radius:11px;letter-spacing:0;color:var(--boton-tx)}
+button.ghost{background:var(--card);color:var(--ink);border-color:var(--rule);font-weight:600}
+button.ghost:hover:not(:disabled){background:var(--card);color:var(--ink);border-color:var(--muted)}
+button.mini{padding:5px 12px;font-size:13px;border-radius:9px}
+button.link{font-size:13px;letter-spacing:0;text-transform:none;color:var(--muted)}
+fieldset{border-radius:14px}
+legend{font-family:inherit;font-size:13.5px;letter-spacing:0;text-transform:none;color:var(--ink);font-weight:700}
+.hint{font-size:13px}
+.nomen input{font-size:13px}
+.nomen label{font-size:11px;letter-spacing:0}
+.nomprev{font-family:inherit;font-variant-numeric:tabular-nums;border-radius:10px;border-left-width:0;border:1px solid var(--rule);background:var(--paper)}
+html[data-theme="dark"] .nomprev{background:var(--paper)}
+.nomprev.bad{border-color:var(--sello)}
+.flag{border-left:0;border:1px solid var(--warn-borde);border-radius:12px;color:var(--ink);font-size:14px}
+.good{border-left:0;border:1px solid #ABEFC6;background:#ECFDF3;color:#067647;border-radius:12px;font-size:14px}
+html[data-theme="dark"] .good{background:#0E2A1C;border-color:#1C4A30;color:#75E0A7}
+.frag{border-radius:10px;font-size:13px}
+.frag b{font-family:inherit;font-size:12px;letter-spacing:0;text-transform:none}
+.bar{border-top:1px solid var(--rule);padding:10px 24px;box-shadow:0 -4px 16px rgba(16,24,40,.06)}
+.bar .st{font-family:inherit;font-size:14px;color:var(--ink)}
+.bar .acts{gap:10px}
+.bar button{min-height:44px}
+#pv{border-radius:12px}
 </style>
 </head>
 <body>
 <div class="wrap">
 
 <header>
-  <div class="sello"><h1>ROGADOR</h1><small>ESCRIBANÍA GENERAL DE GOBIERNO · VERSIÓN 2</small></div>
-  <p class="tagline">Lee la escritura, arma la <b>Rogación</b> del Registro General y la devuelve en PDF. Ley Provincial 9811.</p>
+  <span class="tile" aria-hidden="true"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18M5 21V10M19 21V10M9.5 21V10M14.5 21V10M2.5 10L12 4l9.5 6z"/></svg></span>
+  <div class="tx">
+    <h1>Rogador</h1>
+    <p class="tagline">Lee la escritura, arma la <b>Rogación</b> del Registro General y la devuelve en PDF. Ley Provincial 9811.</p>
+  </div>
 </header>
 
 <section class="panel hidden" id="setup">
@@ -1278,25 +1339,55 @@ $("#tplReset").onclick = async () => {
 })();
 </script>
 
-<!-- Volver a SIGEC. Solo aparece cuando la herramienta se abrio sola: adentro del menu no
-     hace falta, porque la barra lateral ya esta. Antes, si abrias una herramienta aparte,
-     no habia ninguna forma de volver. -->
+<!-- Volver a SIGEC (diseño D, 02/11/2026). Sólo cuando la herramienta se abrió sola: adentro
+     del menú está el lateral. Es una barra azul arriba y no un botón flotante: el flotante
+     tapaba botones de la herramienta («Imprimir recibo»). Lleva el claro/oscuro, que adentro
+     del menú está en el pie del lateral. Es igual en todas las herramientas: sólo cambia
+     NOMBRE. -->
 <script>
 (function(){
   try{ if(window.self !== window.top) return; }catch(e){ return; }
-  var a=document.createElement('a');
-  a.href='../../index.html';
-  a.textContent='\u2190 Volver a SIGEC';
-  a.setAttribute('style','position:fixed;left:14px;bottom:14px;z-index:9999;'
-    +'font-family:Montserrat,system-ui,sans-serif;font-size:12.5px;font-weight:600;'
-    +'text-decoration:none;padding:8px 14px;border-radius:999px;'
-    +'background:#1B2F5E;color:#fff;box-shadow:0 2px 10px rgba(27,47,94,.28)');
-  function poner(){ if(document.body) document.body.appendChild(a); }
-  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',poner);
-  else poner();
+  var NOMBRE='Rogador';
+  document.documentElement.classList.add('suelto');
+  var css='.sigec-suelta{flex:0 0 100%;width:100%;display:flex;align-items:center;gap:12px;min-height:58px;box-sizing:border-box;'
+    +'padding:8px 14px;background:#172A52;color:#fff;border-bottom:2px solid #C9A84C;'
+    +'font:600 14px/1.3 "Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;position:relative;z-index:60}'
+    +'html[data-theme="dark"] .sigec-suelta{background:#0E1A33}'
+    +'.sigec-suelta a,.sigec-suelta button{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 12px 0 7px;border:0;'
+    +'border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font:inherit;text-decoration:none;cursor:pointer;flex:0 0 auto}'
+    +'.sigec-suelta a:hover,.sigec-suelta button:hover{background:rgba(255,255,255,.15)}'
+    +'.sigec-suelta .s{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:#C9A84C;color:#172A52;'
+    +'font-weight:800;font-size:13px}'
+    +'.sigec-suelta .n{font-size:16px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+    +'.sigec-suelta button{margin-left:auto;padding:0 12px}'
+    +'.sigec-suelta svg{display:block}'
+    +'.sigec-suelta :focus-visible{outline:2px solid #C9A84C;outline-offset:2px}'
+    +'@media(max-width:560px){.sigec-suelta button span{display:none}}'
+    +'@media print{.sigec-suelta{display:none!important}}';
+  var LUNA='M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z';
+  var SOL='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4';
+  function poner(){
+    var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
+    var bar=document.createElement('div'); bar.className='sigec-suelta';
+    var a=document.createElement('a'); a.href='../../index.html'; a.title='Ir al menú de SIGEC';
+    a.innerHTML='<span class="s" aria-hidden="true">S</span>Volver a SIGEC';
+    var n=document.createElement('span'); n.className='n'; n.textContent=NOMBRE;
+    var b=document.createElement('button'); b.type='button';
+    function pintar(){
+      var osc=window.SIGEC_TEMA&&SIGEC_TEMA.actual()==='oscuro', t=osc?'Modo claro':'Modo oscuro';
+      b.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        +'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(osc?SOL:LUNA)+'"/></svg><span></span>';
+      b.lastChild.textContent=t; b.title=t; b.setAttribute('aria-label',t);
+    }
+    b.addEventListener('click',function(){ if(window.SIGEC_TEMA) SIGEC_TEMA.alternar(); });
+    document.addEventListener('sigec:tema',pintar); pintar();
+    bar.appendChild(a); bar.appendChild(n); bar.appendChild(b);
+    document.body.insertBefore(bar,document.body.firstChild);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',poner); else poner();
 })();
 </script>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 28/10/2026</p>
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 02/11/2026</p>
 </body>
 </html>

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Recibo — Escribanía General de Gobierno</title>
-<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
 <script>
 /* Modo oscuro de SIGEC. Una sola preferencia, sigec.tema, que vale para la cáscara y para
    todas las herramientas, estén sueltas o adentro del marco. Va en el <head> para que la
@@ -416,15 +416,73 @@ html[data-theme="dark"]{
       border-bottom: 1px solid #000 !important;
     }
   }
+
+  /* ── DISEÑO D (02/11/2026) ─────────────────────────────────────────────────────────
+     La capa común de SIGEC: la letra, los colores, el encabezado con el ícono, los
+     campos y los botones. Va al final para pisar lo de arriba sin reescribirlo. El azul
+     del recibo pasa a ser sólo el del botón, la opción elegida y el ícono. */
+  :root{
+    --fondo:#F6F7F9; --panel:#FFFFFF; --panel-borde:#E4E7EC; --titulo:#172033; --acento:#C9A84C;
+    --texto:#172033; --texto-2:#5B6478; --campo-bg:#FFFFFF; --campo-borde:#D0D5DD;
+    --foco:#1A2744; --foco-halo:rgba(26,39,68,.14); --sel-bg:#1A2744; --sel-fg:#FFFFFF;
+    --aviso-bg:#FFFAEB; --aviso-borde:#FEC84B; --aviso-texto:#B54708; --mal:#B42318;
+    --pista-bg:#F0F2F5; --sombra-hoja:0 1px 3px rgba(16,24,40,.10),0 16px 36px rgba(16,24,40,.12);
+  }
+  html[data-theme="dark"]{
+    --fondo:#0F1420; --panel:#161C2B; --panel-borde:#262F42; --titulo:#E6EAF2; --texto:#E6EAF2;
+    --texto-2:#98A2B3; --campo-bg:#121826; --campo-borde:#344054; --foco:#8FA8D4;
+    --foco-halo:rgba(143,168,212,.22); --sel-bg:#8FA8D4; --sel-fg:#0E1A2B;
+    --aviso-bg:#33240A; --aviso-borde:#7A5A0E; --aviso-texto:#FEC84B; --mal:#FDA29B;
+    --pista-bg:#1D2535; --sombra-hoja:0 1px 3px rgba(0,0,0,.30),0 16px 36px rgba(0,0,0,.35);
+  }
+  body { font-family: "Plus Jakarta Sans", "Segoe UI", system-ui, sans-serif; font-size: 15px; line-height: 1.5; }
+  .panel { padding: 24px 24px 22px; gap: 24px; }
+  .marca { flex-direction: row; align-items: center; gap: 14px; }
+  .marca .tile { flex: 0 0 auto; width: 46px; height: 46px; border-radius: 13px; display: grid; place-items: center;
+    background: #1A2744; color: #FFFFFF; }
+  html[data-theme="dark"] .marca .tile { background: #8FA8D4; color: #0E1A2B; }
+  .marca .tx { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+  .marca h1 { font-size: 24px; font-weight: 800; letter-spacing: -.02em; line-height: 1.15; }
+  .marca p { font-size: 13.5px; font-weight: 500; line-height: 1.4; }
+  .grupo { gap: 14px; }
+  .grupo > h2 { font-size: 16px; font-weight: 700; letter-spacing: 0; text-transform: none; color: var(--texto);
+    padding: 16px 0 0; border-bottom: 0; border-top: 1px solid var(--panel-borde); }
+  .campo-lbl { gap: 6px; }
+  .campo-lbl > span, .trato > span { font-size: 13.5px; font-weight: 600; color: var(--texto); }
+  .panel input[type=text], .panel select { font-size: 15px; border-radius: 10px; padding: 10px 12px; min-height: 42px; }
+  /* Las dos opciones, como en todo SIGEC: un riel gris y la elegida en blanco. */
+  .seg { background: var(--pista-bg); border: 0; border-radius: 10px; padding: 3px; gap: 3px; }
+  .seg button { border-radius: 8px; font-size: 14px; padding: 8px 13px; color: var(--texto-2); }
+  .seg button + button { border-left: 0; }
+  .seg button[aria-pressed="true"] { background: var(--panel); color: var(--texto); font-weight: 700;
+    box-shadow: 0 1px 3px rgba(16,24,40,.14); }
+  html[data-theme="dark"] .seg button[aria-pressed="true"] { background: #2A3345; }
+  .seg:focus-within { box-shadow: 0 0 0 3px var(--foco-halo); }
+  .pista { font-size: 13px; }
+  .pista button { font-size: 12.5px; padding: 3px 10px; border-radius: 8px; }
+  .pista.mal { font-weight: 600; }
+  .acciones { gap: 10px; }
+  .btn-print { font-size: 15px; font-weight: 700; padding: 0 16px; min-height: 46px; border-radius: 11px;
+    box-shadow: 0 1px 2px rgba(16,24,40,.12); }
+  .btn-clear { font-size: 15px; font-weight: 600; color: var(--texto); min-height: 44px; border-radius: 11px;
+    border: 1px solid var(--panel-borde); background: var(--panel); }
+  .btn-clear:hover { text-decoration: none; border-color: var(--texto-2); }
+  .aviso-huecos { border-left: 0; border: 1px solid var(--aviso-borde); border-radius: 10px; padding: 10px 12px; font-size: 13.5px; }
+  /* Suelta, la barra azul va arriba y ya no hay nada flotando que tape las acciones. */
+  html.suelto body { flex-wrap: wrap; }
+  html.suelto .panel { padding-bottom: 22px; height: calc(100vh - 58px); }
+  @media (max-width: 860px) { html.suelto .panel { height: auto; } }
 </style>
 </head>
 <body>
 
 <div class="panel">
   <header class="marca">
-    <span class="filete"></span>
-    <h1>Recibo</h1>
-    <p>Declaración jurada patrimonial y entrega de documentos</p>
+    <span class="tile" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6M9 16h3"/></svg></span>
+    <div class="tx">
+      <h1>Recibo</h1>
+      <p>Declaración jurada patrimonial y entrega de documentos</p>
+    </div>
   </header>
 
   <!-- Dos recibos distintos, no dos herramientas: el de DDJJ lo firma la Escribania
@@ -498,7 +556,7 @@ html[data-theme="dark"]{
     <button class="btn-clear" onclick="limpiar()">Limpiar campos</button>
   </div>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:24px 0 0;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 29/10/2026</p>
+<p class="sigec-version" style="margin:24px 0 0;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 02/11/2026</p>
 </div>
 
 <div class="preview-area">
@@ -897,23 +955,52 @@ proponerEscritura();
 actualizar();
 </script>
 
-<!-- Volver a SIGEC. Solo aparece cuando la herramienta se abrio sola: adentro del menu no
-     hace falta, porque la barra lateral ya esta. Antes, si abrias una herramienta aparte,
-     no habia ninguna forma de volver. -->
+<!-- Volver a SIGEC (diseño D, 02/11/2026). Sólo cuando la herramienta se abrió sola: adentro
+     del menú está el lateral. Es una barra azul arriba y no un botón flotante: el flotante
+     tapaba botones de la herramienta («Imprimir recibo»). Lleva el claro/oscuro, que adentro
+     del menú está en el pie del lateral. Es igual en todas las herramientas: sólo cambia
+     NOMBRE. -->
 <script>
 (function(){
   try{ if(window.self !== window.top) return; }catch(e){ return; }
+  var NOMBRE='Recibo';
   document.documentElement.classList.add('suelto');
-  var a=document.createElement('a');
-  a.className='volver-sigec';
-  a.href='../../index.html';
-  a.textContent='\u2190 Volver a SIGEC';
-  a.setAttribute('style','position:fixed;left:14px;bottom:14px;z-index:9999;'
-    +'font-family:Montserrat,system-ui,sans-serif;font-size:12.5px;font-weight:600;'
-    +'text-decoration:none;padding:8px 14px;border-radius:999px;'
-    +'background:#1B2F5E;color:#fff;box-shadow:0 2px 10px rgba(27,47,94,.28)');
-  document.addEventListener('DOMContentLoaded',function(){document.body.appendChild(a);});
-  if(document.readyState!=='loading') document.body.appendChild(a);
+  var css='.sigec-suelta{flex:0 0 100%;width:100%;display:flex;align-items:center;gap:12px;min-height:58px;box-sizing:border-box;'
+    +'padding:8px 14px;background:#172A52;color:#fff;border-bottom:2px solid #C9A84C;'
+    +'font:600 14px/1.3 "Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;position:relative;z-index:60}'
+    +'html[data-theme="dark"] .sigec-suelta{background:#0E1A33}'
+    +'.sigec-suelta a,.sigec-suelta button{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 12px 0 7px;border:0;'
+    +'border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font:inherit;text-decoration:none;cursor:pointer;flex:0 0 auto}'
+    +'.sigec-suelta a:hover,.sigec-suelta button:hover{background:rgba(255,255,255,.15)}'
+    +'.sigec-suelta .s{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:#C9A84C;color:#172A52;'
+    +'font-weight:800;font-size:13px}'
+    +'.sigec-suelta .n{font-size:16px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+    +'.sigec-suelta button{margin-left:auto;padding:0 12px}'
+    +'.sigec-suelta svg{display:block}'
+    +'.sigec-suelta :focus-visible{outline:2px solid #C9A84C;outline-offset:2px}'
+    +'@media(max-width:560px){.sigec-suelta button span{display:none}}'
+    +'@media print{.sigec-suelta{display:none!important}}';
+  var LUNA='M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z';
+  var SOL='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4';
+  function poner(){
+    var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
+    var bar=document.createElement('div'); bar.className='sigec-suelta';
+    var a=document.createElement('a'); a.href='../../index.html'; a.title='Ir al menú de SIGEC';
+    a.innerHTML='<span class="s" aria-hidden="true">S</span>Volver a SIGEC';
+    var n=document.createElement('span'); n.className='n'; n.textContent=NOMBRE;
+    var b=document.createElement('button'); b.type='button';
+    function pintar(){
+      var osc=window.SIGEC_TEMA&&SIGEC_TEMA.actual()==='oscuro', t=osc?'Modo claro':'Modo oscuro';
+      b.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        +'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(osc?SOL:LUNA)+'"/></svg><span></span>';
+      b.lastChild.textContent=t; b.title=t; b.setAttribute('aria-label',t);
+    }
+    b.addEventListener('click',function(){ if(window.SIGEC_TEMA) SIGEC_TEMA.alternar(); });
+    document.addEventListener('sigec:tema',pintar); pintar();
+    bar.appendChild(a); bar.appendChild(n); bar.appendChild(b);
+    document.body.insertBefore(bar,document.body.firstChild);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',poner); else poner();
 })();
 </script>
 </body>
