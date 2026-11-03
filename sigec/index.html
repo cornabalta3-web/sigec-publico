@@ -52,7 +52,10 @@ svg{display:block;flex:0 0 auto}
 /* ---------- el lateral ---------- */
 .lado{flex:0 0 264px;background:var(--lado);color:var(--lado-tx);display:flex;flex-direction:column;gap:18px;
  padding:18px 14px 14px;overflow-y:auto}
-.app.plegado .lado{display:none}
+/* Plegar el lateral lo desliza (Baltasar, 03/11/2026: «no se desplaza suavemente»); plegado
+   queda invisible, para que el tabulador no entre ahí. */
+.lado{transition:margin-left .24s ease,visibility 0s}
+.app.plegado .lado{margin-left:-264px;visibility:hidden;transition:margin-left .24s ease,visibility 0s linear .24s}
 .marca{display:flex;align-items:center;gap:12px;padding:4px 6px 16px;border:0;border-bottom:1px solid rgba(201,168,76,.45);
  background:none;text-align:left;cursor:pointer;border-radius:0}
 .sello{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--oro);color:#172A52;
@@ -148,7 +151,7 @@ iframe{flex:1;width:100%;border:0;background:var(--bg);min-height:0}
 @media(max-width:820px){
  .lado{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:30;transform:translateX(-102%);
   transition:transform .2s ease}
- .app.plegado .lado{display:flex}
+ .app.plegado .lado{margin-left:0;visibility:visible}
  .app.abierto .lado{transform:none;box-shadow:8px 0 30px rgba(0,0,0,.30)}
  .app.abierto .velo{display:block;position:fixed;inset:0;z-index:20;background:rgba(10,16,30,.45)}
  .barra{padding:8px 12px}
@@ -157,7 +160,7 @@ iframe{flex:1;width:100%;border:0;background:var(--bg);min-height:0}
  .cab h1{font-size:26px}
  .logos img{height:36px}
 }
-@media(prefers-reduced-motion:reduce){.lado,.tj{transition:none}}
+@media(prefers-reduced-motion:reduce){.lado,.app.plegado .lado,.tj{transition:none}}
 /* Cambiar de herramienta sin salto (Baltasar, 03/11/2026): la herramienta aparece con un
    fundido cuando terminó de cargar, y la portada entra igual. */
 @media(prefers-reduced-motion:no-preference){
@@ -358,6 +361,11 @@ function pintarTarjetas(){
 
 /* ---------- abrir una herramienta ---------- */
 let ACTUAL=null;
+/* La pestaña que el menú abre aparte lleva un nombre que empieza con «sigec-»: con eso, su
+   «Volver a SIGEC» sabe que el menú quedó abierto atrás y la cierra, en vez de ir al menú que
+   tenga al lado (desde GitHub, la copia pública de cuatro herramientas). Uno nuevo cada vez:
+   un nombre repetido recargaría la pestaña que ya estaba abierta. */
+const nombreVentana=h=>"sigec-"+h.id+"-"+Date.now().toString(36);
 function cerrarCajon(){ $("#app").classList.remove("abierto"); }
 function abrir(id,desdeDireccion){
  const h=HERRAMIENTAS.find(x=>x.id===id);
@@ -365,11 +373,11 @@ function abrir(id,desdeDireccion){
  /* Una herramienta que vive en GitHub (externo) se abre en otra pestaña, no en el marco (Baltasar, 26/10/2026: el cotejo,
     «que el original y el único sea el de GitHub»). Pedida por la dirección (#cotejo) no hay clic que habilite otra
     pestaña: se va directo. */
- if(h.externo){ if(desdeDireccion) location.href=h.url; else window.open(h.url,"_blank","noopener"); return; }
+ if(h.externo){ if(desdeDireccion) location.href=h.url; else window.open(h.url,nombreVentana(h),"noopener"); return; }
  /* Escrituras sociales (ventana:true) se comparte por una carpeta del R:, y adentro del marco Chrome no deja usar
     carpetas: se abre directo en su ventana, para que no se pueda trabajar en el lugar donde no se comparte
     (Baltasar, 03/11/2026). */
- if(h.ventana){ if(desdeDireccion) location.href=h.url; else window.open(h.url,"_blank"); return; }
+ if(h.ventana){ if(desdeDireccion) location.href=h.url; else window.open(h.url,nombreVentana(h)); return; }
  ACTUAL=h;
  /* Abierta desde #cotejo, se despliega «Otros» para que se vea dónde está. */
  if(h.oculto&&!OTROS) OTROS=true;
@@ -400,7 +408,7 @@ function inicio(){
 }
 $("#btnInicio").addEventListener("click",inicio);
 $("#btnMarca").addEventListener("click",inicio);
-$("#btnNueva").addEventListener("click",()=>{ if(ACTUAL) window.open(ACTUAL.url,"_blank"); });
+$("#btnNueva").addEventListener("click",()=>{ if(ACTUAL) window.open(ACTUAL.url,nombreVentana(ACTUAL)); });
 $("#velo").addEventListener("click",cerrarCajon);
 $("#btnMenu").addEventListener("click",()=>{
  const c=$("#app");

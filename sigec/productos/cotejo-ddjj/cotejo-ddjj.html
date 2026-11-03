@@ -3699,7 +3699,7 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("button");
  else if(acc==="sinGrp"){ FILTRO.grp=null; mostrarPersonas(); }
  else if(acc==="publicar") publicar();
  else if(acc==="otroLugar"){ if(db) await pedir("meta","readwrite",s=>s.delete("consultaArchivo")).catch(()=>{}); dlg.close(); }
- else if(acc==="ventana"){ window.open(location.href,"_blank"); dlg.close(); }
+ else if(acc==="ventana"){ window.open(location.href,"sigec-cotejo-"+Date.now().toString(36)); dlg.close(); }
  else if(acc==="recargar") location.reload();
  else if(acc==="nube") abrirNube();
  else if(acc==="nubeToken") pasoToken();
@@ -3778,6 +3778,15 @@ document.addEventListener("visibilitychange",()=>{ if(!document.hidden){ revisar
     var bar=document.createElement('div'); bar.className='sigec-suelta';
     var a=document.createElement('a'); a.href='../../index.html'; a.title='Ir al menú de SIGEC';
     a.innerHTML='<span class="s" aria-hidden="true">S</span>Volver a SIGEC';
+    /* Si a esta pestaña la abrió el menú de SIGEC (le pone un nombre que empieza con «sigec-»),
+       el menú quedó abierto en la de atrás: volver es cerrar esta. Así se vuelve al menú del R:
+       también desde la copia de GitHub, que no puede abrir un archivo del disco y llevaba a la
+       copia pública, con cuatro herramientas (Baltasar, 03/11/2026). Si no se cierra, va al menú
+       de al lado, como antes. */
+    if(/^sigec-/.test(window.name||'')){
+      a.title='Cierra esta pestaña: el menú de SIGEC quedó abierto en la de atrás';
+      a.addEventListener('click',function(e){ e.preventDefault(); try{ window.close(); }catch(x){} setTimeout(function(){ location.href=a.href; },400); });
+    }
     var n=document.createElement('span'); n.className='n'; n.textContent=NOMBRE;
     var b=document.createElement('button'); b.type='button';
     function pintar(){
