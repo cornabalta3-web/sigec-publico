@@ -472,6 +472,15 @@ html[data-theme="dark"]{
   html.suelto body { flex-wrap: wrap; }
   html.suelto .panel { padding-bottom: 22px; height: calc(100vh - 58px); }
   @media (max-width: 860px) { html.suelto .panel { height: auto; } }
+/* Movimiento suave, común a todas las herramientas (Baltasar, 03/11/2026: «que no sea algo
+   tan repentino»). Sólo opacidad: nada cambia de lugar ni de dónde se ancla lo fijo. Entra al
+   abrir, y en lo que aparece al cambiar de pestaña o de paso; no en lo que se redibuja al
+   escribir. Nada corre si la computadora pidió menos movimiento. */
+@media (prefers-reduced-motion:no-preference){
+ body{animation:sigecEntra .22s ease-out}
+ button,a,input,select,textarea,summary{transition:background-color .15s,border-color .15s,box-shadow .15s,color .15s,opacity .15s}
+ @keyframes sigecEntra{from{opacity:0}}
+}
 </style>
 </head>
 <body>
@@ -556,7 +565,7 @@ html[data-theme="dark"]{
     <button class="btn-clear" onclick="limpiar()">Limpiar campos</button>
   </div>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:24px 0 0;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 02/11/2026</p>
+<p class="sigec-version" style="margin:24px 0 0;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 03/11/2026</p>
 </div>
 
 <div class="preview-area">

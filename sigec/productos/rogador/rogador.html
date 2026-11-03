@@ -201,6 +201,16 @@ html[data-theme="dark"] .good{background:#0E2A1C;border-color:#1C4A30;color:#75E
 .bar .acts{gap:10px}
 .bar button{min-height:44px}
 #pv{border-radius:12px}
+/* Movimiento suave, común a todas las herramientas (Baltasar, 03/11/2026: «que no sea algo
+   tan repentino»). Sólo opacidad: nada cambia de lugar ni de dónde se ancla lo fijo. Entra al
+   abrir, y en lo que aparece al cambiar de pestaña o de paso; no en lo que se redibuja al
+   escribir. Nada corre si la computadora pidió menos movimiento. */
+@media (prefers-reduced-motion:no-preference){
+ body{animation:sigecEntra .22s ease-out}
+ #setup,#nueva,#pvPanel,#apiCfg,#ai{animation:sigecEntra .2s ease-out}
+ button,a,input,select,textarea,summary{transition:background-color .15s,border-color .15s,box-shadow .15s,color .15s,opacity .15s}
+ @keyframes sigecEntra{from{opacity:0}}
+}
 </style>
 </head>
 <body>
@@ -1388,6 +1398,6 @@ $("#tplReset").onclick = async () => {
 })();
 </script>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 02/11/2026</p>
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 03/11/2026</p>
 </body>
 </html>

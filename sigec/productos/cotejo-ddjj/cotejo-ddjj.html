@@ -402,6 +402,16 @@ h2{color:var(--fg)}
 .btn{border-radius:10px;font-size:14px;padding:9px 14px}
 .btn.pri{font-weight:700}
 .card,.paso,.pf{border-radius:16px}
+/* Movimiento suave, común a todas las herramientas (Baltasar, 03/11/2026: «que no sea algo
+   tan repentino»). Sólo opacidad: nada cambia de lugar ni de dónde se ancla lo fijo. Entra al
+   abrir, y en lo que aparece al cambiar de pestaña o de paso; no en lo que se redibuja al
+   escribir. Nada corre si la computadora pidió menos movimiento. */
+@media (prefers-reduced-motion:no-preference){
+ body{animation:sigecEntra .22s ease-out}
+ [data-panel]{animation:sigecEntra .2s ease-out}
+ button,a,input,select,textarea,summary{transition:background-color .15s,border-color .15s,box-shadow .15s,color .15s,opacity .15s}
+ @keyframes sigecEntra{from{opacity:0}}
+}
 </style>
 </head>
 <body>
@@ -518,7 +528,7 @@ h2{color:var(--fg)}
  </section>
  </div>
 
- <p class="pie"><span class="sigec-version">Versión del 02/11/2026</span></p>
+ <p class="pie"><span class="sigec-version">Versión del 03/11/2026</span></p>
 </div>
 
 <dialog id="dlg" aria-labelledby="dlgTit"><div class="dlg" id="dlgCont"></div></dialog>

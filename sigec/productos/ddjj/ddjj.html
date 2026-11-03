@@ -261,6 +261,16 @@
   .hist-item{border-radius:12px;}
   .site-footer{border-top-color:var(--line);}
   @media (max-width:600px){ .app{padding:0 16px 48px;} .step-pill{font-size:13px;} .step-pill:not(:last-child)::after{display:none;} }
+/* Movimiento suave, común a todas las herramientas (Baltasar, 03/11/2026: «que no sea algo
+   tan repentino»). Sólo opacidad: nada cambia de lugar ni de dónde se ancla lo fijo. Entra al
+   abrir, y en lo que aparece al cambiar de pestaña o de paso; no en lo que se redibuja al
+   escribir. Nada corre si la computadora pidió menos movimiento. */
+@media (prefers-reduced-motion:no-preference){
+ body{animation:sigecEntra .22s ease-out}
+ section.panel.active,.modal-overlay.show,.warn-box.show{animation:sigecEntra .2s ease-out}
+ button,a,input,select,textarea,summary{transition:background-color .15s,border-color .15s,box-shadow .15s,color .15s,opacity .15s}
+ @keyframes sigecEntra{from{opacity:0}}
+}
 </style>
 </head>
 <body>
@@ -524,14 +534,8 @@ document.getElementById("btn-theme").addEventListener("click", () => {
 // Configuración de API
 // ============================================================
 const API_URL = "https://api.anthropic.com/v1/messages";
-const MODEL_COMPOSE = "claude-sonnet-5-5";  // redacción: necesita criterio y estilo notarial. $2/$10 el millón
-const MODEL_EXTRACT = "claude-haiku-5-5";   // lectura del formulario, tarea mecánica. $0,10/$0,50 el millón
-/* Los dos modelos piensan por defecto, cosa que Sonnet 4.6 y Haiku 4.5 no hacían: omitir
-   "thinking" en los nuevos significa pensamiento adaptativo, no "sin pensar". Ese pensamiento
-   se factura como salida y entra dentro de max_tokens. Con ESFUERZO "low" el modelo piensa
-   poco y puede no pensar nada en lo simple, que es lo más parecido al comportamiento de antes.
-   Si alguna vez conviene que razone más en la redacción, acá se sube a "medium". */
-const ESFUERZO = "low";
+const MODEL_COMPOSE = "claude-sonnet-4-6";       // redacción de la escritura: necesita criterio y estilo notarial
+const MODEL_EXTRACT = "claude-haiku-4-5-20251001"; // lectura/extracción de datos: tarea mecánica, modelo más económico
 
 function getApiKey(){ return localStorage.getItem("escrituras_api_key") || ""; }
 
@@ -575,18 +579,13 @@ function parseDelimited(text){
   return {filename: nombreArchivo, html: html};
 }
 
-/* Si una API vieja rechazara output_config, la herramienta no puede quedar muerta: se
-   reintenta una vez sin él y no se vuelve a mandar en toda la sesión. */
-let SIN_OUTPUT_CONFIG = false;
-async function callClaude(system, contentBlocks, maxTokens, model, esfuerzo){
+async function callClaude(system, contentBlocks, maxTokens, model){
   const apiKey = getApiKey();
   if(!apiKey){ throw new Error("Falta configurar la clave de API (arriba de la página, sección 'Configuración de la clave')."); }
   let messages = [{role:"user", content: contentBlocks}];
   let fullText = "";
   for(let round = 0; round < 6; round++){
     let resp;
-    const cuerpo = { model: model || MODEL_COMPOSE, max_tokens: maxTokens || 8000, system, messages };
-    if(!SIN_OUTPUT_CONFIG) cuerpo.output_config = { effort: esfuerzo || ESFUERZO };
     try{
       resp = await fetch(API_URL, {
         method: "POST",
@@ -596,7 +595,7 @@ async function callClaude(system, contentBlocks, maxTokens, model, esfuerzo){
           "content-type": "application/json",
           "anthropic-dangerous-direct-browser-access": "true"
         },
-        body: JSON.stringify(cuerpo)
+        body: JSON.stringify({ model: model || MODEL_COMPOSE, max_tokens: maxTokens || 8000, system, messages })
       });
     }catch(e){
       throw new Error("No se pudo conectar (revisá la conexión a internet). Detalle: " + e.message);
@@ -605,10 +604,6 @@ async function callClaude(system, contentBlocks, maxTokens, model, esfuerzo){
     try{ data = await resp.json(); }catch(e){ throw new Error("Respuesta no interpretable de la API (status " + resp.status + ")."); }
     if(!resp.ok){
       const msg = (data && data.error && data.error.message) ? data.error.message : JSON.stringify(data);
-      if(resp.status === 400 && !SIN_OUTPUT_CONFIG && /output_config|effort/i.test(msg)){
-        SIN_OUTPUT_CONFIG = true;   // esta API no lo acepta: seguimos sin él
-        round--; continue;
-      }
       if(resp.status === 401) throw new Error("La clave de API no es válida o fue revocada. Revisala en la sección 'Configuración de la clave'. (" + msg + ")");
       if(resp.status === 429) throw new Error("Se alcanzó el límite de uso momentáneo de la API. Esperá un minuto y volvé a intentar. (" + msg + ")");
       throw new Error(msg + " (status " + resp.status + ")");
@@ -616,9 +611,7 @@ async function callClaude(system, contentBlocks, maxTokens, model, esfuerzo){
     const textPart = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("");
     fullText += textPart;
     if(data.stop_reason !== "max_tokens") break;
-    /* El turno se devuelve ENTERO, con sus bloques de pensamiento: rearmarlo sólo con el texto
-       es editar lo ya dicho, y los modelos nuevos rechazan un pensamiento así alterado. */
-    messages.push({role:"assistant", content: data.content});
+    messages.push({role:"assistant", content: textPart});
     messages.push({role:"user", content:[{type:"text", text:"Continuá exactamente desde donde quedaste, caracter por caracter, sin repetir nada ni agregar comentarios. Tu respuesta se concatena directamente después de lo anterior."}]});
   }
   return fullText;
@@ -899,7 +892,7 @@ document.getElementById("btn-retry-sonnet").addEventListener("click", async () =
       {type:"document", source:{type:"base64", media_type:"application/pdf", data: state.pdfBase64}},
       {type:"text", text:"Leé el formulario de declaración jurada adjunto y devolvé el listado completo de datos, según tus instrucciones."}
     ];
-    const out = await callClaude(EXTRACT_SYSTEM, blocks, 12000, MODEL_COMPOSE);
+    const out = await callClaude(EXTRACT_SYSTEM, blocks, 8000, MODEL_COMPOSE);
     const nuevoListado = out.trim();
     if(!nuevoListado){ throw new Error("La respuesta vino vacía."); }
     state.listado = nuevoListado;
@@ -1206,9 +1199,7 @@ document.getElementById("btn-extract").addEventListener("click", async () => {
       {type:"document", source:{type:"base64", media_type:"application/pdf", data: state.pdfBase64}},
       {type:"text", text:"Leé el formulario de declaración jurada adjunto y devolvé el listado completo de datos, según tus instrucciones."}
     ];
-    // 8000 y no 4000: en Haiku 5.5 el pensamiento cuenta dentro de max_tokens y el mismo
-    // texto ocupa ~30% más tokens que en 4.5, así que el techo viejo cortaba el listado.
-    const out = await callClaude(EXTRACT_SYSTEM, blocks, 8000, MODEL_EXTRACT);
+    const out = await callClaude(EXTRACT_SYSTEM, blocks, 4000, MODEL_EXTRACT);
     state.listado = out.trim();
     if(!state.listado){ throw new Error("La respuesta vino vacía. Volvé a intentar."); }
     document.getElementById("listado-edit").value = state.listado;
@@ -1238,7 +1229,7 @@ document.getElementById("btn-compose").addEventListener("click", async () => {
       {type:"document", source:{type:"base64", media_type:"application/pdf", data: state.pdfBase64}},
       {type:"text", text:"LISTADO CONFIRMADO POR EL ESCRIBANO (fuente principal; puede tener correcciones respecto del PDF):\n\n" + listado + "\n\nEl PDF original está adjunto solo para verificar cifras y transcripciones exactas. Nunca agregues datos que no estén en el listado confirmado. Redactá la escritura con el formato de delimitadores indicado en tus instrucciones (NO uses JSON)."}
     ];
-    const out = await callClaude(buildComposeSystem(), blocks, 12000, MODEL_COMPOSE);
+    const out = await callClaude(buildComposeSystem(), blocks, 8000, MODEL_COMPOSE);
     const parsed = parseDelimited(out);
     document.getElementById("doc-preview").innerHTML = parsed.html || "";
     state.filename = (parsed.filename || "Escritura").replace(/[\\/:*?"<>|]/g, "");
@@ -1433,6 +1424,6 @@ showPanel(1);
 })();
 </script>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 02/11/2026</p>
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 03/11/2026</p>
 </body>
 </html>
