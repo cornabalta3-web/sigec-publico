@@ -53,7 +53,11 @@
   *{box-sizing:border-box;}
   body{margin:0; background:var(--paper); color:var(--ink); font-family:var(--font-sans); line-height:1.5;}
   .app{max-width:900px; margin:0 auto; padding:0 20px 80px; transition:max-width 0.2s;}
-  .app.wide-mode{max-width:1760px;}
+  /* Sin tope: en los pasos 2 y 3 se usa la ventana entera. El 1760 dejaba una franja
+   muerta a cada lado en los monitores grandes, y lo que se gana con el ancho es que
+   la escritura y el PDF se puedan comparar de verdad, que es para lo que está esa
+   pantalla. */
+.app.wide-mode{max-width:none;}
   .compare-wrap{display:flex; gap:20px; align-items:flex-start;}
   .compare-main{flex:1 1 0; min-width:0;}
   .compare-pdf{flex:1 1 0; min-width:0; position:sticky; top:16px; display:flex; flex-direction:column; gap:8px; transition:flex 0.15s; background:var(--paper-raised); border:1px solid var(--line); border-radius:6px; padding:22px 24px; box-sizing:border-box;}
@@ -157,7 +161,7 @@
   button.secondary:hover{background:var(--paper); opacity:1;}
   button:disabled{opacity:0.45; cursor:default; box-shadow:none;}
   .hint{font-size:12.5px; color:var(--ink-soft); margin-top:8px;}
-  .guia{max-width:900px; margin:0 auto 22px; border:1px solid var(--line); border-radius:6px; background:var(--card); overflow:hidden;}
+  .guia{max-width:none; margin:0 auto 22px; border:1px solid var(--line); border-radius:6px; background:var(--card); overflow:hidden;}
   .guia summary{cursor:pointer; padding:13px 18px; font-size:14px; font-weight:600; color:var(--ink); list-style:none; display:flex; align-items:center; gap:9px; user-select:none;}
   .guia summary::-webkit-details-marker{display:none;}
   .guia summary::before{content:"›"; display:inline-block; font-size:19px; line-height:1; transition:transform .18s ease; color:var(--ink-soft);}
@@ -179,7 +183,7 @@
   .doc-preview{
     background:var(--paper-raised); border:1px solid var(--line); border-radius:2px; padding:44px 50px;
     font-family:var(--font-serif); font-size:15px; line-height:1.9; text-align:justify; min-height:560px;
-    box-shadow:0 2px 10px rgba(26,40,54,0.1), 0 1px 3px rgba(26,40,54,0.08); max-width:860px; margin:0 auto;
+    box-shadow:0 2px 10px rgba(26,40,54,0.1), 0 1px 3px rgba(26,40,54,0.08); max-width:none; margin:0 auto;
   }
   .doc-preview:focus{outline:2px solid var(--gold); outline-offset:4px;}
   .filename-row{display:flex; align-items:center; gap:10px; margin:16px 0;}
