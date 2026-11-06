@@ -264,6 +264,7 @@ html[data-theme="dark"] .chipb.on{color:#0E1524}
 .pf-acc{margin-top:4px}
 .carta{border:1px solid var(--line);border-radius:8px;padding:18px 20px;max-height:440px;overflow:auto;background:#fff;color:#000}
 .carta img{max-width:100%;height:auto}
+.carta-prev{max-height:300px}
 .seg.seg-c{display:inline-grid;grid-template-columns:repeat(2,auto)}
 .seg.seg-c button{min-height:32px;padding:4px 14px;font-size:13px}
 .notif{white-space:pre-wrap;font:inherit;font-size:13.5px;line-height:1.5;background:var(--sup2);border:1px solid var(--line);border-radius:8px;padding:12px 14px;margin:0;max-height:280px;overflow:auto}
@@ -406,6 +407,60 @@ h2{color:var(--fg)}
    tan repentino»). Sólo opacidad: nada cambia de lugar ni de dónde se ancla lo fijo. Entra al
    abrir, y en lo que aparece al cambiar de pestaña o de paso; no en lo que se redibuja al
    escribir. Nada corre si la computadora pidió menos movimiento. */
+/* La franja de las fechas y el Inicio (06/11/2026) */
+.aldia{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin:0 0 14px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--sup);font-size:13px}
+.aldia[hidden],.aldia.oculto{display:none}
+.aldia-t{font-weight:700;color:var(--fg)}
+.aldia-it{display:flex;flex-wrap:wrap;gap:2px 14px;color:var(--fg)}
+.aldia-it small{color:var(--muted);font-size:12px}
+.aldia-n{flex:1 1 100%;color:var(--muted)}
+.aldia.viejo{border-color:var(--warn);background:var(--warn-bg)}
+.aldia.viejo .aldia-n{color:var(--warn)}
+.card.ini{margin-bottom:16px}
+.ini-num{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:24px;align-items:end}
+.ini-t{margin:0 0 10px;font-size:15px;font-weight:600;color:var(--muted)}
+.ini-al{color:var(--fg);font-weight:700;white-space:nowrap}
+.ini-cifra{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px}
+.ini-pct{font-size:64px;font-weight:800;line-height:1;letter-spacing:-.02em;color:var(--fg);font-variant-numeric:tabular-nums}
+.ini-de{font-size:17px;font-variant-numeric:tabular-nums}
+.ini-faltan{color:var(--mal)}
+.ini-barra{height:12px;margin-top:14px;border-radius:4px;background:var(--pista);overflow:hidden}
+.ini-barra>span{display:block;height:100%;background:var(--acento);border-radius:0 4px 4px 0}
+.ini-lado{border-left:1px solid var(--line);padding-left:24px}
+.ini-lado .et{display:block;font-size:13px;font-weight:600;color:var(--muted)}
+.ini-lado .v{display:block;font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+.ini-lado small{font-size:14px;font-weight:500;color:var(--muted)}
+.ini-cab{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:8px}
+.ini-cab h2,.ini-cese h2{margin:0;font-size:18px}
+.ini-lista{list-style:none;margin:0;padding:0}
+.ini-fila{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,2fr) 90px 20px;gap:16px;align-items:center;width:100%;padding:12px 10px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;color:var(--fg);font:inherit;text-align:left;cursor:pointer;min-height:52px}
+.ini-fila:hover{background:var(--sup2)}
+.ini-fila:focus-visible{outline:2px solid var(--acento);outline-offset:-2px;border-radius:8px}
+.ini-fila.enc{cursor:default;min-height:0;padding-top:4px;padding-bottom:6px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.ini-fila.enc:hover{background:none}
+.ini-fila .r{text-align:right;font-variant-numeric:tabular-nums}
+.ini-org b{display:block;font-weight:600}
+.ini-org small{color:var(--muted);font-size:12.5px}
+.ini-pr{display:flex;align-items:center;gap:12px}
+.ini-pr .pista{flex:1 1 auto;height:10px;border-radius:4px;background:var(--pista);overflow:hidden}
+.ini-pr .lleno{display:block;height:100%;background:var(--acento);border-radius:0 4px 4px 0}
+.ini-pr b{flex:0 0 46px;text-align:right;font-variant-numeric:tabular-nums}
+.ini-f{font-weight:700}
+.ini-f.mal{color:var(--mal)}
+.ini-f.ok{color:var(--ok);font-weight:600}
+.ini-fet{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.ini-ir{color:var(--muted)}
+.ini-cese{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;justify-content:space-between}
+.ini-cese>div{flex:1 1 320px}
+@media (max-width:700px){
+ .ini-num{grid-template-columns:1fr;gap:16px}
+ .ini-lado{border-left:0;border-top:1px solid var(--line);padding:14px 0 0}
+ .ini-pct{font-size:52px}
+ .ini-fila{grid-template-columns:minmax(0,1fr) auto 18px;grid-template-areas:"org f ir" "pr pr ir";gap:8px 12px}
+ .ini-fila.enc{display:none}
+ .ini-org{grid-area:org}.ini-pr{grid-area:pr}.ini-f{grid-area:f}.ini-ir{grid-area:ir}
+ .ini-fet{position:static;width:auto;height:auto;clip:auto;font-weight:500;font-size:12.5px}
+}
 @media (prefers-reduced-motion:no-preference){
  body{animation:sigecEntra .22s ease-out}
  [data-panel]{animation:sigecEntra .2s ease-out}
@@ -431,15 +486,23 @@ h2{color:var(--fg)}
  </header>
 
  <nav class="pestanas" id="pestanas" aria-label="Partes del cotejo">
-  <button type="button" data-tab="buscar" aria-pressed="true">Buscar</button>
+  <button type="button" data-tab="inicio" aria-pressed="false">Inicio</button>
+  <button type="button" data-tab="buscar" aria-pressed="false">Buscar</button>
   <button type="button" data-tab="resumen" aria-pressed="false">Resumen</button>
   <button type="button" data-tab="carga" aria-pressed="false"><span class="largo">Cargar la semana</span><span class="corto">Carga</span><span class="badge oculto" id="pestN"></span></button>
  </nav>
 
  <div id="bandas"></div>
+ <div id="alDia" class="aldia oculto" role="note" aria-label="Hasta qué fecha llegan los datos"></div>
  <div id="vacio"></div>
 
- <div data-panel="buscar">
+ <div data-panel="inicio" hidden>
+ <section class="card ini oculto" id="secIni" aria-labelledby="iniT"></section>
+ <section class="card ini oculto" id="secIniOrg"></section>
+ <section class="card ini oculto" id="secIniCese"></section>
+ </div>
+
+ <div data-panel="buscar" hidden>
  <section class="card principal oculto" id="secPersonas">
   <h2 class="visual-oculto">Buscar</h2>
   <div class="filtros">
@@ -528,7 +591,7 @@ h2{color:var(--fg)}
  </section>
  </div>
 
- <p class="pie"><span class="sigec-version">Versión del 03/11/2026</span></p>
+ <p class="pie"><span class="sigec-version">Versión del 06/11/2026</span></p>
 </div>
 
 <dialog id="dlg" aria-labelledby="dlgTit"><div class="dlg" id="dlgCont"></div></dialog>
@@ -1402,18 +1465,19 @@ async function pintar(){ const m=M(); const ult=m.semanas.length-1; if(VISTA!=nu
  const cmpG=R&&prevR?comparar(R.personas,prevR.personas):null;
  ACT={i,s,R,r:vista(R,ALC),prevR,prev:otrasP.length?null:vista(prevR,ALC),otras:otras.length?otras:otrasP,cmpG,cmp:cmpG&&!otrasP.length?{cambios:new Map([...cmpG.cambios].filter(([p])=>p.alc.includes(ALC))),salieron:cmpG.salieron.filter(q=>(q.alc||["E"]).includes(ALC)),
   pasaron:[...cmpG.par].filter(([p,q])=>q.alc&&q.alc.includes(ALC)&&!p.alc.includes(ALC)).map(([p])=>p)}:null};
- pintarCab(); pintarBandas(); pintarTitular(); pintarSelPod(); pintarMandar(); pintarListas(); pintarResumen(); pintarOrganismos(); pintarConfirmar(); pintarSelMin(); pintarFiltros(); pintarPersonas(); pintarPublicar(); pintarHistorial(); pintarCopia(); pintarPlegados(); pintarPestanas();
+ pintarCab(); pintarBandas(); pintarTitular(); pintarAlDia(); pintarInicio(); pintarSelPod(); pintarMandar(); pintarListas(); pintarResumen(); pintarOrganismos(); pintarConfirmar(); pintarSelMin(); pintarFiltros(); pintarPersonas(); pintarPublicar(); pintarHistorial(); pintarCopia(); pintarPlegados(); pintarPestanas();
  // el historial recalculó las semanas con la cuenta vieja: se guardan, para no recalcularlas al abrir
  if(viejas&&!DEMO&&!conflicto) await guardarMeta(true); }
 
 const hayDatos=()=>!!(ACT&&ACT.R&&ACT.R.personas.length);
-/* Las pestañas, una por tarea (Baltasar, 24/10/2026: «falta orden»): Buscar es lo de todos los
-   días; Resumen, el panorama; Cargar la semana, lo del lunes, con el número de lo que falta
-   decidir. Sin listas se abre en la carga. La que está elegida no se recuerda al recargar. */
+/* Las pestañas, una por tarea (Baltasar, 24/10/2026: «falta orden»): Inicio, el número y cómo está cada organismo
+   (el diseño E, 06/11/2026: «es más que todo una consulta»); Buscar, una persona o una lista; Resumen, el detalle;
+   Cargar la semana, lo del lunes, con el número de lo que falta decidir. Sin listas se abre en la carga. La que
+   está elegida no se recuerda al recargar. */
 let TAB=null;
-function ponerTab(t){ TAB=t; document.querySelectorAll("[data-panel]").forEach(e=>{ e.hidden=e.dataset.panel!==t; });
+function ponerTab(t){ TAB=t; document.querySelectorAll("[data-panel]").forEach(e=>{ e.hidden=e.dataset.panel!==t; }); const ad=$("#alDia"); if(ad) ad.hidden=t==="carga";
  document.querySelectorAll("#pestanas [data-tab]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.tab===t))); }
-function pintarPestanas(){ if(!hayDatos()) TAB="carga"; else if(!TAB) TAB="buscar"; ponerTab(TAB);
+function pintarPestanas(){ if(!hayDatos()) TAB="carga"; else if(!TAB) TAB="inicio"; ponerTab(TAB);
  const r=ACT.R, n=r&&editable()?r.propuestas.length+r.personas.filter(p=>p.revCargo||p.inconsist||p.dudaPoder).length:0, b=$("#pestN");
  b.textContent=n?nf(n):""; b.classList.toggle("oculto",!n); b.title=n?"Lo que falta decidir: coincidencias de nombre e inconsistencias":""; }
 const enUltima=()=>!!ACT&&ACT.i===M().semanas.length-1;
@@ -1427,6 +1491,52 @@ const soloVerN=n=>!!n&&!!n.pierri&&!["admin","editor"].includes(n.rol);   // un 
 const SOLO_VER=()=>!!NUBE&&!DEMO&&soloVerN(NUBE);
 const editable=()=>enUltima()&&!SOLO_VER();
 const soloVer=()=>{ if(!SOLO_VER()) return false; dialogoAviso("Sólo para ver","Entraste con un perfil de Consulta de Ley Pierri: ves todo el cotejo, pero no cargás listas ni decidís."); return true; };
+/* La franja «hasta qué fecha llegan los datos», arriba de Inicio, Buscar y Resumen: lo que cada lista dice y hasta
+   cuándo. Sin ella, quien presentó después de la última escritura del índice parece que no presentó. Si el índice
+   tiene más de una semana, se dice en naranja. */
+function textoAlDia(){ const r=ACT&&ACT.r; if(!hayDatos()||!r) return null; const F=fuentesDatos(ACT.s), L=r.L, it=[];
+ it.push(L.p&&F.p?`<span><b>Presentaron:</b> hasta la escritura del ${esc(F.p.hasta||"—")}${F.p.cargada?` <small>· índice cargado el ${esc(F.p.cargada)}</small>`:""}</span>`:`<span><b>Presentaron:</b> falta el índice del protocolo</span>`);
+ const fd=L.a?fechaNominaDe(ACT.s,ALC):"", ref=L.a?refNominaDe(ACT.s,ALC):"";
+ const entes=ALC==="A"?idsDe(ACT.s,"a").map(id=>LS().get(id)).filter(l=>l&&l.ente&&poderLista(l)==="A"):[], marcados=ALC==="A"&&(M().entesOrg||[]).length;
+ const actA=[...entes.map(l=>`${esc(l.clave||l.archivo)}, lista cargada el ${esc(fechaDe(l.cargada))}`),...(marcados&&fechaNomina(ACT.s)?[`organismos de PeopleNet marcados como ente, nómina al ${esc(fechaNomina(ACT.s))}`]:[])].join(" · ");
+ it.push(`<span><b>Activos:</b> ${r.sinNom?`no hay nómina del ${esc(PN[ALC].t)}`:!L.a?"falta la nómina":ALC==="A"?(actA||"sin listas de entes"):fd?"nómina al "+esc(fd):"nómina cargada el "+esc(ref)}</span>`);
+ if(!r.sinWeb) it.push(`<span><b>Publicadas:</b> ${L.u&&F.u?"índice de la web cargado el "+esc(F.u.cargada):"falta el índice de la web"}</span>`);
+ const h=L.p&&F.p?F.p.hasta:""; return {it,h,d:h?diasDesde(h):null}; }
+function pintarAlDia(){ const el=$("#alDia"), x=textoAlDia(); if(!x){ el.innerHTML=""; el.classList.add("oculto"); return; }
+ const viejo=enUltima()&&x.d!=null&&x.d>7; el.className="aldia"+(viejo?" viejo":"");
+ el.innerHTML=`<span class="aldia-t">Hasta qué fecha llegan los datos</span><span class="aldia-it">${x.it.join("")}</span>${x.h&&enUltima()?`<span class="aldia-n">${viejo?`<b>El índice del protocolo llega hasta hace ${x.d===1?"un día":nf(x.d)+" días"}.</b> `:""}Si alguien presentó el ${esc(x.h)} o después, puede figurar todavía como que no presentó: aparece al cargar el índice nuevo.</span>`:""}`;
+ el.hidden=TAB==="carga"; }
+/* El aviso de la notificación: notificar a quien ya presentó es lo que no puede pasar. */
+const avisoHasta=()=>{ const F=ACT&&ACT.s?fuentesDatos(ACT.s):null, h=F&&F.p&&F.p.hasta; return h?`<div class="banda info" style="margin:0"><span>El índice del protocolo llega hasta la escritura del <b>${esc(h)}</b>: si presentó ese día o después, puede no figurar todavía. Antes de mandarla, conviene mirarlo en el protocolo.</span></div>`:""; };
+
+/* Inicio (el diseño E, elegido por Baltasar el 06/11/2026): primero el número —cuántos activos presentaron—,
+   después cómo está cada organismo, del más atrasado al más al día, y la de cese. Tocar un organismo lleva a sus
+   personas, en «Buscar», con los que faltan. Las notificaciones registradas (el diseño F) todavía no están. */
+// el porcentaje del Inicio: no dice 100 % mientras falta alguien, ni 0 % si presentó alguno
+const pctI=(a,b)=>!b?0:a>=b?100:Math.max(a?1:0,Math.min(99,pct(a,b)));
+function pintarInicio(){ const r=ACT.r, a=$("#secIni"), o=$("#secIniOrg"), c=$("#secIniCese");
+ if(!hayDatos()||!r){ [a,o,c].forEach(e=>e.classList.add("oculto")); return; }
+ const L=r.L, res=r.res, conEntes=ALC==="E"&&ACT.R.res.por.A.total>0, F=fuentesDatos(ACT.s), h=L.p&&F.p?F.p.hasta:"";
+ const quien=ALC==="A"?"de los entes autárquicos":conEntes?"del Poder Ejecutivo, sin los entes autárquicos":"del "+PN[ALC].t;
+ const hay=!r.sinNom&&!!L.a&&!!L.p&&res.activos>0;
+ a.classList.remove("oculto");
+ if(!hay) a.innerHTML=`<h2 class="visual-oculto" id="iniT">El número</h2><p class="mensaje" style="margin:0">${$("#titular").innerHTML}</p>`;
+ else { const pc=pctI(res.presAct,res.activos), pub=!!L.u&&!r.sinWeb;
+  a.innerHTML=`<div class="ini-num"><div class="ini-grande"><h2 class="ini-t" id="iniT">De los funcionarios activos ${esc(quien)}, presentaron la declaración${h?` <span class="ini-al">hasta el ${esc(h)}</span>`:""}</h2>
+   <div class="ini-cifra"><span class="ini-pct">${pc} %</span><span class="ini-de"><b>${nf(res.presAct)}</b> de <b>${nf(res.activos)}</b> · faltan <b class="ini-faltan">${nf(res.sinPres)}</b></span></div>
+   <div class="ini-barra" role="img" aria-label="${pc} % presentaron"><span style="width:${pc}%"></span></div></div>
+   ${pub?`<div class="ini-lado"><span class="et">La tienen publicada</span><span class="v">${pctI(res.pubAct,res.activos)} % <small>${nf(res.pubAct)} de ${nf(res.activos)}</small></span></div>`:""}</div>`; }
+ if(!hay){ o.classList.add("oculto"); o.innerHTML=""; }
+ else { o.classList.remove("oculto");
+  const fs=porGrupo(r.personas,"jurs").map(x=>Object.assign(x,{pct:pctI(x.pres,x.act)})).sort((x,y)=>x.pct-y.pct||y.sin-x.sin||x.v.localeCompare(y.v,"es"));
+  o.innerHTML=`<div class="ini-cab"><h2>Cómo está cada organismo</h2><span class="ayuda" style="margin:0">Primero los más atrasados. Tocá uno para ver a sus personas.</span></div>
+   <div class="ini-fila enc" aria-hidden="true"><span>Organismo</span><span>Presentaron</span><span class="r">Faltan</span><span></span></div>
+   <ul class="ini-lista">${fs.map(x=>`<li><button type="button" class="ini-fila" data-verorg="${esc(x.v)}"><span class="ini-org"><b>${esc(x.v)}</b><small>${nf(x.act)} ${x.act===1?"activo":"activos"}</small></span><span class="ini-pr"><span class="pista"><span class="lleno" style="width:${x.pct}%"></span></span><b>${x.pct} %</b></span><span class="r ini-f ${x.sin?"mal":"ok"}">${x.sin?nf(x.sin):"Ninguno"}<small class="ini-fet">${x.sin?(x.sin===1?" falta":" faltan"):" falta"}</small></span><svg class="ini-ir" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>`).join("")}</ul>`; }
+ // sin nómina no se sabe quién dejó un cargo, y una DDJJ «¿de otro cargo?» sin decidir puede ser la de cese que falta
+ const nC=L.p?r.personas.filter(p=>debeTxt(p)).length:0, nD=r.personas.filter(p=>p.revCargo).length;
+ if(!L.p||!L.a||r.sinNom||!res.total){ c.classList.add("oculto"); c.innerHTML=""; }
+ else { c.classList.remove("oculto");
+  c.innerHTML=`<div class="ini-cese"><div><h2>La declaración de cese</h2><p class="ayuda" style="margin:4px 0 0">${nC?`<b>${nf(nC)}</b> ${nC===1?"debe":"deben"} la declaración de cese: ${nC===1?"presentó":"presentaron"} la de un cargo que ${nC===1?"dejó":"dejaron"} y no consta la de cese de ese cargo.`:nD?"Por ahora no se sabe de nadie que la deba.":"Nadie debe la declaración de cese: de cada cargo que alguien dejó, consta la de cese."}${nD?` ${nD===1?"Falta decidir una DDJJ que puede ser":`Falta decidir ${nf(nD)} DDJJ que pueden ser`} de un cargo anterior: ${nD===1?"puede":"pueden"} cambiar esta cuenta.`:""}</p></div><div class="row">${nC?`<button class="btn" type="button" data-acc="verCese">Ver ${nC===1?"quién":"quiénes"}</button>`:""}${nD?`<button class="btn lnk sm" type="button" data-acc="verIncons">Ver ${nD===1?"cuál falta decidir":"cuáles faltan decidir"}</button>`:""}</div></div>`; } }
 function pintarCab(){ const s=ACT.s;
  $("#chipSemana").textContent=s?"Semana del "+isoAFecha(s.s):"Sin listas cargadas"; }
 
@@ -2400,6 +2510,7 @@ function datosDeFecha(ps,lista){ const s=ACT.s, out=[["Semana del",isoAFecha(s.s
  aj.forEach(l=>out.push([`Nómina del ${PN[poderLista(l)].t}`,l.fechaDatos?"al "+l.fechaDatos:"cargada el "+fechaDe(l.cargada)]));
  if(ae.length) out.push(["Entes autárquicos sumados",ae.map(l=>`${l.clave}, cargada el ${fechaDe(l.cargada)}`).join(" · ")]);
  const p=ls("p"); out.push(["Índice del Protocolo B",p.length?p.map(l=>`${l.clave||l.archivo}, cargado el ${fechaDe(l.cargada)}`).join(" · "):"no cargado"]);
+ const hp=p.length?hastaIndice(p):""; if(hp) out.push(["Presentaciones",`hasta la escritura del ${hp}: lo presentado ese día o después puede no figurar`]);
  const u=ls("u"); if(vr&&vr.sinWeb) out.push(["Índice de la web",`las del ${tt} no se publican en la web`]); else out.push(["Índice de la web",u.length?u.map(l=>"cargado el "+fechaDe(l.cargada)).join(" · "):"no cargado"]);
  // con las personas de un organismo, sólo lo de ellas
  const np=ps?ps.filter(x=>x.pend).length:ACT.r?ACT.r.propuestas.length:0; if(np) out.push(["Coincidencias sin confirmar",ps?`${nf(np)} ${np===1?"persona":"personas"} de esta lista: los números pueden moverse un poco`:`${nf(np)}: los números pueden moverse un poco`]);
@@ -2561,7 +2672,7 @@ function datosConsulta(){ const R=ACT.R, s=ACT.s, cmp=ACT.cmpG; const ls=f=>idsD
  // a la oficina va el Ejecutivo y los entes: los nombres y cargos de jueces y legisladores no se publican sin que se decida
  const ea=p=>(p.alc||["E"]).some(a=>a==="E"||a==="A"), r={personas:R.personas.filter(ea),L:R.L}, prevP=ACT.prevR?ACT.prevR.personas.filter(ea):null;
  return {app:"cotejo-ddjj-consulta",version:1,publicada:new Date().toISOString(),semana:s.s,
-  fuentes:{p:ls("p").map(l=>({archivo:l.archivo,clave:l.clave||"",cargada:l.cargada})),a:[...ls("a").filter(l=>!l.ente),...ls("a").filter(l=>l.ente&&poderLista(l)==="A")].map(l=>({archivo:l.archivo,cargada:l.cargada,fechaDatos:l.fechaDatos||"",ente:l.ente?l.clave:""})),u:ls("u").map(l=>({archivo:l.archivo,cargada:l.cargada}))},
+  fuentes:{p:ls("p").map(l=>({archivo:l.archivo,clave:l.clave||"",cargada:l.cargada,hasta:hastaIndice([l])})),a:[...ls("a").filter(l=>!l.ente),...ls("a").filter(l=>l.ente&&poderLista(l)==="A")].map(l=>({archivo:l.archivo,cargada:l.cargada,fechaDatos:l.fechaDatos||"",ente:l.ente?l.clave:""})),u:ls("u").map(l=>({archivo:l.archivo,cargada:l.cargada}))},
   res:resumir(r.personas,R.propuestas.filter(x=>ea(x.centro)||x.opciones.some(ea))),resAnt:prevP?resumir(prevP,[]):null,notificacion:M().notificacion||"",
   salieron:cmp?cmp.salieron.filter(ea).map(q=>({nom:q.nom,dni:q.dni,cuil:q.cuil||"",cod:q.otroCargo?"1"+q.cod.slice(1):q.cod,jurs:q.jurs,cargos:q.cargos})):[],
   personas:r.personas.map(p=>({nom:p.nom,dni:p.dni,cuil:p.cuil||"",cod:p.cod,jurs:p.jurs,cargos:p.cargos,escals:p.escals,revistas:p.revistas,pres:p.pres,nPres:p.nPres,otroCargo:p.otroCargo,revCargo:p.revCargo||"",inconsist:p.inconsist||"",orgDDJJ:p.orgDDJJ||"",descartadas:(p.descartadas||[]).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo})),ceses:(p.ceses||[]).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo})),puestos:p.puestos||[],debeCese:p.debeCese?{n:p.debeCese.n,fecha:p.debeCese.fecha,cargo:p.debeCese.cargo}:null,hist:historialDe(p),ddjjs:r.L.p?ddjjsDe(p).filter(e=>!e.ajena&&!/otra persona con el mismo nombre/.test(e.estado)).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo,poder:e.poder,cuenta:e.cuenta,estado:e.estado})):[],falta:p.falta,fuera:p.fuera,otros:p.otrosNombres,otrosDni:p.otrosDni,pend:p.pend,ultimo:p.ultimo,cambio:((cmp&&cmp.cambios.get(p))||{}).txt||"",
@@ -2645,10 +2756,21 @@ const escTxt=e=>`escritura N.º ${e.n||"[N.º]"}${e.fecha?" del "+e.fecha:""}`;
 function aniosTxt(claves){ const a=[...new Set(claves.map(c=>+(/\b(19|20)\d{2}\b/.exec(String(c||""))||[0])[0]).filter(Boolean))].sort();
  const falta=[]; for(let y=a[0];a.length&&y<a[a.length-1];y++) if(!a.includes(y)) falta.push(y);
  return {anios:yLista(a.map(String)),falta:falta.length?(falta.length===1?"falta el de ":"faltan los de ")+yLista(falta.map(String)):""}; }
+/* Hasta qué fecha llega el índice del protocolo (Baltasar, 06/11/2026: «tiene que quedar en claro a qué fecha está
+   actualizada la información… en el sistema dice que no presentó y presentó ayer»): la fecha de la escritura más
+   nueva que trae. Una fecha posterior al día en que se cargó no cuenta: sólo puede ser un error de tipeo. */
+const fNum=f=>{ const m=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(String(f||"").trim()); return m?+m[3]*10000+ +m[2]*100+ +m[1]:0; };
+const HASTA=new Map();
+// {t: la fecha, l: el índice que la trae, que es el que dice cuándo se cargó}
+function hastaDe(pp){ const k=pp.map(l=>l.id+"@"+l.cargada).join("|"); if(HASTA.has(k)) return HASTA.get(k); let max=0, de=null;
+ for(const l of pp){ const d=new Date(l.cargada), tope=isNaN(d)?Infinity:d.getFullYear()*10000+(d.getMonth()+1)*100+d.getDate();
+  for(const r of l.filas||[]){ const n=fNum(r.fecha); if(n>max&&n<=tope){ max=n; de=l; } } }
+ const x={t:max?`${dos(max%100)}/${dos(Math.floor(max/100)%100)}/${Math.floor(max/10000)}`:"",l:de}; HASTA.set(k,x); return x; }
+const hastaIndice=pp=>hastaDe(pp).t;
 function fuentesDatos(s){ const ls=f=>idsDe(s,f).map(id=>LS().get(id)).filter(Boolean); const a=ls("a"), ab=a.filter(l=>!l.ente), ae=a.filter(l=>l.ente);
  const pp=ls("p"), an=aniosTxt(pp.map(l=>l.clave||l.archivo));
  const jl=x=>{ const l=ae.find(l=>poderLista(l)===x); return l?(l.fechaDatos?"al "+l.fechaDatos:"cargada el "+fechaDe(l.cargada)):""; };
- return {p:pp.length?{anios:an.anios,falta:an.falta}:null,
+ return {p:pp.length?{anios:an.anios,falta:an.falta,hasta:hastaIndice(pp),cargada:hastaDe(pp).l?fechaDe(hastaDe(pp).l.cargada):""}:null,
   a:a.length?{fd:ab.map(l=>l.fechaDatos?"al "+l.fechaDatos:"cargada el "+fechaDe(l.cargada))[0]||"",entes:ae.filter(l=>poderLista(l)==="A").map(l=>l.clave).filter(Boolean),J:jl("J"),L:jl("L")}:null,
   u:ls("u").length?{cargada:fechaDe(ls("u")[0].cargada)}:null}; }
 const fuP=F=>F.p?`del índice del Protocolo B${F.p.anios?` (${F.p.anios}${F.p.falta?"; "+F.p.falta:""})`:""}`:"falta el índice del Protocolo B";
@@ -2687,17 +2809,25 @@ function debeTxt(p){ const c=p.debeCese; if(!c) return null;
   :{doble:false,t:"Falta la de cese",d:`Presentó la del cargo de hoy, pero no consta la DDJJ de cese de ${ant} (la de ese cargo es la ${escTxt(c)}).`}; }
 function textoNotif(p,plantilla){ const f=esF(p), m=motivoNotif(p);
  const v={fecha:fechaLarga(new Date()),sr:f?"Sra.":"Sr.",lo:f?"la":"lo",o:f?"a":"o",nombre:nombreNatural(p.nom),dni:p.dni?fmtDni(p.dni):"[DNI]",cuil:p.cuil||"[CUIL]",cargo:yL(p.cargos)||"[cargo]",organismo:yL(p.jurs)||"[organismo]",puesto:puestosDe(p).map(x=>`${x.cargo||"[cargo]"} – ${x.jur||"[organismo]"}`).join("\n"),motivo:(m||"[motivo]").replace(/\.+$/,""),ddjj:debeTxt(p)&&debeTxt(p).doble?"las declaraciones juradas patrimoniales correspondientes":"la declaración jurada patrimonial correspondiente"}; v.jurisdiccion=v.organismo;
- return (plantilla||NOTIF_BORRADOR).replace(/\{(fecha|sr|lo|o|nombre|dni|cuil|cargo|organismo|puesto|jurisdiccion|motivo|ddjj)\}/g,(_,k)=>v[k]); }
+ return (plantilla||NOTIF_BORRADOR).replace(/\{(fecha|sr|lo|o|nombre|dni|cuil|cargo|organismo|puesto|jurisdiccion|motivo|ddjj)\}/g,(_,k)=>String(v[k]).replace(/\*/g,AST)); }
+/* La negrita (Baltasar, 05/11/2026: «dame la opción para poner en negrita ciertas palabras de la
+   notificación»): en el texto va entre dos asteriscos, **así**, y sale en negrita en la nota y al
+   copiarla; en el texto solo se van los asteriscos. No cruza de un párrafo a otro, y un asterisco
+   de los datos de la persona (AST, mientras se arma) no abre ni cierra ninguna. */
+const AST="\uE000", NEG=/\*\*(?=\S)([\s\S]*?\S)\*\*/g;
+const conAst=s=>s.split(AST).join("*");
+const textoSolo=t=>conAst(t.split(/(\n{2,})/).map((b,i)=>i%2?b:b.replace(NEG,"$1")).join(""));
 // la nota con el membrete, como se pega: párrafos y renglones del texto
-function cartaHtml(t){ const par=t.split(/\n{2,}/).map(b=>`<p style="margin:0 0 10pt">${esc(b).replace(/\n/g,"<br>")}</p>`).join("");
+function cartaHtml(t){ const par=t.split(/\n{2,}/).map(b=>`<p style="margin:0 0 10pt">${conAst(esc(b).replace(NEG,"<b>$1</b>")).replace(/\n/g,"<br>")}</p>`).join("");
  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:11pt;line-height:1.45;color:#000;background:#fff"><p style="margin:0 0 16pt"><img src="${MEMBRETE}" alt="Escribanía de Gobierno · Provincia de Córdoba" width="600" style="width:600px;max-width:100%;height:auto"></p>${par}</div>`; }
 function htmlNotificar(p,plantilla,editable){ NOTIF_P={p,plantilla,editable};
  if(p.revCargo||!motivoNotif(p)) return `<p style="margin:0">${p.cod[1]!=="1"?"No está en la nómina de activos: no hay nada que notificarle.":p.revCargo?(editable?"Falta decidir si la declaración que presentó es por el cargo de hoy («Inconsistencia», arriba): hasta entonces no se arma la notificación.":"En el cotejo falta decidir si la declaración que presentó es por el cargo de hoy: hasta entonces no se arma la notificación."):"Presentó la declaración por el cargo de hoy: no hay nada que notificarle."}</p>`;
  const f=esF(p), t=textoNotif(p,plantilla);
  return `<p style="margin:0">Copia la notificación con el membrete y los datos de esta persona, para pegarla en CiDi.${plantilla?"":" <b>Es un borrador:</b> el texto todavía no está definido."}</p>
+  ${avisoHasta()}
   <div class="row"><span class="ayuda" style="margin:0">Trato</span><div class="seg seg-c" role="group" aria-label="Trato">${[["M","Señor"],["F","Señora"]].map(([k,n])=>`<button type="button" data-trato="${k}" aria-pressed="${(f?"F":"M")===k}">${n}</button>`).join("")}</div>${TRATO.has(p.nom)?"":`<span class="ayuda" style="margin:0">${p.nom.includes(",")?"sale del nombre de pila: si no es, se cambia acá":"el nombre no separa el apellido de los nombres: revisá el trato"}</span>`}</div>
   ${/\[[^\]]+\]/.test(t)?`<p class="ayuda" style="margin:0">Tiene partes entre corchetes para completar antes de mandarla.</p>`:""}
-  <div class="carta" id="notifCarta">${cartaHtml(t)}</div><pre id="notifTxt" hidden>${esc(t)}</pre>
+  <div class="carta" id="notifCarta">${cartaHtml(t)}</div><pre id="notifTxt" hidden>${esc(textoSolo(t))}</pre>
   <div class="row"><button class="btn pri" type="button" data-acc="copiarNotif">Copiar la notificación</button>${editable?`<button class="btn lnk sm" type="button" data-acc="editarNotif">Cambiar el texto</button>`:""}<span class="ayuda" id="notifOk" role="status" style="margin:0"></span></div>`; }
 function pintarNotif(){ const s=$("#pfNotif"); if(s&&NOTIF_P) s.innerHTML="<h3>Notificar</h3>"+htmlNotificar(NOTIF_P.p,NOTIF_P.plantilla,NOTIF_P.editable); }
 /* Copiar con formato: el membrete y el texto (text/html) y, para donde no se acepten imágenes,
@@ -2730,7 +2860,7 @@ function htmlPerfil(p,o){ const activo=p.cod[1]==="1", fila=(t,v)=>v?`<div class
   fila("Cargo",p.cargos.join(" · "))+fila("Jurisdicción",p.jurs.join(" · "))+fila("Escalafón",p.escals.join(" · "))+fila("Situación de revista",p.revistas.join(" · "))+fila("Nómina al",o.fd)
   :`<p style="margin:0">No está en la nómina de activos${o.fd?" al "+esc(o.fd):""}.${o.org?" "+esc(o.org):p.ultimo?` Último organismo en que figuró: ${esc(p.ultimo.jur||"—")} (nómina al ${esc(p.ultimo.al)}).`:""}${o.conP&&p.cod[0]==="1"&&p.pres&&!p.inconsist?(!pareceCese(p.pres.cargo)&&!p.ceses.some(c=>c.n===p.pres.n&&c.fecha===p.pres.fecha)&&o.ref&&ordenFecha(p.pres.fecha)>ordenFecha(o.ref)?" Presentó después de la fecha de la nómina: puede haber asumido después, y se va a ver con la nómina nueva.":" Lo que presentó se toma como la DDJJ de cese."):""}</p>`;
  const dd=o.ddjjs;
- const tabla=!o.conP?`<p class="ayuda" style="margin:0">Falta el índice del protocolo.</p>`:!dd.length?`<p style="margin:0">No figura en el índice del Protocolo B${o.partes?" ("+esc(o.partes)+")":""}.</p>`:
+ const tabla=!o.conP?`<p class="ayuda" style="margin:0">Falta el índice del protocolo.</p>`:!dd.length?`<p style="margin:0">No figura en el índice del Protocolo B${o.partes?" ("+esc(o.partes)+")":""}${o.hastaP?`, que llega hasta la escritura del ${esc(o.hastaP)}: si la presentó ese día o después, puede no estar todavía`:""}.</p>`:
   `<div class="scroll-x"><table class="pf-t"><thead><tr><th>Escritura</th><th>Fecha</th><th>Cargo con que la presentó</th><th>Poder</th><th>¿Cuenta?</th></tr></thead><tbody>${dd.map(e=>`<tr class="${e.cuenta?"":"no"}"><td data-t="Escritura">${esc(e.n||"—")}</td><td data-t="Fecha">${esc(e.fecha||"—")}</td><td data-t="Cargo">${esc(e.cargo||"—")}</td><td data-t="Poder">${esc(e.poder||"—")}${e.podD?`<small style="display:block">${esc("decidido: "+pt(e.podD.poder))}</small>${o.botones?` <button class="btn lnk sm" type="button" data-poder="${esc(e.claveP)}" data-v="x">Deshacer</button>`:""}`:o.botones&&!activo&&e.cuenta&&e.claveP&&(p.escrsP||[])[0]&&e.claveP===claveNueva(p,p.escrsP[0])?`<details class="pf-acc"><summary class="btn lnk sm">¿De otro poder?</summary>${["E","J","L"].filter(x=>x!==e.pod).map(x=>`<button class="btn lnk sm" type="button" data-poder="${esc(e.claveP)}" data-v="${x}">Es del ${esc(PN[x].t)}</button>`).join(" ")}</details>`:""}</td><td><span class="chip ${e.cuenta?"t-ok":/falta firmar/i.test(e.estado)?"t-warn":/cese/i.test(e.estado)?"t-info":"t-neutro"}">${esc(e.estado)}</span>${o.botones&&!activo&&e.clave&&e.decidido!==undefined?`<div class="pf-acc"><button class="btn lnk sm" type="button" data-cargo="${esc(e.clave)}" data-v="x">Deshacer</button></div>`:""}${o.botones&&activo&&e.clave?`<div class="pf-acc">${e.decidido===undefined?`<button class="btn lnk sm" type="button" data-cargo="${esc(e.clave)}" data-v="si">Es de un cargo anterior</button> <button class="btn lnk sm" type="button" data-cargo="${esc(e.clave)}" data-v="cese">Es la de cese</button>`:`<button class="btn lnk sm" type="button" data-cargo="${esc(e.clave)}" data-v="x">Deshacer</button>`}</div>`:""}</td></tr>`).join("")}</tbody></table></div>`;
  const dt=debeTxt(p), debe=dt?`<div class="banda ${dt.doble?"mal":"warn"}" style="margin:0"><span><b>${dt.t}.</b> ${esc(dt.d)}${o.botones&&activo&&(o.ddjjs||[]).some(e=>e.clave&&e.decidido===undefined)?" Si alguna de la tabla es la de cese, se marca con «Es la de cese».":""}</span></div>`:"";
  const ou=p.otros.filter(x=>x.f==="u");
@@ -2771,13 +2901,53 @@ function pintarPerfil(){ const p=ACT.R&&ACT.R.personas.find(x=>x.rep===PERFIL); 
  const podN=(p.alc||[]).find(x=>(x==="J"||x==="L")&&ACT.R.conNom[x])||"E", fd=L.a?fechaNominaDe(ACT.s,podN):"", c=ACT.cmp&&ACT.cmp.cambios.get(p);
  const rev=p.inconsist||p.revCargo||p.dudaPoder?`<div class="banda warn banda-dec" style="margin:0"><b>${p.dudaPoder&&!p.inconsist&&!p.revCargo?"Duda de poder":"Inconsistencia"}</b>${htmlDecidir(p,puede)}</div>`:"";
  const FU=fuentesDatos(ACT.s);
- $("#dlgCont").innerHTML=htmlPerfil(Object.assign({},p,{otros:p.otrosNombres}),{org:p.cod[1]==="1"?"":textoOrg(p,FU),fu:{a:p.sinNom?"sin nómina de ese poder":podN!=="E"?"nómina del "+PN[podN].t:FU.a?`PeopleNet${FU.a.fd?", "+FU.a.fd:""}${FU.a.entes.length?", y "+(FU.a.entes.length>1?"las listas de ":"la lista de ")+yLista(FU.a.entes):""}`:"",p:FU.p&&FU.p.anios?`${/ y /.test(FU.p.anios)?"índices":"índice"} ${FU.p.anios}${FU.p.falta?"; "+FU.p.falta:""}`:"",u:p.sinWeb?"es la del Poder Ejecutivo":FU.u?"cargado el "+FU.u.cargada:""},conA:!p.sinNom&&!!L.a,conP:!!L.p,conU:!p.sinWeb&&!!L.u,fd,ref:L.a?refNominaDe(ACT.s,podN):"",ddjjs:L.p?ddjjsDe(p):[],partes:idsDe(ACT.s,"p").map(id=>(LS().get(id)||{}).clave).filter(Boolean).join(" y "),botones:puede,rev,sep:(p.porNombre||p.manual)?`${p.manual?"Confirmado a mano":"Unido por el nombre"} con lo que figura en otra lista.${puede?` <button class="btn lnk sm" type="button" data-separar="${esc(p.rep)}">Separar</button>`:""}`:"",cambio:c?c.txt:"",hist:historialDe(p),notif:p.sinNom?(NOTIF_P=null,`<p style="margin:0">Sin la nómina del ${esc(p.alc[0]==="J"?"Poder Judicial":"Poder Legislativo")} no se puede saber si debe algo: no se arma la notificación.</p>`):!enUltima()||!L.a||!L.p?(NOTIF_P=null,`<p style="margin:0">${!enUltima()?"Es una semana anterior: la notificación se arma desde la última semana.":`Falta ${!L.a?"la nómina":"el índice del protocolo"}: sin esa lista no se puede armar la notificación.`}</p>`):htmlNotificar(p,M().notificacion||"",!SOLO_VER()),semana:isoAFecha(ACT.s.s),tit:"dlgTit",cerrar:"cerrarDlg"}); }
+ $("#dlgCont").innerHTML=htmlPerfil(Object.assign({},p,{otros:p.otrosNombres}),{org:p.cod[1]==="1"?"":textoOrg(p,FU),fu:{a:p.sinNom?"sin nómina de ese poder":podN!=="E"?"nómina del "+PN[podN].t:FU.a?`PeopleNet${FU.a.fd?", "+FU.a.fd:""}${FU.a.entes.length?", y "+(FU.a.entes.length>1?"las listas de ":"la lista de ")+yLista(FU.a.entes):""}`:"",p:FU.p&&FU.p.anios?`${/ y /.test(FU.p.anios)?"índices":"índice"} ${FU.p.anios}${FU.p.hasta?", hasta la escritura del "+FU.p.hasta:""}${FU.p.falta?"; "+FU.p.falta:""}`:"",hastaP:FU.p?FU.p.hasta||"":"",u:p.sinWeb?"es la del Poder Ejecutivo":FU.u?"cargado el "+FU.u.cargada:""},conA:!p.sinNom&&!!L.a,conP:!!L.p,conU:!p.sinWeb&&!!L.u,fd,ref:L.a?refNominaDe(ACT.s,podN):"",ddjjs:L.p?ddjjsDe(p):[],partes:idsDe(ACT.s,"p").map(id=>(LS().get(id)||{}).clave).filter(Boolean).join(" y "),botones:puede,rev,sep:(p.porNombre||p.manual)?`${p.manual?"Confirmado a mano":"Unido por el nombre"} con lo que figura en otra lista.${puede?` <button class="btn lnk sm" type="button" data-separar="${esc(p.rep)}">Separar</button>`:""}`:"",cambio:c?c.txt:"",hist:historialDe(p),notif:p.sinNom?(NOTIF_P=null,`<p style="margin:0">Sin la nómina del ${esc(p.alc[0]==="J"?"Poder Judicial":"Poder Legislativo")} no se puede saber si debe algo: no se arma la notificación.</p>`):!enUltima()||!L.a||!L.p?(NOTIF_P=null,`<p style="margin:0">${!enUltima()?"Es una semana anterior: la notificación se arma desde la última semana.":`Falta ${!L.a?"la nómina":"el índice del protocolo"}: sin esa lista no se puede armar la notificación.`}</p>`):htmlNotificar(p,M().notificacion||"",!SOLO_VER()),semana:isoAFecha(ACT.s.s),tit:"dlgTit",cerrar:"cerrarDlg"}); }
 /* Cambiar el texto de la notificación: se guarda con lo demás y viaja a la consulta al publicar. */
 function editarNotif(){ const sec=$("#pfNotif"); if(!sec) return;
  sec.innerHTML=`<h3>El texto de la notificación</h3><p class="ayuda" style="margin:0">Lo de entre llaves se completa solo con los datos de la persona: {sr} (Sr. o Sra.), {nombre}, {dni}, {cuil}, {puesto} (cada cargo con su organismo, uno por renglón), {cargo}, {organismo}, {motivo} (por qué se la notifica), {fecha}, {lo} (lo o la), {o} (notificad{o}) y {ddjj} (la declaración jurada correspondiente, o las dos en la doble falta). Lo de entre corchetes queda para completar a mano.</p>
+  <div class="row"><button class="btn sm" type="button" data-acc="negritaNotif" aria-describedby="notifNegAy"><b>Negrita</b></button><span class="ayuda" id="notifNegAy" style="margin:0">Seleccioná las palabras y tocá «Negrita» (o Ctrl+B): quedan entre dos asteriscos, **así**, y salen en negrita al copiar. Otra vez, y se saca.</span></div>
   <textarea class="notif-ed" id="notifEd" aria-label="El texto de la notificación">${esc(M().notificacion||NOTIF_BORRADOR)}</textarea>
+  <span class="ayuda" id="notifEdOk" role="status" style="margin:0"></span>
+  <p class="ayuda" style="margin:0">Así queda${NOTIF_P&&NOTIF_P.p?`, con los datos de ${esc(nombreNatural(NOTIF_P.p.nom))}`:""}:</p>
+  <div class="carta carta-prev" id="notifPrev"></div>
   <div class="row"><button class="btn pri" type="button" data-acc="guardarNotif">Guardar el texto</button><button class="btn" type="button" data-acc="cancelarNotif">Cancelar</button>${M().notificacion?`<button class="btn lnk sm" type="button" data-acc="borradorNotif">Volver al borrador</button>`:""}</div>`;
- $("#notifEd").focus(); }
+ const t=$("#notifEd"); let tm=0; previaNotif();
+ t.addEventListener("input",()=>{ clearTimeout(tm); tm=setTimeout(previaNotif,150); const o=$("#notifEdOk"); if(o) o.textContent=""; });
+ t.addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.shiftKey&&e.key.toLowerCase()==="b"){ e.preventDefault(); negritaNotif(); } });
+ t.focus(); }
+/* La nota como va a salir, mientras se escribe: el texto con los datos de la persona del perfil.
+   Se redibuja sólo la vista, nunca el cuadro donde se escribe. */
+function previaNotif(){ const t=$("#notifEd"), v=$("#notifPrev"); if(!t||!v) return; v.innerHTML=NOTIF_P&&NOTIF_P.p?cartaHtml(textoNotif(NOTIF_P.p,t.value.trim()?t.value:"")):""; }
+/* «Negrita», como en un procesador de texto: si todo lo elegido ya está en negrita, se le saca (y
+   lo que queda a los lados la conserva); si no, todo lo elegido queda en negrita, y las que había
+   adentro o pisadas se juntan con ella. Se rehace el párrafo entero desde sus letras, así nunca
+   quedan asteriscos anidados ni sueltos. Los espacios de las puntas quedan afuera, la selección
+   sigue sobre las mismas palabras y el cambio se deshace con Ctrl+Z. */
+function negritaNotif(){ const t=$("#notifEd"), o=$("#notifEdOk"); if(!t) return; const v=t.value; let a=t.selectionStart, b=t.selectionEnd;
+ while(a<b&&/\s/.test(v[a])) a++; while(b>a&&/\s/.test(v[b-1])) b--;
+ const msg=x=>{ if(o) o.textContent=x; t.focus(); };
+ if(a===b) return msg("Primero seleccioná las palabras que van en negrita.");
+ if(/\n{2,}/.test(v.slice(a,b))) return msg("La negrita no pasa de un párrafo a otro: seleccioná dentro de uno.");
+ let ps=a; while(ps>0&&!(ps>=2&&v[ps-1]==="\n"&&v[ps-2]==="\n")) ps--;
+ let pe=b; while(pe<v.length&&!(v[pe]==="\n"&&v[pe+1]==="\n")) pe++;
+ // el párrafo como letras, cada una con su negrita; en[i]: la letra donde cae la posición i del párrafo
+ const par=v.slice(ps,pe), L=[], neg=[], en=[]; let i=0;
+ const letra=n=>{ en[i]=L.length; L.push(par[i]); neg.push(n); i++; };
+ for(const m of par.matchAll(NEG)){ while(i<m.index) letra(false); en[i]=en[i+1]=L.length; i+=2;
+  const fin=i+m[1].length; while(i<fin) letra(true); en[i]=en[i+1]=L.length; i+=2; }
+ while(i<par.length) letra(false); en[par.length]=L.length;
+ const la=en[a-ps], lb=en[b-ps];
+ const ya=neg.slice(la,lb).every((x,k)=>x||/\s/.test(L[la+k]));
+ for(let k=la;k<lb;k++) neg[k]=!ya;
+ // una negrita no empieza ni termina con un espacio
+ for(let k=0;k<L.length;){ if(!neg[k]){ k++; continue; } let e=k; while(e<L.length&&neg[e]) e++; let x=k, y=e;
+  while(x<y&&/\s/.test(L[x])) neg[x++]=false; while(y>x&&/\s/.test(L[y-1])) neg[--y]=false; k=e; }
+ let s=""; const ini=[], fin=[];
+ for(let k=0;k<=L.length;k++){ fin[k]=s.length; if(k>0&&neg[k-1]&&!neg[k]) s+="**"; if(k<L.length&&neg[k]&&(k===0||!neg[k-1])) s+="**"; ini[k]=s.length; if(k<L.length) s+=L[k]; }
+ t.focus();
+ if(s!==par){ t.setSelectionRange(ps,pe); let hecho=false; try{ hecho=document.execCommand("insertText",false,s); }catch(e){}
+  if(!hecho||t.value!==v.slice(0,ps)+s+v.slice(pe)) t.value=v.slice(0,ps)+s+v.slice(pe); }
+ t.setSelectionRange(ps+ini[la],ps+fin[lb]); if(o) o.textContent=""; previaNotif(); }
 async function guardarNotif(v){ if(SOLO_VER()) return; M().notificacion=v; await guardarMeta(); pintarPerfil(); }
 /* La clave de la consulta. Los datos se publican cifrados con AES-GCM, con una llave que sale
    de la clave por PBKDF2: el archivo del R: no se puede leer sin ella. La clave no se guarda en
@@ -3614,7 +3784,7 @@ function armarDemo(){ const hoy=new Date(); const antes=new Date(hoy); antes.set
  meta.semanas=[{s:lunesDe(antes),p:[lp25.id,lp26a.id],a:[la0.id],u:[lu0.id],orig:{},filtros:{},res:null},
   {s:lunesDe(hoy),p:[lp25.id,lp26b.id],a:[la1.id],u:[lu1.id],orig:{},filtros:{},res:null}];
  DEMO=prevDemo; return {META:meta,LISTAS:L}; }
-async function entrarDemo(){ DEMO=armarDemo(); ALC="E"; AVISO_ENTE=""; VER++; MEMO.clear(); M().semanas.forEach((_,i)=>calc(i)); VISTA=null; TAB="buscar"; Object.assign(FILTRO,{sit:"",q:"",min:"",grp:null,n:150,r:{p:"",a:"",u:""}}); $("#buscar").value=""; await pintar(); window.scrollTo(0,0); }
+async function entrarDemo(){ DEMO=armarDemo(); ALC="E"; AVISO_ENTE=""; VER++; MEMO.clear(); M().semanas.forEach((_,i)=>calc(i)); VISTA=null; TAB="inicio"; Object.assign(FILTRO,{sit:"",q:"",min:"",grp:null,n:150,r:{p:"",a:"",u:""}}); $("#buscar").value=""; await pintar(); window.scrollTo(0,0); }
 async function salirDemo(){ DEMO=null; ALC="E"; AVISO_ENTE=""; VISTA=null; TAB=null; VER++; MEMO.clear(); Object.assign(FILTRO,{sit:"",q:"",min:"",grp:null,n:150,r:{p:"",a:"",u:""}}); $("#buscar").value=""; await pintar(); window.scrollTo(0,0); }
 
 /* ---------- los eventos ---------- */
@@ -3674,6 +3844,7 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("button");
  if(d.informe!=null){ MINM=d.informe; pintarMandar(); irA("#secMandar"); return; }
  // tocar un nombre de la tabla es «las personas de ahí»: con un organismo solo, su Excel
  if(d.verfuera!=null){ FILTRO.min=d.verfuera; FILTRO.r=d.verfuera==="-"||d.verfuera==="?"?rVacia():{p:"",a:"0",u:""}; FILTRO.grp=null; FILTRO.sit=""; FILTRO.q=""; $("#buscar").value=""; mostrarPersonas(); irA("#secPersonas"); return; }
+ if(d.verorg!=null){ const x=porGrupo(ACT.r.personas,"jurs").find(g=>g.v===d.verorg); FILTRO.min=d.verorg; FILTRO.grp=null; FILTRO.r=x&&x.sin?{p:"0",a:"1",u:""}:rVacia(); FILTRO.sit=""; FILTRO.q=""; $("#buscar").value=""; mostrarPersonas(); irA("#secPersonas"); return; }
  if(d.vermin!=null){ if(DIM==="jurs"){ FILTRO.min=d.vermin; FILTRO.grp=null; } else { FILTRO.min=""; FILTRO.grp={dim:DIM,v:d.vermin}; } FILTRO.r=rVacia(); FILTRO.sit=""; FILTRO.q=""; $("#buscar").value=""; mostrarPersonas(); irA("#secPersonas"); return; }
  const acc=d.acc;
  if(acc==="cerrarDlg"){ COPIA=null; dlg.close(); }
@@ -3689,6 +3860,7 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("button");
  else if(acc==="copiarMin") copiarMin();
  else if(acc==="copiarNotif") copiarNotif();
  else if(acc==="editarNotif") editarNotif();
+ else if(acc==="negritaNotif") negritaNotif();
  else if(acc==="guardarNotif"){ const t=$("#notifEd"); if(t) guardarNotif(!t.value.trim()||t.value.trim()===NOTIF_BORRADOR.trim()?"":t.value); }
  else if(acc==="borradorNotif") guardarNotif("");
  else if(acc==="cancelarNotif") pintarPerfil();
