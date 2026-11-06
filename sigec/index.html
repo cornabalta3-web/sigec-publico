@@ -190,7 +190,7 @@ iframe{flex:1;width:100%;border:0;background:var(--bg);min-height:0}
     <nav class="nav" id="nav" aria-label="Herramientas"></nav>
 
     <div class="pie">
-      <span class="tx"><span class="q" id="quien">Escribanía</span><span class="sigec-version">Versión del 04/11/2026</span></span>
+      <span class="tx"><span class="q" id="quien">Escribanía</span><span class="sigec-version">Versión del 06/11/2026</span></span>
       <button class="tema" id="btnTema" type="button"></button>
     </div>
   </aside>
@@ -374,7 +374,9 @@ function abrir(id,desdeDireccion){
  /* Una herramienta que vive en GitHub (externo) se abre en otra pestaña, no en el marco (Baltasar, 26/10/2026: el cotejo,
     «que el original y el único sea el de GitHub»). Pedida por la dirección (#cotejo) no hay clic que habilite otra
     pestaña: se va directo. */
- if(h.externo){ if(desdeDireccion) location.href=h.url; else window.open(h.url,nombreVentana(h),"noopener"); return; }
+ /* Con una marca distinta cada vez, el navegador no usa una copia guardada: GitHub deja cada página hasta diez
+    minutos, y desde casa se veía la versión de antes (Baltasar, 06/11/2026: «no veo los cambios»). */
+ if(h.externo){ const u=h.url+(h.url.includes("?")?"&":"?")+"v="+Date.now().toString(36); if(desdeDireccion) location.href=u; else window.open(u,nombreVentana(h),"noopener"); return; }
  /* Escrituras sociales (ventana:true) se comparte por una carpeta del R:, y adentro del marco Chrome no deja usar
     carpetas: se abre directo en su ventana, para que no se pueda trabajar en el lugar donde no se comparte
     (Baltasar, 03/11/2026). */

@@ -433,7 +433,7 @@ h2{color:var(--fg)}
 .ini-cab{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:8px}
 .ini-cab h2,.ini-cese h2{margin:0;font-size:18px}
 .ini-lista{list-style:none;margin:0;padding:0}
-.ini-fila{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,2fr) 90px 20px;gap:16px;align-items:center;width:100%;padding:12px 10px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;color:var(--fg);font:inherit;text-align:left;cursor:pointer;min-height:52px}
+.ini-fila{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,2fr) 80px 110px 20px;gap:16px;align-items:center;width:100%;padding:12px 10px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;color:var(--fg);font:inherit;text-align:left;cursor:pointer;min-height:52px}
 .ini-fila:hover{background:var(--sup2)}
 .ini-fila:focus-visible{outline:2px solid var(--acento);outline-offset:-2px;border-radius:8px}
 .ini-fila.enc{cursor:default;min-height:0;padding-top:4px;padding-bottom:6px;font-size:12.5px;font-weight:600;color:var(--muted)}
@@ -450,13 +450,34 @@ h2{color:var(--fg)}
 .ini-f.ok{color:var(--ok);font-weight:600}
 .ini-fet{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .ini-ir{color:var(--muted)}
+.ini-n{color:var(--muted);font-variant-numeric:tabular-nums}
+.org-cab{margin:0 0 14px;padding:0 0 14px;border-bottom:1px solid var(--line)}
+.org-volver{display:inline-flex;align-items:center;gap:4px;padding-left:0;font-weight:600}
+.org-cab-c{display:flex;flex-wrap:wrap;align-items:center;gap:14px 28px;margin-top:6px}
+.org-cab-n{flex:1 1 280px;min-width:0}
+.org-cab-n h3{margin:0;font-size:22px;font-weight:700;color:var(--fg)}
+.org-cab-v{display:flex;flex-wrap:wrap;gap:14px 28px;align-items:flex-end}
+.org-cab-v .et{display:block;font-size:12.5px;font-weight:600;color:var(--muted)}
+.org-cab-v .v{display:block;font-size:32px;font-weight:800;line-height:1.05;font-variant-numeric:tabular-nums;color:var(--fg)}
+.org-cab-v .v.chica{font-size:22px;font-weight:700}
+.org-cab-v .v.mal{color:var(--mal)}
+.org-cab-v small{color:var(--muted);font-size:12.5px}
+.ini-lado{display:flex;flex-direction:column;gap:14px}
+.notif-l{color:var(--info)!important}
+.notif-b{margin-top:6px}
+.notif-ok{margin:10px 0 0;padding:8px 12px;border-radius:10px;background:var(--ok-bg);color:var(--ok);font-weight:600;font-size:13px}
+.notif-ok.oculto{display:none}
+.notif-reg{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 8px;font-size:13.5px}
+.notif-reg details{flex:1 1 100%;font-size:13px}
+.notif-reg ul{margin:4px 0 0;padding-left:18px}
 .ini-cese{display:flex;flex-wrap:wrap;align-items:center;gap:12px 24px;justify-content:space-between}
 .ini-cese>div{flex:1 1 320px}
 @media (max-width:700px){
  .ini-num{grid-template-columns:1fr;gap:16px}
  .ini-lado{border-left:0;border-top:1px solid var(--line);padding:14px 0 0}
  .ini-pct{font-size:52px}
- .ini-fila{grid-template-columns:minmax(0,1fr) auto 18px;grid-template-areas:"org f ir" "pr pr ir";gap:8px 12px}
+ .ini-fila{grid-template-columns:minmax(0,1fr) auto 18px;grid-template-areas:"org f ir" "pr n ir";gap:8px 12px}
+ .ini-n{grid-area:n}
  .ini-fila.enc{display:none}
  .ini-org{grid-area:org}.ini-pr{grid-area:pr}.ini-f{grid-area:f}.ini-ir{grid-area:ir}
  .ini-fet{position:static;width:auto;height:auto;clip:auto;font-weight:500;font-size:12.5px}
@@ -505,6 +526,7 @@ h2{color:var(--fg)}
  <div data-panel="buscar" hidden>
  <section class="card principal oculto" id="secPersonas">
   <h2 class="visual-oculto">Buscar</h2>
+  <div id="orgCab"></div>
   <div class="filtros">
    <span class="campo"><label for="buscar">Nombre, apellido, DNI o cargo</label>
     <input type="search" id="buscar" placeholder="Por ejemplo: García o 30.000.101" autocomplete="off"></span>
@@ -514,6 +536,7 @@ h2{color:var(--fg)}
   <div class="preguntas" id="preguntas"></div>
   <div class="atajos" id="atajos"></div>
   <div class="barra-res" id="barraRes"></div>
+  <p class="notif-ok oculto" id="notifFila" role="status"></p>
   <div class="grilla-per" id="personas"></div>
  </section>
  </div>
@@ -1022,7 +1045,7 @@ const dobles=(personas,dim)=>personas.filter(p=>p.cod[1]==="1"&&valoresDe(p,dim)
    leyó, esta no pisa nada y pide recargar.
    ============================================================================ */
 const DB_NOMBRE="sigec-cotejo-ddjj";
-const metaVacia=()=>({app:"cotejo-ddjj",version:2,rev:0,semanas:[],vinculos:[],cargos:[],revisadas:[],entesOrg:[],poderes:[],notificacion:"",mapeos:{},hojas:{},filtros:{}});
+const metaVacia=()=>({app:"cotejo-ddjj",version:2,rev:0,semanas:[],vinculos:[],cargos:[],revisadas:[],entesOrg:[],poderes:[],notificados:[],notificacion:"",mapeos:{},hojas:{},filtros:{}});
 let db=null, sinGuardar=false, errorGuardar="", conflicto=false, REV=0;
 let META=metaVacia();
 const LISTAS=new Map();
@@ -1521,17 +1544,19 @@ function pintarInicio(){ const r=ACT.r, a=$("#secIni"), o=$("#secIniOrg"), c=$("
  const hay=!r.sinNom&&!!L.a&&!!L.p&&res.activos>0;
  a.classList.remove("oculto");
  if(!hay) a.innerHTML=`<h2 class="visual-oculto" id="iniT">El número</h2><p class="mensaje" style="margin:0">${$("#titular").innerHTML}</p>`;
- else { const pc=pctI(res.presAct,res.activos), pub=!!L.u&&!r.sinWeb;
+ else { const pc=pctI(res.presAct,res.activos), pub=!!L.u&&!r.sinWeb, deb=enUltima()?r.personas.filter(debeNotif):[], nDeb=deb.length, nNot=deb.filter(p=>notifDe(p).length).length;
   a.innerHTML=`<div class="ini-num"><div class="ini-grande"><h2 class="ini-t" id="iniT">De los funcionarios activos ${esc(quien)}, presentaron la declaración${h?` <span class="ini-al">hasta el ${esc(h)}</span>`:""}</h2>
    <div class="ini-cifra"><span class="ini-pct">${pc} %</span><span class="ini-de"><b>${nf(res.presAct)}</b> de <b>${nf(res.activos)}</b> · faltan <b class="ini-faltan">${nf(res.sinPres)}</b></span></div>
    <div class="ini-barra" role="img" aria-label="${pc} % presentaron"><span style="width:${pc}%"></span></div></div>
-   ${pub?`<div class="ini-lado"><span class="et">La tienen publicada</span><span class="v">${pctI(res.pubAct,res.activos)} % <small>${nf(res.pubAct)} de ${nf(res.activos)}</small></span></div>`:""}</div>`; }
+   ${pub||nDeb?`<div class="ini-lado">${pub?`<div><span class="et">La tienen publicada</span><span class="v">${pctI(res.pubAct,res.activos)} % <small>${nf(res.pubAct)} de ${nf(res.activos)}</small></span></div>`:""}${nDeb?`<div><span class="et">Notificados que todavía deben</span><span class="v">${nf(nNot)} <small>de los ${nf(nDeb)} que deben</small></span><button class="btn lnk sm" type="button" data-filtro="${nNot?"notif":"sinNotif"}" data-ir="1">${nNot?"Ver quiénes":"Ver a los que deben"}</button></div>`:""}</div>`:""}</div>`; }
  if(!hay){ o.classList.add("oculto"); o.innerHTML=""; }
  else { o.classList.remove("oculto");
-  const fs=porGrupo(r.personas,"jurs").map(x=>Object.assign(x,{pct:pctI(x.pres,x.act)})).sort((x,y)=>x.pct-y.pct||y.sin-x.sin||x.v.localeCompare(y.v,"es"));
+  // en cada organismo, de los que no presentaron, a cuántos se les copió la notificación
+  const nOrg=new Map(); if(enUltima()) for(const p of r.personas) if(p.cod[1]==="1"&&p.cod[0]==="0"&&notifDe(p).length) for(const v of valoresDe(p,"jurs")) nOrg.set(v,(nOrg.get(v)||0)+1);
+  const fs=porGrupo(r.personas,"jurs").map(x=>Object.assign(x,{pct:pctI(x.pres,x.act),nt:nOrg.get(x.v)||0})).sort((x,y)=>x.pct-y.pct||y.sin-x.sin||x.v.localeCompare(y.v,"es"));
   o.innerHTML=`<div class="ini-cab"><h2>Cómo está cada organismo</h2><span class="ayuda" style="margin:0">Primero los más atrasados. Tocá uno para ver a sus personas.</span></div>
-   <div class="ini-fila enc" aria-hidden="true"><span>Organismo</span><span>Presentaron</span><span class="r">Faltan</span><span></span></div>
-   <ul class="ini-lista">${fs.map(x=>`<li><button type="button" class="ini-fila" data-verorg="${esc(x.v)}"><span class="ini-org"><b>${esc(x.v)}</b><small>${nf(x.act)} ${x.act===1?"activo":"activos"}</small></span><span class="ini-pr"><span class="pista"><span class="lleno" style="width:${x.pct}%"></span></span><b>${x.pct} %</b></span><span class="r ini-f ${x.sin?"mal":"ok"}">${x.sin?nf(x.sin):"Ninguno"}<small class="ini-fet">${x.sin?(x.sin===1?" falta":" faltan"):" falta"}</small></span><svg class="ini-ir" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>`).join("")}</ul>`; }
+   <div class="ini-fila enc" aria-hidden="true"><span>Organismo</span><span>Presentaron</span><span class="r">Faltan</span><span class="r">${enUltima()?"Notificados":""}</span><span></span></div>
+   <ul class="ini-lista">${fs.map(x=>`<li><button type="button" class="ini-fila" data-verorg="${esc(x.v)}"><span class="ini-org"><b>${esc(x.v)}</b><small>${nf(x.act)} ${x.act===1?"activo":"activos"}</small></span><span class="ini-pr"><span class="pista"><span class="lleno" style="width:${x.pct}%"></span></span><b>${x.pct} %</b></span><span class="r ini-f ${x.sin?"mal":"ok"}">${x.sin?nf(x.sin):"Ninguno"}<small class="ini-fet">${x.sin?(x.sin===1?" falta":" faltan"):" falta"}</small></span><span class="r ini-n">${x.sin&&enUltima()?`${nf(x.nt)} de ${nf(x.sin)}<small class="ini-fet"> notificados</small>`:"—"}</span><svg class="ini-ir" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>`).join("")}</ul>`; }
  // sin nómina no se sabe quién dejó un cargo, y una DDJJ «¿de otro cargo?» sin decidir puede ser la de cese que falta
  const nC=L.p?r.personas.filter(p=>debeTxt(p)).length:0, nD=r.personas.filter(p=>p.revCargo).length;
  if(!L.p||!L.a||r.sinNom||!res.total){ c.classList.add("oculto"); c.innerHTML=""; }
@@ -1794,7 +1819,7 @@ const ATAJOS=[
  {id:"pendiente",t:"Lo pendiente de la nómina",sit:"pendiente",pide:"pau",aparte:true},
  {id:"cambio",t:"Cambiaron esta semana",sit:"cambio",pide:"",aparte:true}];
 const especial=x=>x&&x.startsWith("cod:")?(SIT[x.slice(4)]||{n:""}).n:ESPECIAL[x];
-const ESPECIAL={incomp:"Anulada por incomparecencia",pendiente:"Lo pendiente de la nómina",cambio:"Cambiaron esta semana",cese:"Deben la DDJJ de cese",incons:"Inconsistencias",pend:"Por confirmar",nombre:"Unidos por el nombre",otroCargo:"¿DDJJ de otro cargo?"};
+const ESPECIAL={notif:"Notificados que todavía deben",sinNotif:"Deben y no se los notificó",incomp:"Anulada por incomparecencia",pendiente:"Lo pendiente de la nómina",cambio:"Cambiaron esta semana",cese:"Deben la DDJJ de cese",incons:"Inconsistencias",pend:"Por confirmar",nombre:"Unidos por el nombre",otroCargo:"¿DDJJ de otro cargo?"};
 const rVacia=()=>({p:"",a:"",u:""});
 const rDe=()=>{ const L=ACT&&ACT.r?ACT.r.L:{}; const x=rVacia(); for(const k of FID) if(L[k]) x[k]=FILTRO.r[k]; return x; };
 const atajoPuesto=()=>{ const R=rDe(); return ATAJOS.find(t=>(t.sit||"")===FILTRO.sit&&FID.every(k=>(t.r?t.r[k]:"")===R[k])); };
@@ -1802,12 +1827,23 @@ const atajoPuesto=()=>{ const R=rDe(); return ATAJOS.find(t=>(t.sit||"")===FILTR
    sin semana anterior, no quedan puestos (si no, en una semana sin la web todos los activos
    saldrían como pendientes). Corre antes de pintar la tabla y los filtros. */
 function sanearFiltro(){ const r=ACT.r; if(!r) return [];
+ // lo anotado es de hoy: en una semana anterior no se filtra por eso
+ if(!enUltima()&&(FILTRO.sit==="notif"||FILTRO.sit==="sinNotif")) FILTRO.sit="";
  const hayCambios=!!(ACT.cmp&&(ACT.cmp.cambios.size||ACT.cmp.salieron.length||(ACT.cmp.pasaron||[]).length));
  const vis=ATAJOS.filter(t=>[...t.pide].every(k=>r.L[k]||(k==="u"&&r.sinWeb&&t.id==="pendiente"))&&(t.id!=="cambio"||hayCambios));
  const suyo=ATAJOS.find(t=>t.sit&&t.sit===FILTRO.sit); if(suyo&&!vis.includes(suyo)) FILTRO.sit="";
  return vis; }
+/* Con un organismo de la nómina elegido, arriba de la lista sus números (el diseño F): cuántos presentaron, cuántos
+   faltan y a cuántos de ellos se les copió la notificación, y cuántos la tienen publicada. Volver lleva al Inicio. */
+function pintarOrgCab(){ const el=$("#orgCab"), r=ACT.r, v=FILTRO.min; if(!el) return;
+ const x=r&&r.L.a&&r.L.p&&!r.sinNom&&v&&v!=="-"&&v!=="?"&&!v.startsWith("d:")?porGrupo(r.personas,"jurs").find(g=>g.v===v):null;
+ if(!x){ el.innerHTML=""; return; }
+ const nt=enUltima()?r.personas.filter(p=>enGrupo(p,"jurs",v)&&p.cod[0]==="0"&&notifDe(p).length).length:0, pub=!!r.L.u&&!r.sinWeb;
+ el.innerHTML=`<div class="org-cab"><button type="button" class="btn lnk sm org-volver" data-tab="inicio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Todos los organismos</button>
+  <div class="org-cab-c"><div class="org-cab-n"><h3>${esc(v)}</h3><p class="ayuda" style="margin:2px 0 0">${nf(x.act)} ${x.act===1?"funcionario activo":"funcionarios activos"}</p></div>
+  <div class="org-cab-v"><div><span class="et">Presentaron</span><span class="v">${pctI(x.pres,x.act)} %</span><small>${nf(x.pres)} de ${nf(x.act)}</small></div><div><span class="et">Faltan</span><span class="v ${x.sin?"mal":""}">${nf(x.sin)}</span><small>${!x.sin?"nadie":enUltima()?`${nf(nt)} ${nt===1?"ya notificado":"ya notificados"}`:"en esa semana"}</small></div>${pub?`<div><span class="et">Publicadas</span><span class="v chica">${pctI(x.pub,x.act)} %</span><small>${nf(x.pub)} de ${nf(x.act)}</small></div>`:""}</div></div></div>`; }
 function pintarFiltros(){ const r=ACT.r; const sec=$("#secPersonas");
- if(!r||!r.personas.length){ sec.classList.add("oculto"); return; } sec.classList.remove("oculto");
+ if(!r||!r.personas.length){ sec.classList.add("oculto"); return; } sec.classList.remove("oculto"); pintarOrgCab();
  const R=rDe();
  $("#preguntas").innerHTML=PREG.map(([k,t,h])=>{ const hay=!!r.L[k];
   return `<div class="preg" title="${hay?"Según "+h:""}"><span class="pt" id="pq-${k}">${t}${hay?"":` <span class="ph">· ${estructural(k)?SIN_ESTR[k]:SIN[k]}</span>`}</span><div class="seg" role="group" aria-labelledby="pq-${k}">${[["","Todos"],["1","Sí"],["0","No"]].map(([x,tt])=>`<button type="button" data-preg="${k}|${x}" aria-pressed="${hay&&R[k]===x}" ${hay?"":"disabled"}>${tt}</button>`).join("")}</div></div>`; }).join("");
@@ -1822,7 +1858,9 @@ function pintarFiltros(){ const r=ACT.r; const sec=$("#secPersonas");
  if(nCe||FILTRO.sit==="cese") h+=`<button type="button" class="chipb ${nDo?"rojo":""} ${FILTRO.sit==="cese"?"on":""}" aria-pressed="${FILTRO.sit==="cese"}" data-filtro="cese" title="Los que presentaron la DDJJ de un cargo anterior y no la de cese de ese cargo. Si tampoco presentaron la del cargo de hoy, están en doble falta">Deben la DDJJ de cese${nDo?" · hay doble falta":""}</button>`;
  const nIn=r.personas.filter(p=>p.incomp&&p.incomp.length).length+incompDe(ALC).sueltas.length;
  if(nIn||FILTRO.sit==="incomp") h+=`<button type="button" class="chipb ${FILTRO.sit==="incomp"?"on":""}" aria-pressed="${FILTRO.sit==="incomp"}" data-filtro="incomp" title="Tienen en el índice del protocolo una DDJJ anulada por incomparecencia: no cuenta como presentada">Anulada por incomparecencia</button>`;
- if(FILTRO.sit&&FILTRO.sit!=="cese"&&FILTRO.sit!=="incomp"&&!ATAJOS.some(t=>t.sit===FILTRO.sit&&!t.aparte)) h+=`<button type="button" class="chipb on" data-filtro="${FILTRO.sit}" title="Quitar este filtro">${especial(FILTRO.sit)} ✕</button>`;
+ const conN=enUltima()&&!!r.L.a&&!!r.L.p&&r.personas.some(debeNotif);
+ if(conN) for(const [k,t,ti] of [["notif","Notificados que todavía deben","Se les copió la notificación y todavía deben algo: no presentaron, falta firmar o deben la de cese"],["sinNotif","Deben y no se los notificó","Deben algo y nunca se les copió la notificación"]]) h+=`<button type="button" class="chipb ${FILTRO.sit===k?"on":""}" aria-pressed="${FILTRO.sit===k}" data-filtro="${k}" title="${ti}">${t}</button>`;
+ if(FILTRO.sit&&FILTRO.sit!=="cese"&&FILTRO.sit!=="incomp"&&FILTRO.sit!=="notif"&&FILTRO.sit!=="sinNotif"&&!ATAJOS.some(t=>t.sit===FILTRO.sit&&!t.aparte)) h+=`<button type="button" class="chipb on" data-filtro="${FILTRO.sit}" title="Quitar este filtro">${especial(FILTRO.sit)} ✕</button>`;
  if(FILTRO.grp) h+=`<button type="button" class="chipb on" data-acc="sinGrp" title="Quitar este filtro">${esc((DIMS.find(d=>d[0]===FILTRO.grp.dim)||["",""])[1])}: ${esc(FILTRO.grp.v)} ✕</button>`;
  $("#atajos").innerHTML=h; }
 
@@ -1836,6 +1874,7 @@ function pasaF(F){ const q=sinTildes(F.q||"").toLowerCase().trim(), qd=q.replace
   else if(F.sit&&F.sit.startsWith("cod:")){ if(p.cv!==F.sit.slice(4)) return false; }
   else if(F.sit==="pend"){ if(!p.pend) return false; } else if(F.sit==="incomp"){ if(!(p.incomp&&p.incomp.length)) return false; } else if(F.sit==="nombre"){ if(!p.porNombre&&!p.manual) return false; }
   else if(F.sit==="cese"){ if(!debeTxt(p)) return false; }
+  else if(F.sit==="notif"){ if(!enUltima()||!debeNotif(p)||!notifDe(p).length) return false; } else if(F.sit==="sinNotif"){ if(!enUltima()||!debeNotif(p)||notifDe(p).length) return false; }
   else if(F.sit==="pendiente"){ if(!(p.cod[1]==="1"&&(p.cod[0]==="0"||(!p.sinWeb&&p.cod[2]==="0")||p.debeCese))) return false; }
   for(let k=0;k<3;k++){ const v=R[FID[k]]; if(v&&p.cod[k]!==v) return false; }
   if(F.min&&!enOrganismo(p,F.min)) return false;
@@ -1901,12 +1940,12 @@ function pintarPersonas(){ const r=ACT.r; if(!r||!r.personas.length){ $("#person
   if(lista==="cese"&&dt) lin.push(`<div class="nota">${esc(dt.d)}</div>`);
   if(lista==="incomp"&&p.incomp&&p.incomp.length) lin.push(`<div class="nota">${esc(textoIncomp(p))}</div>`);
   const m=marca(p); if(m) marcas++;
-  const of=orgFila(p,FU);
+  const of=orgFila(p,FU), nt=enUltima()&&L0.a&&L0.p?notifTxt(p):"", pn=puedeNotif(p);
   const det=[p.dni?"DNI "+fmtDni(p.dni):"",...(activo?p.cargos.slice(0,9):p.pres&&p.pres.cargo?[`presentó como «${p.pres.cargo}»`]:[])].filter(Boolean).join(" · ");
-  return `<div class="fila-per" data-fila="${esc(p.rep)}"><div class="per"><div class="nom"><button type="button" class="nom-per" data-perfil="${esc(p.rep)}" title="Ver todo lo que hay de esta persona">${esc(p.nom)}</button></div><div class="det">${esc(det)}</div></div>
+  return `<div class="fila-per" data-fila="${esc(p.rep)}"><div class="per"><div class="nom"><button type="button" class="nom-per" data-perfil="${esc(p.rep)}" title="Ver todo lo que hay de esta persona">${esc(p.nom)}</button></div><div class="det">${esc(det)}</div>${nt?`<div class="det notif-l">${esc(nt)}</div>`:""}</div>
    <span class="org"${of.title?` title="${esc(of.title)}"`:""}>${of.txt?esc(of.txt):"—"}${of.sub?`<small>${esc(of.sub)}</small>`:""}</span>
    <span class="cks">${VER_ORDEN.map(f=>[f,FID.indexOf(f)]).map(([f,k])=>p.cv[k]==="-"?`<span class="ck c nd"><i>${FN[f].col}: </i>—<small>${SIN_ESTR[f]}</small></span>`:`<span class="ck c ${p.cod[k]==="1"?"si":"no"}"><i>${FN[f].col}: </i>${p.cod[k]==="1"?"Sí":"No"}${f==="p"&&p.cod[0]==="0"&&L0.p?(p.falta?"<small>falta firmar</small>":p.otroCargo?`<small>${p.otroCargo.cese?"sólo la de cese":"era de otro cargo"}</small>`:p.fuera||(p.incomp&&p.incomp.length)?"<small>no cuenta</small>":""):""}</span>`).join("")}</span>
-   <div class="sitc"><span class="sitl"><span class="chip t-${SIT[p.cv].tono}">${SIT[p.cv].n}</span>${m?`<span class="punto" role="img" aria-label="Tiene algo por revisar: está en su perfil" title="Tiene algo por revisar: está en su perfil"></span>`:""}</span>${c&&lista==="cambio"?`<small>${esc(c.txt)}</small>`:""}</div>${lin.join("")}
+   <div class="sitc"><span class="sitl"><span class="chip t-${SIT[p.cv].tono}">${SIT[p.cv].n}</span>${m?`<span class="punto" role="img" aria-label="Tiene algo por revisar: está en su perfil" title="Tiene algo por revisar: está en su perfil"></span>`:""}</span>${c&&lista==="cambio"?`<small>${esc(c.txt)}</small>`:""}${pn?`<button class="btn sm notif-b ${nt?"":"pri"}" type="button" data-notifp="${esc(p.rep)}" title="Copia la notificación para pegar en CiDi${editable()?" y la anota con el día":""}">${nt?"Notificar de nuevo":"Copiar la notificación"}</button>`:""}</div>${lin.join("")}
   </div>`; }).join("");
  if(marcas) h+=`<p class="ayuda leyenda"><span class="punto" aria-hidden="true"></span> Tiene algo por revisar (una inconsistencia, una duda de poder, una coincidencia por confirmar o la de cese): está en su perfil, tocando la fila.</p>`;
  // con una búsqueda, si hay más en otro poder
@@ -2675,7 +2714,7 @@ function datosConsulta(){ const R=ACT.R, s=ACT.s, cmp=ACT.cmpG; const ls=f=>idsD
   fuentes:{p:ls("p").map(l=>({archivo:l.archivo,clave:l.clave||"",cargada:l.cargada,hasta:hastaIndice([l])})),a:[...ls("a").filter(l=>!l.ente),...ls("a").filter(l=>l.ente&&poderLista(l)==="A")].map(l=>({archivo:l.archivo,cargada:l.cargada,fechaDatos:l.fechaDatos||"",ente:l.ente?l.clave:""})),u:ls("u").map(l=>({archivo:l.archivo,cargada:l.cargada}))},
   res:resumir(r.personas,R.propuestas.filter(x=>ea(x.centro)||x.opciones.some(ea))),resAnt:prevP?resumir(prevP,[]):null,notificacion:M().notificacion||"",
   salieron:cmp?cmp.salieron.filter(ea).map(q=>({nom:q.nom,dni:q.dni,cuil:q.cuil||"",cod:q.otroCargo?"1"+q.cod.slice(1):q.cod,jurs:q.jurs,cargos:q.cargos})):[],
-  personas:r.personas.map(p=>({nom:p.nom,dni:p.dni,cuil:p.cuil||"",cod:p.cod,jurs:p.jurs,cargos:p.cargos,escals:p.escals,revistas:p.revistas,pres:p.pres,nPres:p.nPres,otroCargo:p.otroCargo,revCargo:p.revCargo||"",inconsist:p.inconsist||"",orgDDJJ:p.orgDDJJ||"",descartadas:(p.descartadas||[]).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo})),ceses:(p.ceses||[]).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo})),puestos:p.puestos||[],debeCese:p.debeCese?{n:p.debeCese.n,fecha:p.debeCese.fecha,cargo:p.debeCese.cargo}:null,hist:historialDe(p),ddjjs:r.L.p?ddjjsDe(p).filter(e=>!e.ajena&&!/otra persona con el mismo nombre/.test(e.estado)).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo,poder:e.poder,cuenta:e.cuenta,estado:e.estado})):[],falta:p.falta,fuera:p.fuera,otros:p.otrosNombres,otrosDni:p.otrosDni,pend:p.pend,ultimo:p.ultimo,cambio:((cmp&&cmp.cambios.get(p))||{}).txt||"",
+  personas:r.personas.map(p=>({nt:(rs=>rs.length?{n:rs.length,u:rs[rs.length-1].t}:null)(notifDe(p)),nom:p.nom,dni:p.dni,cuil:p.cuil||"",cod:p.cod,jurs:p.jurs,cargos:p.cargos,escals:p.escals,revistas:p.revistas,pres:p.pres,nPres:p.nPres,otroCargo:p.otroCargo,revCargo:p.revCargo||"",inconsist:p.inconsist||"",orgDDJJ:p.orgDDJJ||"",descartadas:(p.descartadas||[]).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo})),ceses:(p.ceses||[]).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo})),puestos:p.puestos||[],debeCese:p.debeCese?{n:p.debeCese.n,fecha:p.debeCese.fecha,cargo:p.debeCese.cargo}:null,hist:historialDe(p),ddjjs:r.L.p?ddjjsDe(p).filter(e=>!e.ajena&&!/otra persona con el mismo nombre/.test(e.estado)).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo,poder:e.poder,cuenta:e.cuenta,estado:e.estado})):[],falta:p.falta,fuera:p.fuera,otros:p.otrosNombres,otrosDni:p.otrosDni,pend:p.pend,ultimo:p.ultimo,cambio:((cmp&&cmp.cambios.get(p))||{}).txt||"",
    alc:p.alc,podFuente:p.podFuente||"",dudaPoder:p.dudaPoder||"",ubic:p.ubic?{de:p.ubic.de,orgs:p.ubic.orgs,vals:p.ubic.vals,nomina:!!p.ubic.nomina,por:p.ubic.por||"",literal:!!p.ubic.literal,ultima:p.ubic.ultima!==false,al:p.ubic.al||"",e:p.ubic.e?{n:p.ubic.e.n||"",fecha:p.ubic.e.fecha||"",cargo:p.ubic.e.cargo||"",noCuenta:p.ubic.e.noCuenta||""}:null}:null,sinOrg:p.sinOrg?{sin:p.sinOrg.sin,e:p.sinOrg.e?{n:p.sinOrg.e.n||"",fecha:p.sinOrg.e.fecha||"",cargo:p.sinOrg.e.cargo||""}:null,dos:p.sinOrg.dos||null}:null}))}; }
 /* El perfil de un funcionario: todo lo que hay de esa persona, y cada DDJJ del protocolo con el
    cargo con que se presentó (Baltasar, 23/10/2026: «que se vea sobre qué cargo presentó… como un
@@ -2820,22 +2859,66 @@ const textoSolo=t=>conAst(t.split(/(\n{2,})/).map((b,i)=>i%2?b:b.replace(NEG,"$1
 // la nota con el membrete, como se pega: párrafos y renglones del texto
 function cartaHtml(t){ const par=t.split(/\n{2,}/).map(b=>`<p style="margin:0 0 10pt">${conAst(esc(b).replace(NEG,"<b>$1</b>")).replace(/\n/g,"<br>")}</p>`).join("");
  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:11pt;line-height:1.45;color:#000;background:#fff"><p style="margin:0 0 16pt"><img src="${MEMBRETE}" alt="Escribanía de Gobierno · Provincia de Córdoba" width="600" style="width:600px;max-width:100%;height:auto"></p>${par}</div>`; }
+/* Las notificaciones anotadas (el diseño F; Baltasar, 04/11/2026: «que registre a quién se notificó y cuándo», «yo
+   diría que quede automático, pero siempre la opción de notificar de vuelta»). Copiar la notificación la anota, con el
+   momento y quién la copió; se puede notificar de nuevo cuantas veces haga falta, y queda cada vez. No hay plazo
+   (no está definido): se dice cuánto pasó. Anota sólo quien puede cambiar el cotejo, en la última semana: con el
+   perfil Consulta copiar no anota nada. La persona se reconoce por su DNI de la nómina, que no cambia de una semana
+   a otra; sin DNI, por el nombre. */
+const dniNotif=p=>p.dni||(p.dnis||[])[0]||"";
+const claveNotif=p=>dniNotif(p)?"d"+dniNotif(p):"n"+claveNombre(p.nom);
+/* Se busca por cada DNI de la persona y, si nadie más en el cotejo se llama igual, también por el nombre: así no
+   se pierde lo anotado cuando se une a mano con un renglón de otra lista, o cuando la nómina trae el DNI una
+   semana y la otra no. */
+let NOMS_N={R:null,m:new Map()};
+const nombreUnico=p=>{ const R=ACT&&ACT.R; if(!R) return false; if(NOMS_N.R!==R){ const m=new Map(); for(const q of R.personas){ const k=claveNombre(q.nom); m.set(k,(m.get(k)||0)+1); } NOMS_N={R,m}; } return (NOMS_N.m.get(claveNombre(p.nom))||0)===1; };
+const clavesNotif=p=>{ const ks=new Set([p.dni,...(p.dnis||[])].filter(Boolean).map(d=>"d"+d)); if(!ks.size||nombreUnico(p)) ks.add("n"+claveNombre(p.nom)); return [...ks]; };
+const NOTIFS=()=>{ const m=M(); if(!Array.isArray(m.notificados)) m.notificados=[]; return m.notificados; };
+let NOTIF_IDX={a:null,n:-1,m:new Map()};
+function notifDe(p){ const a=NOTIFS(); if(NOTIF_IDX.a!==a||NOTIF_IDX.n!==a.length){ const m=new Map();
+  for(const v of a){ if(!decValida("notificados",v)||isNaN(new Date(v.t))) continue; if(!m.has(v.p)) m.set(v.p,[]); m.get(v.p).push(v); }
+  for(const l of m.values()) l.sort((x,y)=>x.t<y.t?-1:x.t>y.t?1:0); NOTIF_IDX={a,n:a.length,m}; }
+ const ks=clavesNotif(p); if(ks.length===1) return NOTIF_IDX.m.get(ks[0])||[];
+ const vistos=new Set(), out=[]; for(const k of ks) for(const v of NOTIF_IDX.m.get(k)||[]) if(!vistos.has(v.k)){ vistos.add(v.k); out.push(v); }
+ return out.sort((x,y)=>x.t<y.t?-1:x.t>y.t?1:0); }
+// a quién se le arma la notificación: está en la nómina y debe algo
+const debeNotif=p=>p.cod[1]==="1"&&!p.sinNom&&!!motivoNotif(p);
+const puedeNotif=p=>enUltima()&&!!ACT.r&&!!ACT.r.L.a&&!!ACT.r.L.p&&!p.revCargo&&debeNotif(p);
+const haceDias=t=>{ const d=new Date(t), h=new Date(), n=Math.round((new Date(h.getFullYear(),h.getMonth(),h.getDate())-new Date(d.getFullYear(),d.getMonth(),d.getDate()))/86400000); return n<=0?"hoy":n===1?"ayer":`hace ${nf(n)} días`; };
+function notifTxt(p){ const rs=notifDe(p); if(!rs.length) return ""; const u=rs[rs.length-1];
+ return `Notificad${esF(p)?"a":"o"} ${haceDias(u.t)} · ${fechaDe(u.t)}${rs.length>1?` · ${nf(rs.length)} veces`:""}`; }
+const MIAS=new Set(); // las anotadas desde esta ventana: «No la mandé» borra sólo una de esas
+async function anotarNotif(p){ if(!editable()) return false; const q=quienRevisa(), v={k:nuevoId(),p:claveNotif(p),t:new Date().toISOString(),quien:q||""};
+ NOTIFS().push(v); if(!(await guardarMeta())){ const a=NOTIFS(), i=a.indexOf(v); if(i>=0) a.splice(i,1); return null; } MIAS.add(v.k); return true; }
+// copiar desde la lista: lo mismo que desde el perfil, con el trato que sale del nombre (o el elegido en el perfil)
+async function copiarNotifDe(p){ const t=textoNotif(p,M().notificacion||""), ok=await copiarRico(cartaHtml(t),textoSolo(t)); const an=ok&&await anotarNotif(p); return {ok,an}; }
+const yaAnotada=(p,an)=>an?` Quedó anotado: notificad${esF(p)?"a":"o"} hoy, ${fechaDe(new Date())}.`:an===null?" Pero no quedó anotada: no se pudo guardar (el aviso de arriba dice por qué).":SOLO_VER()?" Con el perfil de Consulta no queda anotada.":"";
 function htmlNotificar(p,plantilla,editable){ NOTIF_P={p,plantilla,editable};
  if(p.revCargo||!motivoNotif(p)) return `<p style="margin:0">${p.cod[1]!=="1"?"No está en la nómina de activos: no hay nada que notificarle.":p.revCargo?(editable?"Falta decidir si la declaración que presentó es por el cargo de hoy («Inconsistencia», arriba): hasta entonces no se arma la notificación.":"En el cotejo falta decidir si la declaración que presentó es por el cargo de hoy: hasta entonces no se arma la notificación."):"Presentó la declaración por el cargo de hoy: no hay nada que notificarle."}</p>`;
  const f=esF(p), t=textoNotif(p,plantilla);
  return `<p style="margin:0">Copia la notificación con el membrete y los datos de esta persona, para pegarla en CiDi.${plantilla?"":" <b>Es un borrador:</b> el texto todavía no está definido."}</p>
   ${avisoHasta()}
+  ${htmlRegNotif(p,editable)}
   <div class="row"><span class="ayuda" style="margin:0">Trato</span><div class="seg seg-c" role="group" aria-label="Trato">${[["M","Señor"],["F","Señora"]].map(([k,n])=>`<button type="button" data-trato="${k}" aria-pressed="${(f?"F":"M")===k}">${n}</button>`).join("")}</div>${TRATO.has(p.nom)?"":`<span class="ayuda" style="margin:0">${p.nom.includes(",")?"sale del nombre de pila: si no es, se cambia acá":"el nombre no separa el apellido de los nombres: revisá el trato"}</span>`}</div>
   ${/\[[^\]]+\]/.test(t)?`<p class="ayuda" style="margin:0">Tiene partes entre corchetes para completar antes de mandarla.</p>`:""}
   <div class="carta" id="notifCarta">${cartaHtml(t)}</div><pre id="notifTxt" hidden>${esc(textoSolo(t))}</pre>
-  <div class="row"><button class="btn pri" type="button" data-acc="copiarNotif">Copiar la notificación</button>${editable?`<button class="btn lnk sm" type="button" data-acc="editarNotif">Cambiar el texto</button>`:""}<span class="ayuda" id="notifOk" role="status" style="margin:0"></span></div>`; }
+  <div class="row"><button class="btn pri" type="button" data-acc="copiarNotif">${notifDe(p).length?"Notificar de nuevo":"Copiar la notificación"}</button>${editable?`<button class="btn lnk sm" type="button" data-acc="editarNotif">Cambiar el texto</button>`:""}<span class="ayuda" id="notifOk" role="status" style="margin:0"></span></div>`; }
+// lo anotado de una persona, en su perfil: la última, cada vez, y borrar la última si se copió sin mandarla
+function htmlRegNotif(p,editable){ const rs=notifDe(p); if(!rs.length) return `<p class="ayuda" style="margin:0">Todavía no se ${esF(p)?"la":"lo"} notificó.${editable&&enUltima()?" Al copiar la notificación queda anotado el día.":""}</p>`;
+ const u=rs[rs.length-1];
+ return `<div class="notif-reg"><b>${esc(notifTxt(p))}</b>${u.quien?`<span> · la última, ${esc(u.quien)}</span>`:""}${rs.length>1?`<details><summary>Cada vez</summary><ul>${rs.slice().reverse().map(v=>`<li>${esc(fechaHora(v.t))}${v.quien?" · "+esc(v.quien):""}</li>`).join("")}</ul></details>`:""}${editable&&enUltima()&&rs.some(v=>MIAS.has(v.k))?` <button class="btn lnk sm" type="button" data-acc="borrarNotif">No la mandé: borrar la que copié recién</button>`:""}</div>`; }
+async function borrarNotif(){ if(!NOTIF_P||!editable()) return; const rs=notifDe(NOTIF_P.p).filter(v=>MIAS.has(v.k)), u=rs[rs.length-1]; if(!u) return; const a=NOTIFS(), i=a.indexOf(u); if(i<0) return;
+ a.splice(i,1); if(!(await guardarMeta())){ a.splice(i,0,u); const o=$("#notifOk"); if(o) o.textContent="No se pudo borrar: no se pudo guardar (el aviso de arriba dice por qué)."; return; } MIAS.delete(u.k); pintarNotif(); pintarPersonas(); pintarInicio(); pintarOrgCab(); const o=$("#notifOk"); if(o) o.textContent=`Se borró la anotación del ${fechaHora(u.t)}.`; const b=$('[data-acc="copiarNotif"]'); if(b) b.focus(); }
 function pintarNotif(){ const s=$("#pfNotif"); if(s&&NOTIF_P) s.innerHTML="<h3>Notificar</h3>"+htmlNotificar(NOTIF_P.p,NOTIF_P.plantilla,NOTIF_P.editable); }
 /* Copiar con formato: el membrete y el texto (text/html) y, para donde no se acepten imágenes,
    el texto solo (text/plain). La copia clásica anda adentro de la ventana del perfil y del menú. */
 async function copiarRico(html,texto){ let ok=false; const h=e=>{ e.clipboardData.setData("text/html",html); e.clipboardData.setData("text/plain",texto); e.preventDefault(); ok=true; };
  document.addEventListener("copy",h); try{ document.execCommand("copy"); }catch(e){} document.removeEventListener("copy",h); if(ok) return true;
  try{ await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([texto],{type:"text/plain"})})]); return true; }catch(e){ return alPortapapeles(texto); } }
-async function copiarNotif(){ const t=$("#notifTxt"), c=$("#notifCarta"); if(!t) return; const ok=await copiarRico(c?c.innerHTML:"",t.textContent); const o=$("#notifOk"); if(o) o.textContent=ok?"Copiada, con el membrete: pegala en la notificación de CiDi (si no acepta la imagen, queda el texto).":"El navegador no dejó copiar: seleccioná el texto y copialo."; }
+async function copiarNotif(){ const t=$("#notifTxt"), c=$("#notifCarta"); if(!t) return; const ok=await copiarRico(c?c.innerHTML:"",t.textContent);
+ const p=NOTIF_P&&NOTIF_P.p, an=ok&&p&&await anotarNotif(p);
+ if(an){ pintarNotif(); pintarPersonas(); pintarInicio(); pintarOrgCab(); const b=$('[data-acc="copiarNotif"]'); if(b) b.focus(); }
+ const o=$("#notifOk"); if(o) o.textContent=ok?"Copiada, con el membrete: pegala en la notificación de CiDi (si no acepta la imagen, queda el texto)."+(p?yaAnotada(p,an):""):"El navegador no dejó copiar: seleccioná el texto y copialo."; }
 /* El historial de la persona, semana por semana (de la más nueva a la más vieja): qué decía cada
    lista y qué cambió contra la semana anterior, también el cargo. */
 const QUE_H={p:["presentó","ya no figura entre los que presentaron"],a:["entró en la nómina","ya no figura en la nómina"],u:["se publicó la declaración","ya no figura publicada"]};
@@ -3018,6 +3101,7 @@ function validarCopia(o){ const mal=t=>{ throw new Error(t); };
  for(const s of o.meta.semanas){ if(!esObj(s)||!/^\d{4}-\d{2}-\d{2}$/.test(s.s||"")) mal("La copia está dañada: hay una semana que no se puede leer.");
   for(const f of FID){ if(!Array.isArray(s[f])||s[f].some(id=>typeof id!=="string")) mal("La copia está dañada: hay una semana que no se puede leer."); if(s[f].some(id=>!ids.has(id))) mal("A la copia le faltan listas."); } }
  if(o.meta.notificacion!=null&&typeof o.meta.notificacion!=="string") mal("La copia está dañada: el texto de la notificación no se puede leer.");
+ if(o.meta.notificados!=null&&(!Array.isArray(o.meta.notificados)||o.meta.notificados.some(v=>!decValida("notificados",v)))) mal("La copia está dañada: hay una notificación anotada que no se puede leer.");
  if(o.meta.cargos!=null&&(!Array.isArray(o.meta.cargos)||o.meta.cargos.some(v=>!esObj(v)||typeof v.k!=="string"||typeof v.si!=="boolean"||(v.cese!=null&&typeof v.cese!=="boolean")||(v.otra!=null&&typeof v.otra!=="boolean")))) mal("La copia está dañada: hay una DDJJ marcada de otro cargo que no se puede leer.");
  if(o.meta.entesOrg!=null&&(!Array.isArray(o.meta.entesOrg)||o.meta.entesOrg.some(v=>!esObj(v)||typeof v.j!=="string"||typeof v.nom!=="string"))) mal("La copia está dañada: hay un organismo marcado como ente que no se puede leer.");
  if(o.meta.poderes!=null&&(!Array.isArray(o.meta.poderes)||o.meta.poderes.some(v=>!esObj(v)||typeof v.k!=="string"||!/^[EJL]$/.test(v.poder||"")))) mal("La copia está dañada: hay un poder decidido que no se puede leer.");
@@ -3259,7 +3343,7 @@ const entradaPierri=async(c,crudo,por)=>Object.assign({u:c.u,n:c.n,rol:c.r,pierr
 const sinCuenta=s=>{ const c=Object.assign({},s); delete c.res; delete c.resK; return c; };
 const paraNube=m=>{ const o=Object.assign({},m); delete o.rev; delete o.vistos; o.semanas=(m.semanas||[]).map(sinCuenta); return JSON.parse(JSON.stringify(o)); };
 /* Cada decisión es un registro; dos registros con la misma clave son la misma decisión. */
-const CLAVE_DEC={vinculos:v=>[v.x,v.y].sort().join("\n"),cargos:v=>v.k,revisadas:v=>v.k,entesOrg:v=>v.j,poderes:v=>v.k};
+const CLAVE_DEC={vinculos:v=>[v.x,v.y].sort().join("\n"),cargos:v=>v.k,revisadas:v=>v.k,entesOrg:v=>v.j,poderes:v=>v.k,notificados:v=>v.k};
 const juntarValor=(b,l,r)=>{ if(esObj(l)&&esObj(r)&&(b===undefined||esObj(b))){ const o={}; for(const k of new Set([...Object.keys(l),...Object.keys(r)])){ const v=juntarValor((b||{})[k],l[k],r[k]); if(v!==undefined) o[k]=v; } return o; } return igual(b,l)?r:l; };
 /* Las listas de una parte de la semana: se saca lo que se sacó acá y se suma lo que se sumó acá, sobre lo de GitHub. */
 const mezIds=(b,l,r)=>{ b=b||[]; l=l||[]; r=r||[]; const sb=new Set(b), sl=new Set(l), sac=new Set(b.filter(x=>!sl.has(x))), out=r.filter(x=>!sac.has(x));
@@ -3287,7 +3371,7 @@ function juntar(b,l,r){ b=esObj(b)?paraNube(b):{}; r=esObj(r)?r:{}; const o={};
  return o; }
 const idsNube=m=>{ const ids=new Set(); (m.semanas||[]).forEach(s=>FID.forEach(f=>{ idsDe(s,f).forEach(id=>ids.add(id)); if(s.orig&&Array.isArray(s.orig[f])) s.orig[f].forEach(id=>ids.add(id)); })); return ids; };
 /* Lo que viene de GitHub se revisa como una copia: si algo no se puede leer, no entra (y no rompe la pantalla). */
-const decValida=(k,v)=>esObj(v)&&(k==="vinculos"?typeof v.x==="string"&&typeof v.y==="string"&&typeof v.si==="boolean":k==="entesOrg"?typeof v.j==="string"&&typeof v.nom==="string":typeof v.k==="string"&&(k!=="cargos"||typeof v.si==="boolean")&&(k!=="poderes"||/^[EJL]$/.test(v.poder||"")));
+const decValida=(k,v)=>esObj(v)&&(k==="vinculos"?typeof v.x==="string"&&typeof v.y==="string"&&typeof v.si==="boolean":k==="entesOrg"?typeof v.j==="string"&&typeof v.nom==="string":typeof v.k==="string"&&(k!=="cargos"||typeof v.si==="boolean")&&(k!=="poderes"||/^[EJL]$/.test(v.poder||""))&&(k!=="notificados"||typeof v.p==="string"&&typeof v.t==="string"));
 const metaValida=m=>esObj(m)&&Array.isArray(m.semanas)&&m.semanas.every(s=>esObj(s)&&/^\d{4}-\d{2}-\d{2}$/.test(s.s||"")&&FID.every(f=>Array.isArray(s[f])&&s[f].every(id=>typeof id==="string")))
  &&Object.keys(CLAVE_DEC).every(k=>m[k]==null||Array.isArray(m[k])&&m[k].every(v=>decValida(k,v)))&&(m.notificacion==null||typeof m.notificacion==="string");
 /* El estado en GitHub: {vuelta, meta}. */
@@ -3464,7 +3548,7 @@ function formCrear(){ const ns=META.semanas.length;
 /* En la web, la copia elegida al crear es lo que se sube (en memoria: acá no se guarda). */
 async function tomarCopiaWeb(){ const i=$("#nCopia"), fl=i&&i.files&&i.files[0]; if(!WEB||!fl) return;
  const o=validarCopia(JSON.parse(decodificar(await fl.arrayBuffer())));
- META=Object.assign(metaVacia(),o.meta,{rev:0}); ["vinculos","cargos","revisadas","entesOrg","poderes"].forEach(k=>{ if(!Array.isArray(META[k])) META[k]=[]; }); ["mapeos","hojas","filtros"].forEach(k=>{ if(!esObj(META[k])) META[k]={}; });
+ META=Object.assign(metaVacia(),o.meta,{rev:0}); ["vinculos","cargos","revisadas","entesOrg","poderes","notificados"].forEach(k=>{ if(!Array.isArray(META[k])) META[k]=[]; }); ["mapeos","hojas","filtros"].forEach(k=>{ if(!esObj(META[k])) META[k]={}; });
  LISTAS.clear(); o.listas.forEach(l=>LISTAS.set(l.id,l)); VISTA=null; TAB=null; VER++; MEMO.clear(); }
 function pasoToken(){ if(WEB){ if(!NUBE) return pasoEntrarWeb(); return formNube("tokenW","Cambiar la llave de GitHub",`<p style="margin:0">La llave nueva queda en esta computadora, cifrada con tu usuario y tu clave.</p>${campoN("nTok","Llave de GitHub","password","off")}${campoN("nC","Tu clave","password","current-password")}`,"Guardar"); }
  formNube("token","Compartir con el equipo",`<p style="margin:0">El cotejo compartido vive en un repositorio privado de GitHub, <b>cotejo-ddjj-datos</b>. Para que esta computadora entre, se pega una sola vez su llave de GitHub (un «token»), que da quien administra el repositorio. Queda guardada en esta computadora.</p>
@@ -3504,8 +3588,10 @@ async function enviarNube(){ const P=NUBE_PASO, f=$("#fNube"); if(!f) return;
   ocupadoNube("Entrando…"); let token=tk;
   if(!token){ const t=await abrirToken(u,c).catch(()=>"");
    const pedir=m=>{ const k=f.querySelector("#nTokc"); if(k) k.hidden=false; return malNube(m,"#nTok"); };
-   if(t===null) return pedir("Esta computadora todavía no tiene tu llave de GitHub: pegala abajo (es una sola vez).");
-   if(!t) return pedir("El usuario o la clave no son correctos. Si cambiaste la clave, pegá de nuevo tu llave de GitHub.");
+   /* Una clave mal escrita no pide la llave de GitHub (Baltasar, 06/11/2026: «cuando le erro a la contraseña me vuelve
+      a pedir la de github»): la llave sigue guardada, y se pide sólo si la persona toca «Pegar mi llave de GitHub». */
+   if(t===null) return Object.keys(llavesGuardadas()).length?pedir(`En esta computadora no hay una llave guardada para «${u.trim()}»: revisá el usuario. Si es la primera vez que entrás con él acá, pegá tu llave de GitHub abajo.`):pedir("Esta computadora todavía no tiene tu llave de GitHub: pegala abajo (es una sola vez).");
+   if(!t){ const k=f.querySelector("#nTokc"); return malNube(`La clave no es correcta: probá de nuevo.${k&&k.hidden?" Si la cambiaste después de entrar en esta computadora (acá, en otra o en Ley Pierri), es la buena pero la llave quedó guardada con la anterior: tocá «Pegar mi llave de GitHub» y pegala de nuevo.":""}`,"#nC"); }
    token=t; }
   TOKEN_MEM=token; let us, x, crudo;
   try{ const r=await gh("GET",""); if(r.status===404) throw errN("acceso"); if(!r.ok) throw errN("http"); const j=await r.json(); if(j.private!==true) throw errN("publico");
@@ -3783,6 +3869,9 @@ function armarDemo(){ const hoy=new Date(); const antes=new Date(hoy); antes.set
  const lp26b=parte("p",p26b,`INDICE PROTOCOLO B - ${an}.xlsx`,hoy,"Hoja1"), la1=parte("a",n1,"Funcionarios activos.xlsx",hoy,"Funcionarios"), lu1=parte("u",u1,"Indice ddjj publicadas en web.xlsx",hoy,"Hoja1");
  meta.semanas=[{s:lunesDe(antes),p:[lp25.id,lp26a.id],a:[la0.id],u:[lu0.id],orig:{},filtros:{},res:null},
   {s:lunesDe(hoy),p:[lp25.id,lp26b.id],a:[la1.id],u:[lu1.id],orig:{},filtros:{},res:null}];
+ // dos notificaciones anotadas, inventadas: una mandada dos veces y otra hace unos días
+ const vez=(dni,d,quien)=>{ const x=new Date(hoy); x.setDate(x.getDate()-d); x.setHours(10,30,0,0); return {k:nuevoId(),p:"d"+dni,t:x.toISOString(),quien}; };
+ meta.notificados=[vez("30000118",28,"Ejemplo"),vez("30000118",14,"Ejemplo"),vez("30000115",5,"Ejemplo")];
  DEMO=prevDemo; return {META:meta,LISTAS:L}; }
 async function entrarDemo(){ DEMO=armarDemo(); ALC="E"; AVISO_ENTE=""; VER++; MEMO.clear(); M().semanas.forEach((_,i)=>calc(i)); VISTA=null; TAB="inicio"; Object.assign(FILTRO,{sit:"",q:"",min:"",grp:null,n:150,r:{p:"",a:"",u:""}}); $("#buscar").value=""; await pintar(); window.scrollTo(0,0); }
 async function salirDemo(){ DEMO=null; ALC="E"; AVISO_ENTE=""; VISTA=null; TAB=null; VER++; MEMO.clear(); Object.assign(FILTRO,{sit:"",q:"",min:"",grp:null,n:150,r:{p:"",a:"",u:""}}); $("#buscar").value=""; await pintar(); window.scrollTo(0,0); }
@@ -3796,7 +3885,7 @@ function conOrganismo(){ const v=FILTRO.min; if(!v) return; if(FILTRO.grp&&!hayE
  if(FILTRO.r.a==="0"&&!hayEnOrg(v,false)) FILTRO.r.a="";
  if(!hayEnOrg(v,true)){ if(FILTRO.r.a==="1") FILTRO.r.a=""; if(FILTRO.sit==="pendiente") FILTRO.sit=""; } }
 function sinContradiccion(a){ const v=FILTRO.min; if(a==="0"){ FILTRO.grp=null; if(v&&!hayEnOrg(v,false)) FILTRO.min=""; } else if(a==="1"&&v&&!hayEnOrg(v,true)) FILTRO.min=""; }
-function mostrarPersonas(){ const f=document.activeElement, sel=f&&f.dataset?(f.dataset.preg!=null?`[data-preg="${f.dataset.preg}"]`:f.dataset.atajo?`[data-atajo="${f.dataset.atajo}"]`:f.dataset.sit?`[data-sit="${f.dataset.sit}"]`:f.dataset.filtro!=null?`[data-filtro="${f.dataset.filtro}"]`:""):"";
+function mostrarPersonas(){ const nf0=$("#notifFila"); if(nf0){ nf0.classList.add("oculto"); nf0.textContent=""; } const f=document.activeElement, sel=f&&f.dataset?(f.dataset.preg!=null?`[data-preg="${f.dataset.preg}"]`:f.dataset.atajo?`[data-atajo="${f.dataset.atajo}"]`:f.dataset.sit?`[data-sit="${f.dataset.sit}"]`:f.dataset.filtro!=null?`[data-filtro="${f.dataset.filtro}"]`:""):"";
  FILTRO.n=150; pintarResumen(); pintarSelMin(); pintarFiltros(); pintarPersonas();
  if(sel){ const n=$(sel); if(n&&!n.disabled) n.focus({preventScroll:true}); } }
 const irA=sel=>{ const e=$(sel); if(!e) return; const pn=e.closest("[data-panel]");
@@ -3839,11 +3928,17 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("button");
  if(d.sit!=null){ const c=d.sit; if(c.includes("-")){ FILTRO.r=rVacia(); FILTRO.sit="cod:"+c; } else { FILTRO.r={p:c[0],a:c[1],u:c[2]}; FILTRO.sit=""; sinContradiccion(c[1]); } mostrarPersonas(); irA("#secPersonas"); return; }
  if(d.preg){ const [k,v]=d.preg.split("|"); FILTRO.r[k]=v; mostrarPersonas(); return; }
  if(d.atajo){ const t=ATAJOS.find(x=>x.id===d.atajo); if(!t) return; if(atajoPuesto()===t){ FILTRO.r=rVacia(); FILTRO.sit=""; } else { FILTRO.r=Object.assign(rVacia(),t.r||{}); FILTRO.sit=t.sit||""; sinContradiccion(t.r?t.r.a:t.sit==="pendiente"?"1":""); } mostrarPersonas(); return; }
- if(d.filtro!=null){ FILTRO.sit=FILTRO.sit===d.filtro?"":d.filtro; mostrarPersonas(); return; }
+ if(d.filtro!=null){ if(d.ir){ FILTRO.sit=d.filtro; FILTRO.r=rVacia(); FILTRO.min=""; FILTRO.grp=null; FILTRO.q=""; $("#buscar").value=""; mostrarPersonas(); irA("#barraRes"); return; } FILTRO.sit=FILTRO.sit===d.filtro?"":d.filtro; mostrarPersonas(); return; }
  if(d.dim){ DIM=d.dim; pintarOrganismos(); return; }
  if(d.informe!=null){ MINM=d.informe; pintarMandar(); irA("#secMandar"); return; }
  // tocar un nombre de la tabla es «las personas de ahí»: con un organismo solo, su Excel
  if(d.verfuera!=null){ FILTRO.min=d.verfuera; FILTRO.r=d.verfuera==="-"||d.verfuera==="?"?rVacia():{p:"",a:"0",u:""}; FILTRO.grp=null; FILTRO.sit=""; FILTRO.q=""; $("#buscar").value=""; mostrarPersonas(); irA("#secPersonas"); return; }
+ if(d.notifp!=null){ const p=ACT.R&&ACT.R.personas.find(x=>x.rep===d.notifp); if(!p||!puedeNotif(p)) return; const {ok,an}=await copiarNotifDe(p), o=$("#notifFila");
+  if(an){ pintarPersonas(); pintarInicio(); pintarOrgCab(); }
+  if(o){ o.textContent=ok?`Copiada la notificación de ${nombreNatural(p.nom)}, como «${esF(p)?"Sra.":"Sr."}»: pegala en CiDi.${yaAnotada(p,an)}${TRATO.has(p.nom)?"":" Si el trato no es ese, cambialo en su perfil y copiala de nuevo."}`:"El navegador no dejó copiar: abrí su perfil, seleccioná el texto y copialo."; o.classList.remove("oculto"); }
+  const nb=$(`[data-notifp="${CSS.escape(p.rep)}"]`); if(nb) nb.focus({preventScroll:true});
+  // si la fila salió de la lista («Deben y no se los notificó»), el foco va al aviso
+  else if(o){ o.setAttribute("tabindex","-1"); o.focus({preventScroll:true}); o.scrollIntoView({block:"nearest"}); } return; }
  if(d.verorg!=null){ const x=porGrupo(ACT.r.personas,"jurs").find(g=>g.v===d.verorg); FILTRO.min=d.verorg; FILTRO.grp=null; FILTRO.r=x&&x.sin?{p:"0",a:"1",u:""}:rVacia(); FILTRO.sit=""; FILTRO.q=""; $("#buscar").value=""; mostrarPersonas(); irA("#secPersonas"); return; }
  if(d.vermin!=null){ if(DIM==="jurs"){ FILTRO.min=d.vermin; FILTRO.grp=null; } else { FILTRO.min=""; FILTRO.grp={dim:DIM,v:d.vermin}; } FILTRO.r=rVacia(); FILTRO.sit=""; FILTRO.q=""; $("#buscar").value=""; mostrarPersonas(); irA("#secPersonas"); return; }
  const acc=d.acc;
@@ -3859,6 +3954,7 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("button");
  else if(acc==="bajarMin") bajarMin();
  else if(acc==="copiarMin") copiarMin();
  else if(acc==="copiarNotif") copiarNotif();
+ else if(acc==="borrarNotif") borrarNotif();
  else if(acc==="editarNotif") editarNotif();
  else if(acc==="negritaNotif") negritaNotif();
  else if(acc==="guardarNotif"){ const t=$("#notifEd"); if(t) guardarNotif(!t.value.trim()||t.value.trim()===NOTIF_BORRADOR.trim()?"":t.value); }
