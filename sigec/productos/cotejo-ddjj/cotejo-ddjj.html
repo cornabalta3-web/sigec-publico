@@ -408,14 +408,36 @@ h2{color:var(--fg)}
    abrir, y en lo que aparece al cambiar de pestaña o de paso; no en lo que se redibuja al
    escribir. Nada corre si la computadora pidió menos movimiento. */
 /* La franja de las fechas y el Inicio (06/11/2026) */
-.aldia{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 14px;margin:0 0 14px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--sup);font-size:13px}
+.aldia{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 14px}
 .aldia[hidden],.aldia.oculto{display:none}
-.aldia-t{font-weight:700;color:var(--fg)}
-.aldia-it{display:flex;flex-wrap:wrap;gap:2px 14px;color:var(--fg)}
-.aldia-it small{color:var(--muted);font-size:12px}
-.aldia-n{flex:1 1 100%;color:var(--muted)}
-.aldia.viejo{border-color:var(--warn);background:var(--warn-bg)}
-.aldia.viejo .aldia-n{color:var(--warn)}
+.aldia-c{flex:1 1 200px;min-width:0;background:var(--sup);border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+.aldia-c .t{display:flex;align-items:center;gap:6px;font-size:12.5px;font-weight:600;color:var(--muted)}
+.aldia-c .v{display:block;font-size:20px;font-weight:800;color:var(--fg);font-variant-numeric:tabular-nums;line-height:1.25}
+.aldia-c small{display:block;color:var(--muted);font-size:12px}
+.aldia.viejo .aldia-c.p{border-color:var(--warn);background:var(--warn-bg)}
+.aldia-n{flex:1 1 100%;margin:0;color:var(--warn);font-weight:600;font-size:13px}
+details.q{display:inline-block;position:relative;vertical-align:middle;font-weight:400;text-transform:none;letter-spacing:0}
+details.q>summary{list-style:none;display:inline-flex;width:20px;height:20px;border-radius:50%;border:1px solid var(--line);background:var(--sup);color:var(--muted);font-size:12px;font-weight:700;align-items:center;justify-content:center;cursor:pointer}
+details.q>summary::-webkit-details-marker{display:none}
+details.q>summary:focus-visible{outline:2px solid var(--acento);outline-offset:2px}
+details.q[open]>summary{border-color:var(--acento);color:var(--acento)}
+.q-t{position:absolute;z-index:30;top:26px;left:0;width:min(320px,80vw);background:var(--sup);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13px;font-weight:400;line-height:1.45;text-align:left;white-space:normal;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+details.q-der .q-t{left:auto;right:0}
+@media (max-width:600px){
+ .q-t{position:fixed;left:16px;right:16px;bottom:16px;top:auto;width:auto;z-index:100;font-size:14px;padding:14px 16px}
+ .aldia{flex-direction:column;gap:0;background:var(--sup);border:1px solid var(--line);border-radius:12px}
+ .aldia-c{flex:none;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:2px 10px;border:0;border-radius:0;border-bottom:1px solid var(--line);padding:8px 12px;background:none}
+ .aldia-c:last-of-type{border-bottom:0}
+ .aldia-c .v{font-size:15px}
+ .aldia-c small{display:none}
+ .aldia.viejo .aldia-c.p{border-radius:12px 12px 0 0}
+ .aldia-n{padding:0 12px 8px}
+}
+.ini-cese1{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px}
+.ini-cese1 h2{margin:0;font-size:16px}
+.ini-cese1 .v{font-size:22px;font-weight:800;font-variant-numeric:tabular-nums}
+.ini-cese1 .sp{flex:1 1 auto}
+.chip-b{border:0;cursor:pointer;font:inherit;font-size:12.5px;font-weight:600}
 .card.ini{margin-bottom:16px}
 .ini-num{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:24px;align-items:end}
 .ini-t{margin:0 0 10px;font-size:15px;font-weight:600;color:var(--muted)}
@@ -427,10 +449,10 @@ h2{color:var(--fg)}
 .ini-barra{height:12px;margin-top:14px;border-radius:4px;background:var(--pista);overflow:hidden}
 .ini-barra>span{display:block;height:100%;background:var(--acento);border-radius:0 4px 4px 0}
 .ini-lado{border-left:1px solid var(--line);padding-left:24px}
-.ini-lado .et{display:block;font-size:13px;font-weight:600;color:var(--muted)}
+.ini-lado .et{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:600;color:var(--muted)}
 .ini-lado .v{display:block;font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
 .ini-lado small{font-size:14px;font-weight:500;color:var(--muted)}
-.ini-cab{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;margin-bottom:8px}
+.ini-cab{display:flex;flex-wrap:wrap;align-items:center;gap:4px 10px;margin-bottom:8px}
 .ini-cab h2,.ini-cese h2{margin:0;font-size:18px}
 .ini-lista{list-style:none;margin:0;padding:0}
 .ini-fila{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,2fr) 80px 110px 20px;gap:16px;align-items:center;width:100%;padding:12px 10px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;color:var(--fg);font:inherit;text-align:left;cursor:pointer;min-height:52px}
@@ -473,7 +495,6 @@ h2{color:var(--fg)}
 .ini-mas{margin:0 0 16px}
 .ini-mas.oculto{display:none}
 .ini-mas>summary{cursor:pointer;padding:12px 4px;font-weight:700;font-size:15px;color:var(--fg)}
-.ini-mas>summary small{font-weight:500;color:var(--muted);font-size:13px;margin-left:6px}
 .ini-mas>summary:focus-visible{outline:2px solid var(--acento);outline-offset:2px;border-radius:8px}
 .ini-mas>section{margin-top:12px}
 .entes-l{list-style:none;margin:10px 0 0;padding:0}
@@ -530,7 +551,7 @@ h2{color:var(--fg)}
  <section class="card ini oculto" id="secIni" aria-labelledby="iniT"></section>
  <section class="card ini oculto" id="secIniOrg"></section>
  <section class="card ini oculto" id="secIniCese"></section>
- <details class="ini-mas oculto" id="iniMas"><summary>Más detalle <small>por organismo con todas las columnas, por cargo o escalafón, quienes no están en la nómina y las siete situaciones</small></summary>
+ <details class="ini-mas oculto" id="iniMas"><summary>Más detalle</summary>
  <section class="card mandar oculto" id="secMandar">
   <h2>Para mandar a un organismo</h2>
   <p class="ayuda">El informe de un organismo, para entregar: cuántos activos, cuántos presentaron y cuántos no, con el nombre de cada uno y de qué fecha son los datos.</p>
@@ -626,7 +647,7 @@ h2{color:var(--fg)}
  </section>
  </div>
 
- <p class="pie"><span class="sigec-version">Versión del 06/11/2026</span></p>
+ <p class="pie"><span class="sigec-version">Versión del 07/11/2026</span></p>
 </div>
 
 <dialog id="dlg" aria-labelledby="dlgTit"><div class="dlg" id="dlgCont"></div></dialog>
@@ -1526,20 +1547,25 @@ const soloVerN=n=>!!n&&!!n.pierri&&!["admin","editor"].includes(n.rol);   // un 
 const SOLO_VER=()=>!!NUBE&&!DEMO&&soloVerN(NUBE);
 const editable=()=>enUltima()&&!SOLO_VER();
 const soloVer=()=>{ if(!SOLO_VER()) return false; dialogoAviso("Sólo para ver","Entraste con un perfil de Consulta de Ley Pierri: ves todo el cotejo, pero no cargás listas ni decidís."); return true; };
+/* Lo que explica la pantalla va en un «?» chico, que se abre al tocarlo (Baltasar, 07/11/2026: «tiene que ser más
+   intuitivo, no tan explicativo»). Es un details: anda con el teclado y sin código. */
+const ayudaQ=(html,der)=>`<details class="q${der?" q-der":""}"><summary title="Qué es esto" aria-label="Qué es esto">?</summary><div class="q-t">${html}</div></details>`;
 /* La franja «hasta qué fecha llegan los datos», arriba de Inicio y Buscar: lo que cada lista dice y hasta
    cuándo. Sin ella, quien presentó después de la última escritura del índice parece que no presentó. Si el índice
    tiene más de una semana, se dice en naranja. */
-function textoAlDia(){ const r=ACT&&ACT.r; if(!hayDatos()||!r) return null; const F=fuentesDatos(ACT.s), L=r.L, it=[];
- it.push(L.p&&F.p?`<span><b>Presentaron:</b> hasta la escritura del ${esc(F.p.hasta||"—")}${F.p.cargada?` <small>· índice cargado el ${esc(F.p.cargada)}</small>`:""}</span>`:`<span><b>Presentaron:</b> falta el índice del protocolo</span>`);
+function textoAlDia(){ const r=ACT&&ACT.r; if(!hayDatos()||!r) return null; const F=fuentesDatos(ACT.s), L=r.L, t=[];
+ t.push({k:"p",t:"Índice del protocolo",v:L.p&&F.p?(F.p.hasta?"hasta el "+F.p.hasta:"sin fechas"):"falta",s:L.p&&F.p&&F.p.cargada?"cargado el "+F.p.cargada:""});
  const fd=L.a?fechaNominaDe(ACT.s,ALC):"", ref=L.a?refNominaDe(ACT.s,ALC):"";
  const entes=ALC==="A"?idsDe(ACT.s,"a").map(id=>LS().get(id)).filter(l=>l&&l.ente&&poderLista(l)==="A"):[], marcados=ALC==="A"&&(M().entesOrg||[]).length;
- const actA=[...entes.map(l=>`${esc(l.clave||l.archivo)}, lista cargada el ${esc(fechaDe(l.cargada))}`),...(marcados&&fechaNomina(ACT.s)?[`organismos de PeopleNet marcados como ente, nómina al ${esc(fechaNomina(ACT.s))}`]:[])].join(" · ");
- it.push(`<span><b>Activos:</b> ${r.sinNom?`no hay nómina del ${esc(PN[ALC].t)}`:!L.a?"falta la nómina":ALC==="A"?(actA||"sin listas de entes"):fd?"nómina al "+esc(fd):"nómina cargada el "+esc(ref)}</span>`);
- if(!r.sinWeb) it.push(`<span><b>Publicadas:</b> ${L.u&&F.u?"índice de la web cargado el "+esc(F.u.cargada):"falta el índice de la web"}</span>`);
- const h=L.p&&F.p?F.p.hasta:""; return {it,h,d:h?diasDesde(h):null}; }
+ const actA=[...entes.map(l=>`${l.clave||l.archivo}, lista cargada el ${fechaDe(l.cargada)}`),...(marcados&&fechaNomina(ACT.s)?[`organismos de PeopleNet marcados como ente, nómina al ${fechaNomina(ACT.s)}`]:[])].join(" · ");
+ t.push(r.sinNom?{k:"a",t:"Nómina de activos",v:"no hay",s:`del ${PN[ALC].t}`}:!L.a?{k:"a",t:"Nómina de activos",v:"falta",s:""}:ALC==="A"?{k:"a",t:"Activos de los entes",v:entes.length?"cargadas el "+fechaDe(entes.map(l=>l.cargada).sort().pop()):"—",s:actA}:{k:"a",t:"Nómina de activos",v:fd?"al "+fd:"cargada el "+ref,s:""});
+ if(!r.sinWeb) t.push({k:"u",t:"Publicadas en la web",v:L.u&&F.u?"al "+F.u.cargada:"falta",s:""});
+ const h=L.p&&F.p?F.p.hasta:""; return {t,h,d:h?diasDesde(h):null}; }
 function pintarAlDia(){ const el=$("#alDia"), x=textoAlDia(); if(!x){ el.innerHTML=""; el.classList.add("oculto"); return; }
  const viejo=enUltima()&&x.d!=null&&x.d>7; el.className="aldia"+(viejo?" viejo":"");
- el.innerHTML=`<span class="aldia-t">Hasta qué fecha llegan los datos</span><span class="aldia-it">${x.it.join("")}</span>${x.h&&enUltima()?`<span class="aldia-n">${viejo?`<b>El índice del protocolo llega hasta hace ${x.d===1?"un día":nf(x.d)+" días"}.</b> `:""}Si alguien presentó el ${esc(x.h)} o después, puede figurar todavía como que no presentó: aparece al cargar el índice nuevo.</span>`:""}`;
+ const ay=`Hasta qué fecha llega cada lista. El índice del protocolo, hasta su escritura más nueva: si alguien presentó${x.h?" el "+esc(x.h):""} o después, puede figurar todavía como que no presentó; aparece al cargar el índice nuevo.`;
+ el.innerHTML=x.t.map((y,i)=>`<div class="aldia-c ${y.k}"><span class="t">${esc(y.t)}${i===0?" "+ayudaQ(ay):""}</span><span class="v">${esc(y.v)}</span>${y.s?`<small>${esc(y.s)}</small>`:""}</div>`).join("")
+  +(viejo?`<p class="aldia-n">El índice del protocolo llega hasta hace ${x.d===1?"un día":nf(x.d)+" días"}: lo presentado después todavía no figura.</p>`:"");
  el.hidden=TAB==="carga"; }
 /* El aviso de la notificación: notificar a quien ya presentó es lo que no puede pasar. */
 const avisoHasta=()=>{ const F=ACT&&ACT.s?fuentesDatos(ACT.s):null, h=F&&F.p&&F.p.hasta; return h?`<div class="banda info" style="margin:0"><span>El índice del protocolo llega hasta la escritura del <b>${esc(h)}</b>: si presentó ese día o después, puede no figurar todavía. Antes de mandarla, conviene mirarlo en el protocolo.</span></div>`:""; };
@@ -1551,30 +1577,32 @@ const avisoHasta=()=>{ const F=ACT&&ACT.s?fuentesDatos(ACT.s):null, h=F&&F.p&&F.
 const pctI=(a,b)=>!b?0:a>=b?100:Math.max(a?1:0,Math.min(99,pct(a,b)));
 function pintarInicio(){ const r=ACT.r, a=$("#secIni"), o=$("#secIniOrg"), c=$("#secIniCese"), mas=$("#iniMas");
  mas.classList.toggle("oculto",!hayDatos()||!r);
- if(!hayDatos()||!r){ [a,o,c].forEach(e=>e.classList.add("oculto")); return; }
+ if(!hayDatos()||!r){ [a,o,c].forEach(e=>e.classList.add("oculto")); $("#titular").hidden=false; return; }
  const L=r.L, res=r.res, conEntes=ALC==="E"&&ACT.R.res.por.A.total>0, F=fuentesDatos(ACT.s), h=L.p&&F.p?F.p.hasta:"";
  const quien=ALC==="A"?"de los entes autárquicos":conEntes?"del Poder Ejecutivo, sin los entes autárquicos":"del "+PN[ALC].t;
  const hay=!r.sinNom&&!!L.a&&!!L.p&&res.activos>0;
+ // la frase del encabezado repite el número: con el número a la vista, se va (queda si falta una lista)
+ $("#titular").hidden=hay&&!faltanListas().length;
  a.classList.remove("oculto");
  if(!hay) a.innerHTML=`<h2 class="visual-oculto" id="iniT">El número</h2><p class="mensaje" style="margin:0">${$("#titular").innerHTML}</p>`;
  else { const pc=pctI(res.presAct,res.activos), pub=!!L.u&&!r.sinWeb, deb=enUltima()?r.personas.filter(debeNotif):[], nDeb=deb.length, nNot=deb.filter(p=>notifDe(p).length).length;
   a.innerHTML=`<div class="ini-num"><div class="ini-grande"><h2 class="ini-t" id="iniT">De los funcionarios activos ${esc(quien)}, presentaron la declaración${h?` <span class="ini-al">hasta el ${esc(h)}</span>`:""}</h2>
    <div class="ini-cifra"><span class="ini-pct">${pc} %</span><span class="ini-de"><b>${nf(res.presAct)}</b> de <b>${nf(res.activos)}</b> · faltan <b class="ini-faltan">${nf(res.sinPres)}</b></span></div>
    <div class="ini-barra" role="img" aria-label="${pc} % presentaron"><span style="width:${pc}%"></span></div></div>
-   ${pub||nDeb?`<div class="ini-lado">${pub?`<div><span class="et">La tienen publicada</span><span class="v">${pctI(res.pubAct,res.activos)} % <small>${nf(res.pubAct)} de ${nf(res.activos)}</small></span></div>`:""}${nDeb?`<div><span class="et">Notificados que todavía deben</span><span class="v">${nf(nNot)} <small>de los ${nf(nDeb)} que deben</small></span><button class="btn lnk sm" type="button" data-filtro="${nNot?"notif":"sinNotif"}" data-ir="1">${nNot?"Ver quiénes":"Ver a los que deben"}</button></div>`:""}</div>`:""}</div>`; }
+   ${pub||nDeb?`<div class="ini-lado">${pub?`<div><span class="et">Publicadas</span><span class="v">${pctI(res.pubAct,res.activos)} % <small>${nf(res.pubAct)} de ${nf(res.activos)}</small></span></div>`:""}${nDeb?`<div><span class="et">Notificados ${ayudaQ("De los que deben algo —no presentaron, falta firmar o deben la de cese—, a cuántos se les copió la notificación.",true)}</span><span class="v">${nf(nNot)} <small>de ${nf(nDeb)}</small></span><button class="btn lnk sm" type="button" data-filtro="${nNot?"notif":"sinNotif"}" data-ir="1">Ver</button></div>`:""}</div>`:""}</div>`; }
  if(!hay){ o.classList.add("oculto"); o.innerHTML=""; }
  else { o.classList.remove("oculto");
   // en cada organismo, de los que no presentaron, a cuántos se les copió la notificación
   const nOrg=new Map(); if(enUltima()) for(const p of r.personas) if(p.cod[1]==="1"&&p.cod[0]==="0"&&notifDe(p).length) for(const v of valoresDe(p,"jurs")) nOrg.set(v,(nOrg.get(v)||0)+1);
   const fs=porGrupo(r.personas,"jurs").map(x=>Object.assign(x,{pct:pctI(x.pres,x.act),nt:nOrg.get(x.v)||0})).sort((x,y)=>x.pct-y.pct||y.sin-x.sin||x.v.localeCompare(y.v,"es"));
-  o.innerHTML=`<div class="ini-cab"><h2>Cómo está cada organismo</h2><span class="ayuda" style="margin:0">Primero los más atrasados. Tocá uno para ver a sus personas.</span></div>
-   <div class="ini-fila enc" aria-hidden="true"><span>Organismo</span><span>Presentaron</span><span class="r">Faltan</span><span class="r">${enUltima()?"Notificados":""}</span><span></span></div>
+  o.innerHTML=`<div class="ini-cab"><h2>Organismos</h2>${ayudaQ("Del más atrasado al más al día. Tocá uno para ver a sus personas. «Notificados»: de los que faltan, a cuántos se les copió la notificación.")}</div>
+   <div class="ini-fila enc" aria-hidden="true"><span></span><span>Presentaron</span><span class="r">Faltan</span><span class="r">${enUltima()?"Notificados":""}</span><span></span></div>
    <ul class="ini-lista">${fs.map(x=>`<li><button type="button" class="ini-fila" data-verorg="${esc(x.v)}"><span class="ini-org"><b>${esc(x.v)}</b><small>${nf(x.act)} ${x.act===1?"activo":"activos"}</small></span><span class="ini-pr"><span class="pista"><span class="lleno" style="width:${x.pct}%"></span></span><b>${x.pct} %</b></span><span class="r ini-f ${x.sin?"mal":"ok"}">${x.sin?nf(x.sin):"Ninguno"}<small class="ini-fet">${x.sin?(x.sin===1?" falta":" faltan"):" falta"}</small></span><span class="r ini-n">${x.sin&&enUltima()?`${nf(x.nt)} de ${nf(x.sin)}<small class="ini-fet"> notificados</small>`:"—"}</span><svg class="ini-ir" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button></li>`).join("")}</ul>`; }
  // sin nómina no se sabe quién dejó un cargo, y una DDJJ «¿de otro cargo?» sin decidir puede ser la de cese que falta
  const nC=L.p?r.personas.filter(p=>debeTxt(p)).length:0, nD=r.personas.filter(p=>p.revCargo).length;
  if(!L.p||!L.a||r.sinNom||!res.total){ c.classList.add("oculto"); c.innerHTML=""; }
  else { c.classList.remove("oculto");
-  c.innerHTML=`<div class="ini-cese"><div><h2>La declaración de cese</h2><p class="ayuda" style="margin:4px 0 0">${nC?`<b>${nf(nC)}</b> ${nC===1?"debe":"deben"} la declaración de cese: ${nC===1?"presentó":"presentaron"} la de un cargo que ${nC===1?"dejó":"dejaron"} y no consta la de cese de ese cargo.`:nD?"Por ahora no se sabe de nadie que la deba.":"Nadie debe la declaración de cese: de cada cargo que alguien dejó, consta la de cese."}${nD?` ${nD===1?"Falta decidir una DDJJ que puede ser":`Falta decidir ${nf(nD)} DDJJ que pueden ser`} de un cargo anterior: ${nD===1?"puede":"pueden"} cambiar esta cuenta.`:""}</p></div><div class="row">${nC?`<button class="btn" type="button" data-acc="verCese">Ver ${nC===1?"quién":"quiénes"}</button>`:""}${nD?`<button class="btn lnk sm" type="button" data-acc="verIncons">Ver ${nD===1?"cuál falta decidir":"cuáles faltan decidir"}</button>`:""}</div></div>`; } }
+  c.innerHTML=`<div class="ini-cese1"><h2>Deben la de cese</h2><span class="v">${nf(nC)}</span>${ayudaQ(`Presentaron la DDJJ de un cargo que dejaron y no consta la de cese de ese cargo.${nD?` ${nD===1?"Una DDJJ por decidir puede ser":`${nf(nD)} DDJJ por decidir pueden ser`} de un cargo anterior: ${nD===1?"puede":"pueden"} cambiar esta cuenta.`:""}`)}${nD?`<button class="chip t-warn chip-b" type="button" data-acc="verIncons">${nf(nD)} por decidir</button>`:""}<span class="sp"></span>${nC?`<button class="btn lnk sm" type="button" data-acc="verCese">Ver</button>`:""}</div>`; } }
 function pintarCab(){ const s=ACT.s;
  $("#chipSemana").textContent=s?"Semana del "+isoAFecha(s.s):"Sin listas cargadas"; }
 
@@ -1832,9 +1860,10 @@ function pintarSelMin(){ const js=jursActivas(), conA=!!(ACT.r&&ACT.r.L.a), fu=A
    «y» entre sí, con el organismo, la búsqueda y los atajos que no son una combinación. */
 const PREG=[["a","¿Está activo?","la nómina"],["p","¿Presentó?","el índice del Protocolo B"],["u","¿Está publicada?","el índice de la web"]];
 const ATAJOS=[
- {id:"noPres",t:"Activos que no presentaron",r:{p:"0",a:"1",u:""},pide:"pa"},
- {id:"faltaPub",t:"Falta publicar",r:{p:"1",a:"1",u:"0"},pide:"pau"},
- {id:"pubNoNom",t:"Publicadas, no en la nómina",r:{p:"",a:"0",u:"1"},pide:"au"},
+ // los tres primeros son combinaciones de las preguntas: no van como chips (07/11/2026), pero nombran la lista
+ {id:"noPres",t:"Activos que no presentaron",r:{p:"0",a:"1",u:""},pide:"pa",oculto:true},
+ {id:"faltaPub",t:"Falta publicar",r:{p:"1",a:"1",u:"0"},pide:"pau",oculto:true},
+ {id:"pubNoNom",t:"Publicadas, no en la nómina",r:{p:"",a:"0",u:"1"},pide:"au",oculto:true},
  {id:"pendiente",t:"Lo pendiente de la nómina",sit:"pendiente",pide:"pau",aparte:true},
  {id:"cambio",t:"Cambiaron esta semana",sit:"cambio",pide:"",aparte:true}];
 const especial=x=>x&&x.startsWith("cod:")?(SIT[x.slice(4)]||{n:""}).n:ESPECIAL[x];
@@ -1858,9 +1887,9 @@ function pintarOrgCab(){ const el=$("#orgCab"), r=ACT.r, v=FILTRO.min; if(!el) r
  const x=r&&r.L.a&&r.L.p&&!r.sinNom&&v&&v!=="-"&&v!=="?"&&!v.startsWith("d:")?porGrupo(r.personas,"jurs").find(g=>g.v===v):null;
  if(!x){ el.innerHTML=""; return; }
  const nt=enUltima()?r.personas.filter(p=>enGrupo(p,"jurs",v)&&p.cod[0]==="0"&&notifDe(p).length).length:0, pub=!!r.L.u&&!r.sinWeb;
- el.innerHTML=`<div class="org-cab"><button type="button" class="btn lnk sm org-volver" data-tab="inicio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Todos los organismos</button>
-  <div class="org-cab-c"><div class="org-cab-n"><h3>${esc(v)}</h3><p class="ayuda" style="margin:2px 0 0">${nf(x.act)} ${x.act===1?"funcionario activo":"funcionarios activos"}</p></div>
-  <div class="org-cab-v"><div><span class="et">Presentaron</span><span class="v">${pctI(x.pres,x.act)} %</span><small>${nf(x.pres)} de ${nf(x.act)}</small></div><div><span class="et">Faltan</span><span class="v ${x.sin?"mal":""}">${nf(x.sin)}</span><small>${!x.sin?"nadie":enUltima()?`${nf(nt)} ${nt===1?"ya notificado":"ya notificados"}`:"en esa semana"}</small></div>${pub?`<div><span class="et">Publicadas</span><span class="v chica">${pctI(x.pub,x.act)} %</span><small>${nf(x.pub)} de ${nf(x.act)}</small></div>`:""}</div></div></div>`; }
+ el.innerHTML=`<div class="org-cab"><button type="button" class="btn lnk sm org-volver" data-tab="inicio"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg>Organismos</button>
+  <div class="org-cab-c"><div class="org-cab-n"><h3>${esc(v)}</h3><p class="ayuda" style="margin:2px 0 0">${nf(x.act)} ${x.act===1?"activo":"activos"}</p></div>
+  <div class="org-cab-v"><div><span class="et">Presentaron</span><span class="v">${pctI(x.pres,x.act)} %</span><small>${nf(x.pres)} de ${nf(x.act)}</small></div><div><span class="et">Faltan</span><span class="v ${x.sin?"mal":""}">${nf(x.sin)}</span></div>${x.sin&&enUltima()?`<div><span class="et">Notificados</span><span class="v">${nf(nt)}</span></div>`:""}${pub?`<div><span class="et">Publicadas</span><span class="v chica">${pctI(x.pub,x.act)} %</span><small>${nf(x.pub)} de ${nf(x.act)}</small></div>`:""}</div></div></div>`; }
 function pintarFiltros(){ const r=ACT.r; const sec=$("#secPersonas");
  if(!r||!r.personas.length){ sec.classList.add("oculto"); return; } sec.classList.remove("oculto"); pintarOrgCab();
  const R=rDe();
@@ -1869,16 +1898,16 @@ function pintarFiltros(){ const r=ACT.r; const sec=$("#secPersonas");
  const vis=sanearFiltro(); const puesto=atajoPuesto();
  // a la vista, sin números (24/10/2026: «hay muchos datos»); «Lo pendiente» y «Cambiaron» se
  // abren desde «Más detalle», en el Inicio, y se ven acá con su ✕
- const fijos=vis.filter(t=>!t.aparte);
+ const fijos=vis.filter(t=>!t.aparte&&!t.oculto);
  let h=(fijos.length?`<span class="et">Atajos:</span>`:"")+fijos.map(t=>`<button type="button" class="chipb ${puesto===t?"on":""}" aria-pressed="${puesto===t}" data-atajo="${t.id}">${t.t}</button>`).join("");
  // «Deben la DDJJ de cese», en rojo si alguno está en doble falta. Las listas de trabajo
  // (inconsistencias, por confirmar, unidos por el nombre) no tienen atajo: se llega desde la carga
  const nCe=r.personas.filter(p=>debeTxt(p)).length, nDo=r.personas.filter(p=>{ const d=debeTxt(p); return d&&d.doble; }).length;
- if(nCe||FILTRO.sit==="cese") h+=`<button type="button" class="chipb ${nDo?"rojo":""} ${FILTRO.sit==="cese"?"on":""}" aria-pressed="${FILTRO.sit==="cese"}" data-filtro="cese" title="Los que presentaron la DDJJ de un cargo anterior y no la de cese de ese cargo. Si tampoco presentaron la del cargo de hoy, están en doble falta">Deben la DDJJ de cese${nDo?" · hay doble falta":""}</button>`;
+ if(nCe||FILTRO.sit==="cese") h+=`<button type="button" class="chipb ${nDo?"rojo":""} ${FILTRO.sit==="cese"?"on":""}" aria-pressed="${FILTRO.sit==="cese"}" data-filtro="cese" title="Los que presentaron la DDJJ de un cargo anterior y no la de cese de ese cargo. Si tampoco presentaron la del cargo de hoy, están en doble falta">Deben la de cese${nDo?" · doble falta":""}</button>`;
  const nIn=r.personas.filter(p=>p.incomp&&p.incomp.length).length+incompDe(ALC).sueltas.length;
- if(nIn||FILTRO.sit==="incomp") h+=`<button type="button" class="chipb ${FILTRO.sit==="incomp"?"on":""}" aria-pressed="${FILTRO.sit==="incomp"}" data-filtro="incomp" title="Tienen en el índice del protocolo una DDJJ anulada por incomparecencia: no cuenta como presentada">Anulada por incomparecencia</button>`;
+ if(nIn||FILTRO.sit==="incomp") h+=`<button type="button" class="chipb ${FILTRO.sit==="incomp"?"on":""}" aria-pressed="${FILTRO.sit==="incomp"}" data-filtro="incomp" title="Tienen en el índice del protocolo una DDJJ anulada por incomparecencia: no cuenta como presentada">Incomparecencia</button>`;
  const conN=enUltima()&&!!r.L.a&&!!r.L.p&&r.personas.some(debeNotif);
- if(conN) for(const [k,t,ti] of [["notif","Notificados que todavía deben","Se les copió la notificación y todavía deben algo: no presentaron, falta firmar o deben la de cese"],["sinNotif","Deben y no se los notificó","Deben algo y nunca se les copió la notificación"]]) h+=`<button type="button" class="chipb ${FILTRO.sit===k?"on":""}" aria-pressed="${FILTRO.sit===k}" data-filtro="${k}" title="${ti}">${t}</button>`;
+ if(conN) for(const [k,t,ti] of [["notif","Notificados","Se les copió la notificación y todavía deben algo: no presentaron, falta firmar o deben la de cese"],["sinNotif","Sin notificar","Deben algo y nunca se les copió la notificación"]]) h+=`<button type="button" class="chipb ${FILTRO.sit===k?"on":""}" aria-pressed="${FILTRO.sit===k}" data-filtro="${k}" title="${ti}">${t}</button>`;
  if(FILTRO.sit&&FILTRO.sit!=="cese"&&FILTRO.sit!=="incomp"&&FILTRO.sit!=="notif"&&FILTRO.sit!=="sinNotif"&&!ATAJOS.some(t=>t.sit===FILTRO.sit&&!t.aparte)) h+=`<button type="button" class="chipb on" data-filtro="${FILTRO.sit}" title="Quitar este filtro">${especial(FILTRO.sit)} ✕</button>`;
  if(FILTRO.grp) h+=`<button type="button" class="chipb on" data-acc="sinGrp" title="Quitar este filtro">${esc((DIMS.find(d=>d[0]===FILTRO.grp.dim)||["",""])[1])}: ${esc(FILTRO.grp.v)} ✕</button>`;
  $("#atajos").innerHTML=h; }
@@ -1946,7 +1975,7 @@ function pintarBarra(L){ const d=descFiltro(), n=L.length;
    Por confirmar, Unidos por el nombre—, donde se resuelve fila por fila sin abrir nada. */
 function pintarPersonas(){ const r=ACT.r; if(!r||!r.personas.length){ $("#personas").innerHTML=""; return; }
  const L=filtradas(); const ver=L.slice(0,FILTRO.n); const puede=editable(); pintarBarra(L); const lista=FILTRO.sit; const FU=fuentesDatos(ACT.s);
- let h=`<p class="ayuda fuentes">${esc(fuentesTxt(FU))}</p><div class="enc-tabla per"><span>Persona</span><span title="De la nómina; de quien no está en ella, de su DDJJ">Organismo</span>${VER_ORDEN.map(f=>`<span class="c" title="${TIT_COL[f]}">${FN[f].col}</span>`).join("")}<span>Situación</span></div>`;
+ let h=`<div class="enc-tabla per"><span>Persona ${ayudaQ(esc(fuentesTxt(FU)))}</span><span title="De la nómina; de quien no está en ella, de su DDJJ">Organismo</span>${VER_ORDEN.map(f=>`<span class="c" title="${TIT_COL[f]}">${FN[f].col}</span>`).join("")}<span></span></div>`;
  if(!L.length) h+=`<p class="ayuda" style="margin-top:12px">${salieronAca().length?"Nadie cambió de situación desde la semana anterior.":lista==="incomp"&&sueltasVisibles().length?"Nadie del cotejo con este filtro. Abajo, las que no se sabe de quién son o son de alguien que no está en el cotejo.":"No hay nadie con ese filtro."}</p>`;
  // un renglón: las tres verificaciones (24/10/2026: «la naturaleza del sistema… es poder verificar
  // entre esas 3 cosas»); el resto, en el perfil. El punto dice que hay algo por revisar.
@@ -1964,7 +1993,7 @@ function pintarPersonas(){ const r=ACT.r; if(!r||!r.personas.length){ $("#person
   return `<div class="fila-per" data-fila="${esc(p.rep)}"><div class="per"><div class="nom"><button type="button" class="nom-per" data-perfil="${esc(p.rep)}" title="Ver todo lo que hay de esta persona">${esc(p.nom)}</button></div><div class="det">${esc(det)}</div>${nt?`<div class="det notif-l">${esc(nt)}</div>`:""}</div>
    <span class="org"${of.title?` title="${esc(of.title)}"`:""}>${of.txt?esc(of.txt):"—"}${of.sub?`<small>${esc(of.sub)}</small>`:""}</span>
    <span class="cks">${VER_ORDEN.map(f=>[f,FID.indexOf(f)]).map(([f,k])=>p.cv[k]==="-"?`<span class="ck c nd"><i>${FN[f].col}: </i>—<small>${SIN_ESTR[f]}</small></span>`:`<span class="ck c ${p.cod[k]==="1"?"si":"no"}"><i>${FN[f].col}: </i>${p.cod[k]==="1"?"Sí":"No"}${f==="p"&&p.cod[0]==="0"&&L0.p?(p.falta?"<small>falta firmar</small>":p.otroCargo?`<small>${p.otroCargo.cese?"sólo la de cese":"era de otro cargo"}</small>`:p.fuera||(p.incomp&&p.incomp.length)?"<small>no cuenta</small>":""):""}</span>`).join("")}</span>
-   <div class="sitc"><span class="sitl"><span class="chip t-${SIT[p.cv].tono}">${SIT[p.cv].n}</span>${m?`<span class="punto" role="img" aria-label="Tiene algo por revisar: está en su perfil" title="Tiene algo por revisar: está en su perfil"></span>`:""}</span>${c&&lista==="cambio"?`<small>${esc(c.txt)}</small>`:""}${pn?`<button class="btn sm notif-b ${nt?"":"pri"}" type="button" data-notifp="${esc(p.rep)}" title="Copia la notificación para pegar en CiDi${editable()?" y la anota con el día":""}">${nt?"Notificar de nuevo":"Copiar la notificación"}</button>`:""}</div>${lin.join("")}
+   <div class="sitc"><span class="sitl" title="${esc(SIT[p.cv].n)}">${m?`<span class="punto" role="img" aria-label="Tiene algo por revisar: está en su perfil" title="Tiene algo por revisar: está en su perfil"></span>`:""}</span>${c&&lista==="cambio"?`<small>${esc(c.txt)}</small>`:""}${pn?`<button class="btn sm notif-b ${nt?"":"pri"}" type="button" data-notifp="${esc(p.rep)}" title="${nt?"Copiarla de nuevo":"Copia la notificación"} para pegar en CiDi${editable()?", y queda anotada con el día":""}">Notificar</button>`:""}</div>${lin.join("")}
   </div>`; }).join("");
  if(marcas) h+=`<p class="ayuda leyenda"><span class="punto" aria-hidden="true"></span> Tiene algo por revisar (una inconsistencia, una duda de poder, una coincidencia por confirmar o la de cese): está en su perfil, tocando la fila.</p>`;
  // con una búsqueda, si hay más en otro poder
@@ -3954,7 +3983,7 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("button");
  if(d.verfuera!=null){ FILTRO.min=d.verfuera; FILTRO.r=d.verfuera==="-"||d.verfuera==="?"?rVacia():{p:"",a:"0",u:""}; FILTRO.grp=null; FILTRO.sit=""; FILTRO.q=""; $("#buscar").value=""; mostrarPersonas(); irA("#secPersonas"); return; }
  if(d.notifp!=null){ const p=ACT.R&&ACT.R.personas.find(x=>x.rep===d.notifp); if(!p||!puedeNotif(p)) return; const {ok,an}=await copiarNotifDe(p), o=$("#notifFila");
   if(an){ pintarPersonas(); pintarInicio(); pintarOrgCab(); }
-  if(o){ o.textContent=ok?`Copiada la notificación de ${nombreNatural(p.nom)}, como «${esF(p)?"Sra.":"Sr."}»: pegala en CiDi.${yaAnotada(p,an)}${TRATO.has(p.nom)?"":" Si el trato no es ese, cambialo en su perfil y copiala de nuevo."}`:"El navegador no dejó copiar: abrí su perfil, seleccioná el texto y copialo."; o.classList.remove("oculto"); }
+  if(o){ o.textContent=ok?`✓ Copiada la de ${nombreNatural(p.nom)} (${esF(p)?"Sra.":"Sr."})${an?" · anotada hoy":an===null?" · no se pudo anotar":SOLO_VER()?" · con el perfil de Consulta no se anota":""}`:"El navegador no dejó copiar: abrí su perfil y copiala desde ahí."; o.classList.remove("oculto"); }
   const nb=$(`[data-notifp="${CSS.escape(p.rep)}"]`); if(nb) nb.focus({preventScroll:true});
   // si la fila salió de la lista («Deben y no se los notificó»), el foco va al aviso
   else if(o){ o.setAttribute("tabindex","-1"); o.focus({preventScroll:true}); o.scrollIntoView({block:"nearest"}); } return; }
