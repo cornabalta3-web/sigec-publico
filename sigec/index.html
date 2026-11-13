@@ -190,7 +190,7 @@ iframe{flex:1;width:100%;border:0;background:var(--bg);min-height:0}
     <nav class="nav" id="nav" aria-label="Herramientas"></nav>
 
     <div class="pie">
-      <span class="tx"><span class="q" id="quien">Escribanía</span><span class="sigec-version">Versión del 07/11/2026</span></span>
+      <span class="tx"><span class="q" id="quien">Escribanía</span><span class="sigec-version">Versión del 13/11/2026</span></span>
       <button class="tema" id="btnTema" type="button"></button>
     </div>
   </aside>
@@ -312,6 +312,8 @@ const claroDe=h=>h.colorOsc||h.color;
    terminado en #<id> (por ejemplo «SIGEC, APP.html#cotejo»). */
 const VISIBLES=()=>HERRAMIENTAS.filter(h=>!h.oculto);
 const OCULTAS=()=>HERRAMIENTAS.filter(h=>h.oculto);
+/* Con sinTarjeta:true, la herramienta queda en el lateral pero no en las tarjetas del inicio
+   (Baltasar, 13/11/2026: el turnero y el cotejo, «sacalo de la grilla principal»). */
 let OTROS=false;   // «Otros» desplegado; empieza cerrado cada vez que se abre el menú
 let BUSCA="";      // lo escrito en «Buscar»
 const sinTildes=s=>s.normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
@@ -353,7 +355,7 @@ document.addEventListener("keydown",e=>{
 
 /* ---------- tarjetas del inicio ---------- */
 function pintarTarjetas(){
- $("#tarjetas").innerHTML=VISIBLES().map(h=>
+ $("#tarjetas").innerHTML=VISIBLES().filter(h=>!h.sinTarjeta).map(h=>
   `<button type="button" class="tj${abrible(h)?"":" prep"}" ${abrible(h)?`data-t="${h.id}"`:"disabled"} style="--c:${h.color}">
     <span class="tc"><span class="tile">${icono(h,22)}</span><span class="et ${est(h).cls}" title="${esc(est(h).ayuda)}"><i></i>${est(h).et}</span></span>
     <span class="tx"><span class="g">${esc(h.grupo)}</span><span class="n">${esc(h.n)}</span><span class="d">${esc(h.d)}</span></span>
