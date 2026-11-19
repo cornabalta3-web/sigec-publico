@@ -574,7 +574,9 @@ const nErr=(t,c)=>Object.assign(new Error(t),{c:c||"red"});
 function cfgDe(k){ try{ const o=JSON.parse(lsLeer(k)||"null"); return o&&typeof o.token==="string"&&o.token&&typeof o.k==="string"&&typeof o.sal==="string"?o:null; }catch(e){ return null; } }
 /* en la oficina vale la llave de escrituras-sociales de esta computadora (la del puente); si no, la pegada acá */
 const cfgSoc=()=>WEB?null:cfgDe("sigec_sociales_nube");
-const nubeCfg=()=>cfgSoc()||cfgDe(LLAVE_NUBE)||NUBE_MEM;
+/* desde la página publicada, si este teléfono ya entró a escrituras-sociales, vale esa llave (19/11/2026, Baltasar:
+   «sumá el mapa al menú del celu»): desde ahí el mapa nunca escribe, así que da igual que sea de lectura y escritura */
+const nubeCfg=()=>cfgSoc()||cfgDe(LLAVE_NUBE)||(WEB?cfgDe("sigec_sociales_nube"):null)||NUBE_MEM;
 
 /* el cifrado, el mismo de escrituras-sociales: AES-GCM 256 con la llave del equipo (PBKDF2-SHA256), comprimido */
 const aB64=u=>{ let t=""; for(let i=0;i<u.length;i+=0x8000) t+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000)); return btoa(t); };
@@ -1108,6 +1110,6 @@ function arrancar(){
 })();
 </script>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 18/11/2026</p>
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 19/11/2026</p>
 </body>
 </html>
