@@ -639,6 +639,15 @@ html[data-theme="dark"] .nro-et{color:#E6EAF2;background:#262F42;border-color:#3
 .rev-principal:not(.es){border-color:#D9B23A}
 p.rev-principal{margin:0 0 10px}
 .rev-undo{margin:8px 0 0;font-size:13.5px}
+/* corregir en la hoja */
+#rPanel.en-hoja #rCorr{display:none}
+.rev-hoja .ed-hoja{background:#EFF8FF!important;box-shadow:inset 0 -2px 0 #2E90FA!important;outline:none;border-radius:2px;cursor:text;-webkit-box-decoration-break:clone;box-decoration-break:clone}
+/* en bloque: la línea de antes termina como última y no se estira por el justificado */
+.rev-hoja .ed-hoja:focus,.rev-hoja .ed-hoja:focus-visible{outline:none}
+.rev-hoja .hoja-bar{display:flex;width:fit-content;flex-wrap:wrap;align-items:center;gap:6px;margin:8px 0;padding:6px 8px;background:#F2F4F7;border:1px solid #D0D5DD;border-radius:10px;font-family:"Plus Jakarta Sans",system-ui,sans-serif;font-size:13px;line-height:1.2;vertical-align:middle;text-indent:0}
+.rev-hoja .hoja-bar button{font:inherit;font-size:13px;font-weight:700;padding:6px 11px;border-radius:8px;border:1px solid #D0D5DD;background:#FFFFFF;color:#172033;cursor:pointer;width:auto;margin:0}
+.rev-hoja .hoja-bar button.p{background:#B5533C;border-color:#B5533C;color:#FFFFFF}
+.rev-hoja .hoja-bar .hint{font-size:12px;color:#5B6478}
 .rev-undo .link{font-weight:700}
 .protocolo{margin-top:14px;padding:12px 16px}
 .protocolo summary{cursor:pointer;font-size:14.5px}
@@ -2587,7 +2596,7 @@ function guardar(ahora){
  const f=()=>{
   porGuardar=false; ultimoGuardado=Date.now();
   sellar();
-  try{ ponerDB(); sinLugar(false); marcaGuardado("guardado "+horaComp(Date.now())); pedirSync(); }
+  try{ ponerDB(); sinLugar(false); marcaGuardado("guardado "+horaComp(Date.now())); pedirSync(); vigilarListas(); }
   catch(e){
    /* Con el lugar lleno (es uno solo para todas las herramientas de SIGEC) se prueba una vez
       más después de sacar lo que sobra de las firmadas; si tampoco, se dice qué hacer, fijo en
@@ -3206,7 +3215,7 @@ async function sincronizar(){
   if(!COMP.miArchivo||!(COMP.miArchivo.startsWith(miGrupo))) COMP.miArchivo=mios.map(x=>x.nombre).sort().slice(-1)[0]||"";
   diag.mios=mios.length; diag.grupos=grupos.size; COMP.diag=diag;
   COMP.personas=personas.sort((a,b)=>b.cuando-a.cuando); COMP.ultima=Date.now(); COMP.error=""; COMP.estado="ok"; COMP.errSeguidos=0;
-  if(entro) refrescarVista();
+  if(entro){ refrescarVista(); vigilarListas(); }
   asegurarCarpetas();
   /* el puente con GitHub, en una computadora de la oficina que tiene la llave */
   if(!enNube()&&nubeCfg()) setTimeout(()=>puenteNube(),200);
@@ -6924,10 +6933,10 @@ const anioNro=(t,l)=>{ const p=partes((l.firmada&&l.firmada.fecha)||l.fechaActo|
    (un error de impresión) deja su número tomado, y el lote sigue con el siguiente libre. */
 function mismoNroEn(b0,t0,l0,nro){
  const k=claveNro(nro==null?l0.nroEscritura:nro); if(!k) return [];
- const a=anioNro(t0,l0), ej=ES_EJEMPLO(b0), xs=[];
+ const a=anioDe(t0,l0), ej=ES_EJEMPLO(b0), xs=[];
  DB.barrios.forEach(b=>{ if(ES_EJEMPLO(b)!==ej) return; b.tandas.forEach(t=>t.lotes.forEach(l=>{
   (l.anuladas||[]).forEach(x=>{ if(claveNro(x.nro)!==k||(a&&x.anio&&a!==x.anio)) return; xs.push("anulada en "+b.nombre+" · "+loteCorto(l)+(x.motivo?" («"+x.motivo+"»)":"")); });
-  if(l===l0||l.id===l0.id||claveNro(l.nroEscritura)!==k) return; const a2=anioNro(t,l); if(a&&a2&&a!==a2) return;
+  if(l===l0||l.id===l0.id||claveNro(l.nroEscritura)!==k) return; const a2=anioDe(t,l); if(a!==a2) return;
   xs.push(b.nombre+" · "+loteCorto(l)+" ("+nombreLote(l)+")"); })); });
  return xs;
 }
@@ -6935,8 +6944,9 @@ const anioDe=(t,l)=>anioNro(t,l)||new Date().getFullYear();
 function numerosDelAnio(anio,ej){
  const out=[];
  DB.barrios.forEach(b=>{ if(ES_EJEMPLO(b)!==ej) return; b.tandas.forEach(t=>t.lotes.forEach(l=>{
-  const n=String(l.nroEscritura||"").trim(), a=anioNro(t,l);
-  if(n&&(!a||a===anio)) out.push({n,b,t,l,anulada:false});
+  /* el protocolo se abre cada año y los números empiezan de nuevo (Baltasar, 19/11/2026): sin fecha, el año en curso */
+  const n=String(l.nroEscritura||"").trim(), a=anioDe(t,l);
+  if(n&&a===anio) out.push({n,b,t,l,anulada:false});
   (l.anuladas||[]).forEach(x=>{ if(!x.anio||x.anio===anio) out.push({n:String(x.nro),b,t,l,anulada:true,x}); }); })); });
  return out.sort((p,q)=>(+String(q.n).replace(/\D/g,"")||0)-(+String(p.n).replace(/\D/g,"")||0));
 }
@@ -7209,8 +7219,59 @@ function pintarRevision(){
  /* lo de afuera ya está a la vista: la pantalla quedó al día */
  if(typeof COMP!=="undefined") COMP.repintar=false;
  const en=$("#rEntera"); if(en) en.onclick=()=>{ VISTA.entera=!VISTA.entera; pintarRevision(); };
- $("#rHoja").onclick=e=>{ const s=e.target.closest("[data-ri]"); if(!s) return; VISTA.ri=+s.dataset.ri; VISTA.rk=(runsRevision(b,t,l)[VISTA.ri]||{}).k||""; pintarHojaRev(); pintarPanelRev(); const f=$("#rCorr input,#rCorr textarea,#rCorr select"); if(f) f.focus(); };
- $("#rHoja").onkeydown=e=>{ if(e.key!=="Enter"&&e.key!==" ") return; const s=e.target.closest(".dt"); if(!s) return; e.preventDefault(); s.click(); };
+ $("#rHoja").onclick=e=>{
+  if(EN_HOJA){ if(e.target.closest(".ed-hoja,.hoja-bar")) return; if(EN_HOJA.sucio()){ avisar("Primero elegí, abajo del tramo, «Sólo en este lote», «En todos» o «Cancelar».",true); EN_HOJA.span.focus(); return; } }
+  const s=e.target.closest("[data-ri]"); if(!s) return; VISTA.ri=+s.dataset.ri; VISTA.rk=(runsRevision(b,t,l)[VISTA.ri]||{}).k||""; pintarHojaRev(); pintarPanelRev();
+  if(abrirEnHoja(e.clientX,e.clientY)) return;
+  const f=$("#rCorr input,#rCorr textarea,#rCorr select"); if(f) f.focus(); };
+ $("#rHoja").onkeydown=e=>{ if(e.key!=="Enter"&&e.key!==" ") return; if(e.target.isContentEditable) return; const s=e.target.closest(".dt"); if(!s) return; e.preventDefault(); s.click(); };
+}
+/* Corregir en la hoja (Baltasar, 19/11/2026: «¿por qué no es más fácil editar todo el texto de la minuta? ¿por qué se
+   tiene que transpolar a ese cuadrito?»; «hacé lo de corregir en la hoja»). El tramo tocado se escribe ahí mismo, en la
+   minuta, y abajo de él aparecen «Sólo en este lote», «En todos los lotes» y «Cancelar». Por dentro es el mismo cuadro
+   de siempre, escondido: lo escrito se pasa a su texto (pasarEdicion, porque el tramo puede ser un pedazo de un texto
+   más largo, o salir con la matrícula del lote) y se aprieta su botón; así valen sus mismos controles, la lista de lo
+   corregido y el deshacer. Va para los textos: la base, el corresponde y los demás datos largos, y lo cambiado sólo en
+   este lote. Lo demás —los adjudicatarios, las fechas, los números— sigue en el cuadro. */
+let EN_HOJA=null;
+function cerrarEnHoja(){ EN_HOJA=null; const p=$("#rPanel"); if(p) p.classList.remove("en-hoja"); }
+function abrirEnHoja(x,y){
+ cerrarEnHoja();
+ const p=$("#rPanel"), box=$("#rCorr"); if(!p||!box||VISTA.ri==null) return false;
+ const span=document.querySelector('#rHoja [data-ri="'+VISTA.ri+'"]'); if(!span) return false;
+ let m=null;
+ if($("#rPropio")) m={ta:$("#rPropio"),solo:"#rPropioOk",todos:"#rTodos"};
+ else if($("#rPropioD")) m={ta:$("#rPropioD"),solo:"#rPropioDOk",todos:"#rPropioDTodos"};
+ else if($("#rAlt")&&$("#rAlt").tagName==="TEXTAREA") m={ta:$("#rAlt"),solo:"#rSoloDato",todos:"#rAplicar"};
+ if(!m) return false;
+ const bS=$(m.solo), bT=$(m.todos); if(!bS&&!bT) return false;
+ const txtDe=()=>span.textContent.replace(/\u00a0/g," "), viejo=txtDe();
+ span.contentEditable="plaintext-only"; span.classList.add("ed-hoja"); span.setAttribute("spellcheck","false");
+ span.insertAdjacentHTML("afterend",'<span class="hoja-bar" contenteditable="false">'
+  +(bS?'<button type="button" class="p" data-h="solo">'+esc(bS.textContent)+'</button>':"")
+  +(bT?'<button type="button" class="p" data-h="todos">'+esc(bT.textContent)+'</button>':"")
+  +'<button type="button" data-h="no">Cancelar</button><span class="hint">Esc cancela</span></span>');
+ p.classList.add("en-hoja");
+ if(!$("#rEnHojaTxt")) box.insertAdjacentHTML("beforebegin",'<p class="hint rev-tocar" id="rEnHojaTxt">Escribí en la hoja, en el tramo marcado, y elegí abajo de él. <button type="button" class="link" id="rVerCuadro" style="width:auto;margin:0">Corregir en el cuadro</button></p>');
+ const vc=$("#rVerCuadro"); if(vc) vc.onclick=()=>{ cerrarEnHoja(); pintarHojaRev(); pintarPanelRev(); const f=$("#rCorr textarea"); if(f) f.focus(); };
+ EN_HOJA={span,sucio:()=>txtDe()!==viejo};
+ span.focus();
+ /* el cursor donde se tocó */
+ try{ let r=null; if(document.caretRangeFromPoint&&x!=null) r=document.caretRangeFromPoint(x,y);
+  if(r&&span.contains(r.startContainer)){ const sl=getSelection(); sl.removeAllRanges(); sl.addRange(r); } }catch(e){}
+ span.addEventListener("keydown",ev=>{
+  if(ev.key==="Escape"){ ev.preventDefault(); cerrarEnHoja(); pintarHojaRev(); pintarPanelRev(); }
+  else if(ev.key==="Enter"){ ev.preventDefault(); } /* la escritura es un solo párrafo */ });
+ const guardarEn=cual=>{
+  const nuevo=txtDe();
+  if(nuevo===viejo){ cerrarEnHoja(); pintarHojaRev(); pintarPanelRev(); avisar("No cambió nada."); return; }
+  const full=pasarEdicion(viejo,nuevo,m.ta.value);
+  if(full==null){ avisar("No pude ubicar el cambio en el texto: hacelo en el cuadro.",true); cerrarEnHoja(); pintarHojaRev(); pintarPanelRev(); return; }
+  m.ta.value=full; const bt=$(cual==="todos"?m.todos:m.solo); cerrarEnHoja(); if(bt) bt.click(); };
+ span.nextElementSibling.querySelectorAll("[data-h]").forEach(bt=>{
+  bt.addEventListener("mousedown",ev=>ev.preventDefault()); /* que no se vaya el foco antes del clic */
+  bt.onclick=ev=>{ ev.stopPropagation(); const h=bt.dataset.h; if(h==="no"){ cerrarEnHoja(); pintarHojaRev(); pintarPanelRev(); return; } guardarEn(h); }; });
+ return true;
 }
 /* El tramo tocado, buscado por su clave: si un dato que faltaba se completa, los tramos se
    corren y el índice solo apuntaría a otro. Si la clave sale varias veces, el más cercano. */
@@ -7505,13 +7566,15 @@ function revDeshacer(){
 }
 document.addEventListener("keydown",e=>{
  if(VISTA.v!=="revision"||!(e.ctrlKey||e.metaKey)||e.shiftKey||e.altKey||String(e.key).toLowerCase()!=="z") return;
- const tg=e.target; if(tg&&(tg.closest("input,textarea,select")||tg.isContentEditable)) return; /* ahí, el de Chrome */
+ const tg=e.target; if(tg&&tg.closest("input,textarea,select")) return; /* ahí, el de Chrome */
+ /* en el tramo abierto en la hoja, el de Chrome mientras se escribe; si todavía no se escribió nada, el de la revisión */
+ if(tg&&tg.isContentEditable&&EN_HOJA&&EN_HOJA.sucio()) return;
  if($("#dialogo")&&$("#dialogo").classList.contains("on")) return;
  e.preventDefault(); revDeshacer();
 });
 function pintarPanelRev(){
  const z=loteDeVista(), p=$("#rPanel"); if(!z||!p) return; const {b,t,l}=z;
- revPaso(b,l);
+ cerrarEnHoja(); revPaso(b,l);
  const runs=runsRevision(b,t,l), ri=riVigente(runs), run=ri!=null?runs[ri]:null;
  const cc0=cajaCorregir(b,t,l,run), cp=run&&run.k&&run.bi!=null&&datoPropiable(run.k)&&CAT_K[run.k].a==="conc"?cajaPropioDato(b,t,l,run.k,run.bi,run.bt||"",false):null;
  const cc=cp&&cp.html?{html:cc0.html+cp.html,atar:()=>{ if(cc0.atar) cc0.atar(); cp.atar(); }}:cc0;
@@ -7804,6 +7867,27 @@ const LISTAS="Listas para imprimir";
 /* sin la aprobación, deja de estar lista para imprimir */
 async function quitarDeListasR(b,l){ if(!l.listaR||ES_EJEMPLO(b)) return; const raiz=raizCopias(); if(!raiz) return;
  try{ if(!(await permisoRaiz(raiz))) return; const bd=await carpetaBarrio(b,raiz); await sacarDeListas(bd,l); guardar(true); }catch(e){} }
+/* La que está en «Listas para imprimir» y cambió después de aprobada sale de ahí sola (Baltasar, 19/11/2026: «cuando
+   se corrige algo de la minuta y ya estaba revisada, ¿qué pasa con el Word que queda en Listas para imprimir? ¿se
+   actualiza?»). Antes quedaba el Word viejo hasta que la escribana la volvía a aprobar, y quien imprime lo podía
+   tomar de la carpeta. Ahora se saca apenas cambia (o deja de estar aprobada), y vuelve, nuevo, al aprobarla otra vez.
+   Lo hace cualquier computadora que tenga permiso en la carpeta; sin permiso no pregunta nada. */
+let LISTAS_T=null;
+function vigilarListas(){
+ clearTimeout(LISTAS_T);
+ LISTAS_T=setTimeout(async()=>{
+  const raiz=raizCopias(); if(!raiz) return;
+  try{ if((await raiz.queryPermission({mode:"readwrite"}))!=="granted") return; }catch(e){ return; }
+  const salen=[];
+  for(const b of DB.barrios) if(!ES_EJEMPLO(b)) for(const t of b.tandas||[]) for(const l of t.lotes||[]){
+   if(!l.listaR) continue;
+   if(l.estado==="revisada"&&!cambioTrasRevision(b,t,l)) continue;
+   if(l.estado==="impresa"||l.estado==="firmada"||l.estado==="inscripta") continue; /* ésas las saca la copia de imprimir o firmar */
+   try{ const bd=await carpetaBarrio(b,raiz); await sacarDeListas(bd,l); salen.push(loteCorto(l)); }catch(e){}
+  }
+  if(salen.length){ guardar(true); avisar("Saqué de «Listas para imprimir» "+(salen.length===1?"la minuta del "+salen[0]:"las de "+salen.join(", "))+": cambió después de aprobada. Vuelve, nueva, cuando la escribana la apruebe otra vez."); }
+ },1500);
+}
 const nombreEnListas=l=>nombreArchivoOk((String(l.nroEscritura||"").trim()?"Escritura N° "+String(l.nroEscritura).trim()+" - ":"")+nombreLote(l)+" - Lote "+(l.lote||"")+" Mza "+(l.mza||"")+(String(l.expediente||"").trim()?" - Expte "+String(l.expediente).trim().replace(/\//g,"-"):""));
 async function ponerEnListas(bd,l,runs){
  const dh=await bd.h.getDirectoryHandle(LISTAS,{create:true}), base=nombreEnListas(l);
