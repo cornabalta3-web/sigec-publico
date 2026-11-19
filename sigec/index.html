@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SIGEC — Escribanía General de Gobierno</title>
+<!-- el escudo de la EGG en la pestaña y en la pantalla de inicio del celular («Agregar a inicio»), 19/11/2026 -->
+<link rel="icon" href="egg.ico">
+<link rel="icon" type="image/png" sizes="192x192" href="egg-192.png">
+<link rel="apple-touch-icon" href="egg-180.png">
+<meta name="apple-mobile-web-app-title" content="SIGEC">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
@@ -255,7 +260,10 @@ const HERRAMIENTAS=[
   url:"productos/primer-testimonio/primer-testimonio.html"},
  {id:"rogador",grupo:"Escrituración",n:"Rogador",estado:"uso",color:"#A81419",colorOsc:"#E2685F",
   d:"Rogación de inscripción para el Registro General de la Provincia.",
-  url:"productos/rogador/rogador.html"}
+  url:"productos/rogador/rogador.html"},
+ {id:"sociales",grupo:"Escrituración",n:"Escrituras sociales",estado:"uso",ventana:true,color:"#B5533C",colorOsc:"#E08A6F",
+  d:"La base del barrio, los lotes con sus datos y la minuta de cada lote, armada en el momento; la revisión con la escribana. Ley 9811. Se abre en su propia ventana y se comparte por una carpeta del R:.",
+  url:"productos/escrituras-sociales/escrituras-sociales.html"}
 ];
 
 /* Los tres estados. Antes "operativo" se decía callando: la herramienta en uso no llevaba
@@ -383,7 +391,9 @@ function abrir(id,desdeDireccion){
  /* Escrituras sociales (ventana:true) se comparte por una carpeta del R:, y adentro del marco Chrome no deja usar
     carpetas: se abre directo en su ventana, para que no se pueda trabajar en el lugar donde no se comparte
     (Baltasar, 03/11/2026). */
- if(h.ventana){ if(desdeDireccion) location.href=h.url; else window.open(h.url,nombreVentana(h)); return; }
+ /* en la página publicada (el celular, 19/11/2026) se abre en la misma pestaña: no hay carpeta del R: que pelear, y
+    así queda adentro de SIGEC agregado al inicio del celular; «Volver a SIGEC» vuelve al menú */
+ if(h.ventana){ if(desdeDireccion||/^https?:$/.test(location.protocol)) location.href=h.url; else window.open(h.url,nombreVentana(h)); return; }
  ACTUAL=h;
  /* Abierta desde #cotejo, se despliega «Otros» para que se vea dónde está. */
  if(h.oculto&&!OTROS) OTROS=true;
