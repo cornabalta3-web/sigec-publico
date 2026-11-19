@@ -683,7 +683,23 @@ html[data-theme="dark"] .franja-r.azul{background:#102A43;color:#B2DDFF;box-shad
  #v-tablero .tabla tr.fila td:nth-child(4),#v-tablero .tabla tr.fila td:nth-child(5){flex:1 1 120px}
  #v-tablero .tabla tr.fila td:nth-child(4) .mini,#v-tablero .tabla tr.fila td:nth-child(5) .mini{width:100%;min-height:36px}
  #v-tablero .tabla tr.fila td:nth-child(6){flex:1 0 100%}
+ /* lo plegado se esconde también en la tarjeta (19/11/2026: el display:flex de arriba le ganaba a .oculta) */
+ #v-tablero .tabla tr.fila.oculta{display:none}
+ /* la barra de arriba no queda fija en el celular: con la conexión y los botones ocupaba media pantalla al bajar */
+ .top{position:static}
+ /* la franja de conexión: el texto arriba y el botón abajo, a lo ancho */
+ .franja-r{flex-wrap:wrap;padding:10px 16px}
+ .franja-r .tx{flex:1 1 calc(100% - 40px)}
+ .franja-r button{flex:1 0 100%;min-height:40px}
 }
+/* «Tu mitad»: cada barrio se pliega tocando su nombre (19/11/2026, Baltasar: «no se despliegan y pliegan los barrios»).
+   En el celular arranca plegado; en la computadora, abierto. Cada aparato se acuerda (sigec_sociales_mitad). */
+.mitad .mh-bt{all:unset;box-sizing:border-box;width:100%;display:flex;gap:6px 12px;align-items:baseline;flex-wrap:wrap;cursor:pointer;border-radius:8px}
+.mitad .mh-bt:focus-visible{outline:2px solid var(--acc);outline-offset:3px}
+.mitad .mh-bt .fl{flex:0 0 14px;color:var(--muted);font-size:12px;display:inline-block;transition:transform .2s}
+.mitad.plegada .mh-bt .fl{transform:rotate(-90deg)}
+.mitad.plegada .mcuerpo{display:none}
+.mitad.plegada .barra-mitad{margin-bottom:0}
 </style>
 </head>
 <body>
@@ -4897,6 +4913,8 @@ function filasPorPersona(b,t,lotes,fila){
 function accionTablero(acc,bid,tid,lid,el){
  if(acc==="nada") return;
  if(acc==="letrasTanda"){ const b=bDe(bid), t=b&&b.tandas.find(x=>x.id===tid); if(t) letrasTanda(b,t); return; }
+ if(acc==="mitad"){ const k=el.dataset.mk, card=el.closest(".mitad"), pl=!card.classList.contains("plegada"), m=mitadLeer(); m[k]=pl; lsPoner("sigec_sociales_mitad",JSON.stringify(m));
+  card.classList.toggle("plegada",pl); el.setAttribute("aria-expanded",pl?"false":"true"); return; }
  if(acc==="grupo"){ const gk=el.dataset.gk, abre=el.getAttribute("aria-expanded")!=="true", m=plegadosLeer(); m[gk]=!abre; lsPoner(PLEG_K,JSON.stringify(m));
   el.setAttribute("aria-expanded",abre?"true":"false"); el.querySelector(".fl").textContent=abre?"▾":"▸";
   el.closest("tbody").querySelectorAll("tr.fila").forEach(tr=>{ if(tr.dataset.g===gk) tr.classList.toggle("oculta",!abre); }); return; }
@@ -7540,7 +7558,8 @@ function bandejasHtml(){
  let h=avisosCargoHtml();
  if(escb){
   const r=cargoTomado(rol);
-  if(!esCompuDelCargo()) h+='<div class="alerta"><b>Desde esta computadora no se revisa</b>'+(r?'El cargo '+esc(CARGO_TXT[rol])+' está en la computadora de '+esc(r.quien||"otra persona")+'. ':'Todavía ninguna computadora tiene el cargo. ')+'<button type="button" class="link" data-acc="cargo">'+(r?"Ver qué hacer":"Esta es la computadora de la "+esc(CARGO_TXT[rol]))+'</button></div>';
+  if(!esCompuDelCargo()&&desdeCasa()) h+='<p class="hint" style="margin:0 0 14px">Desde acá mirás y editás todo; revisar y aprobar se hace en la computadora del cargo, en la oficina.</p>';
+  else if(!esCompuDelCargo()) h+='<div class="alerta"><b>Desde esta computadora no se revisa</b>'+(r?'El cargo '+esc(CARGO_TXT[rol])+' está en la computadora de '+esc(r.quien||"otra persona")+'. ':'Todavía ninguna computadora tiene el cargo. ')+'<button type="button" class="link" data-acc="cargo">'+(r?"Ver qué hacer":"Esta es la computadora de la "+esc(CARGO_TXT[rol]))+'</button></div>';
   const grupos={}, cambios=[];
   DB.barrios.forEach(b=>b.tandas.forEach(t=>t.lotes.forEach(l=>{
    if(cargoDe(l)!==rol) return;
@@ -7793,6 +7812,8 @@ function estadoMitad(b,t,l){
  if(!f.length) return {g:"completa",et:"ce",txt:"Completa, sin pasar",det:"la tiene "+(l.responsable||"nadie todavía")+(nt?" · "+nt:"")};
  return {g:"faltan",et:"no",txt:"Faltan "+f.length+" dato"+(f.length>1?"s":""),det:"lleva "+(l.responsable||"nadie todavía")+" · "+det};
 }
+function mitadLeer(){ try{ const m=JSON.parse(lsLeer("sigec_sociales_mitad")||"{}"); return esObjPlano(m)?m:{}; }catch(e){ return {}; } }
+const mitadPlegada=k=>{ const m=mitadLeer(); return k in m?!!m[k]:window.matchMedia("(max-width:600px)").matches; };
 function tuMitadHtml(rol){
  let h="";
  DB.barrios.forEach(b=>b.tandas.forEach(t=>{
@@ -7800,11 +7821,12 @@ function tuMitadHtml(rol){
   const xs=mios.map(l=>({l,e:estadoMitad(b,t,l)})), orden=g=>GRUPOS_MITAD.findIndex(x=>x[0]===g);
   xs.sort((a,c)=>orden(a.e.g)-orden(c.e.g)||cmpLote(a.l,c.l));
   const cuenta=g=>xs.filter(x=>x.e.g===g).length, hechas=cuenta("revisada")+cuenta("firmada"), fb=faltaBarrio(b,t);
-  h+='<div class="card mitad"><div class="mh"><b>'+esc(b.nombre)+'</b><span>'+(t.resolucion?"Resolución "+esc(t.resolucion)+" · ":"")+(partes(t.fechaFirma)?"firma el "+esc(t.fechaFirma)+" ("+diasTxt(t.fechaFirma)+")":"sin fecha de firma")+'</span><span class="der">'+hechas+' de '+xs.length+' revisadas</span></div>'
+  const mk=b.id+"/"+t.id, mpl=mitadPlegada(mk);
+  h+='<div class="card mitad'+(mpl?" plegada":"")+'"><div class="mh"><button type="button" class="mh-bt" data-acc="mitad" data-mk="'+esc(mk)+'" aria-expanded="'+(mpl?"false":"true")+'"><span class="fl" aria-hidden="true">▾</span><b>'+esc(b.nombre)+'</b><span>'+(t.resolucion?"Resolución "+esc(t.resolucion)+" · ":"")+(partes(t.fechaFirma)?"firma el "+esc(t.fechaFirma)+" ("+diasTxt(t.fechaFirma)+")":"sin fecha de firma")+'</span><span class="der">'+hechas+' de '+xs.length+' revisadas</span></button></div>'
    +'<div class="barra-mitad" role="img" aria-label="'+GRUPOS_MITAD.filter(g=>cuenta(g[0])).map(g=>g[1]+": "+cuenta(g[0])).join(", ")+'">'+GRUPOS_MITAD.map(g=>cuenta(g[0])?'<i class="g-'+g[0]+'" style="flex:'+cuenta(g[0])+'"></i>':"").join("")+'</div>'
-   +'<p class="leyenda">'+GRUPOS_MITAD.filter(g=>cuenta(g[0])).map(g=>'<span><i class="g-'+g[0]+'"></i>'+g[1]+' '+cuenta(g[0])+'</span>').join("")+'</p>'
+   +'<div class="mcuerpo"><p class="leyenda">'+GRUPOS_MITAD.filter(g=>cuenta(g[0])).map(g=>'<span><i class="g-'+g[0]+'"></i>'+g[1]+' '+cuenta(g[0])+'</span>').join("")+'</p>'
    +(fb.length?'<div class="falta-barrio"><b>A todo el barrio le falta</b>'+esc(fb.join(" · "))+'</div>':"")
-   +'<div class="bandeja">'+xs.map(({l,e})=>'<div class="fb" data-acc="lote" data-b="'+b.id+'" data-l="'+l.id+'" tabindex="0"><b>'+esc(loteCorto(l))+'</b><span>'+esc(nombreLote(l))+' · Expte. '+esc(l.expediente||"sin número")+'</span><span class="et '+e.et+'">'+esc(e.txt)+'</span>'+(e.det?'<span class="det">'+esc(e.det)+'</span>':"")+'</div>').join("")+'</div></div>';
+   +'<div class="bandeja">'+xs.map(({l,e})=>'<div class="fb" data-acc="lote" data-b="'+b.id+'" data-l="'+l.id+'" tabindex="0"><b>'+esc(loteCorto(l))+'</b><span>'+esc(nombreLote(l))+' · Expte. '+esc(l.expediente||"sin número")+'</span><span class="et '+e.et+'">'+esc(e.txt)+'</span>'+(e.det?'<span class="det">'+esc(e.det)+'</span>':"")+'</div>').join("")+'</div></div></div>';
  }));
  return h?'<h3 class="st">Tu mitad</h3>'+h:"";
 }
