@@ -640,6 +640,15 @@ html[data-theme="dark"] .nro-et{color:#E6EAF2;background:#262F42;border-color:#3
 .rev-principal:not(.es){border-color:#D9B23A}
 p.rev-principal{margin:0 0 10px}
 .rev-undo{margin:8px 0 0;font-size:13.5px}
+.rev-word .wg{padding:8px 0;border-top:1px solid var(--line)}
+.rev-word .wg-t{display:flex;flex-direction:column;gap:2px;font-size:13.5px;margin-bottom:6px}
+.rev-word .wg-t .hint{font-size:12.5px;overflow-wrap:anywhere}
+.rev-word .wg-op{display:flex;flex-wrap:wrap;align-items:center;gap:0;}
+.rev-word .wg-op button{font:inherit;font-size:13px;font-weight:700;padding:6px 12px;border:1px solid var(--line);background:var(--card,#fff);color:var(--tx);cursor:pointer;width:auto;margin:0}
+.rev-word .wg-op button:first-child{border-radius:8px 0 0 8px}.rev-word .wg-op button:last-of-type{border-radius:0 8px 8px 0;margin-left:-1px}
+.rev-word .wg-op button:only-of-type{border-radius:8px}
+.rev-word .wg-op button.on{background:#B5533C;border-color:#B5533C;color:#fff}
+.rev-word .wg-op .hint{margin-left:8px;font-size:12px}
 /* corregir en la hoja */
 #rPanel.en-hoja #rCorr{display:none}
 .rev-hoja .ed-hoja{background:#EFF8FF!important;box-shadow:inset 0 -2px 0 #2E90FA!important;outline:none;border-radius:2px;cursor:text;-webkit-box-decoration-break:clone;box-decoration-break:clone}
@@ -7282,50 +7291,69 @@ function cambiosWord(){
  const ahora=textosHoja(); if(!WORD.orig||!ahora) return [];
  const gr=new Map();
  WORD.runs.forEach((x,ri)=>{ const a=WORD.orig.get(ri)||"", d=ahora.get(ri)||""; const key=(x.wbi==null?"r"+ri:x.wbi)+"|"+(x.kp||x.k||"");
-  if(!gr.has(key)) gr.set(key,{k:x.kp||x.k||"",bi:x.wbi,antes:"",despues:"",runs:[]}); const g=gr.get(key); g.antes+=a; g.despues+=d; g.runs.push(x); });
+  if(!gr.has(key)) gr.set(key,{key,k:x.kp||x.k||"",bi:x.wbi,antes:"",despues:"",runs:[]}); const g=gr.get(key); g.antes+=a; g.despues+=d; g.runs.push(x); });
  const gs=[...gr.values()];
- /* Lo que cambió, visto de corrido y no tramo por tramo: al borrar de un tramo a otro y escribir, Chrome deja lo escrito
-    en el tramo de antes (ahí queda el cursor). Los tramos cambiados que están pegados se miran juntos: se saca lo igual
-    del principio y del final, y lo que de verdad cambió queda en el tramo donde empieza. Así «LE CORRESPONDE: A la Comuna
-    de Paso…» → «LE CORRESPONDE: A la Comuna le…» es sólo un cambio en el corresponde, y no en la base. */
- for(let i=0;i<gs.length;i++){
-  if(gs[i].antes===gs[i].despues) continue;
-  let j=i; while(j+1<gs.length&&gs[j+1].antes!==gs[j+1].despues) j++;
-  const zona=gs.slice(i,j+1), O=zona.map(g=>g.antes).join(""), N=zona.map(g=>g.despues).join("");
-  let pre=0; while(pre<O.length&&pre<N.length&&O[pre]===N[pre]) pre++;
-  let suf=0; while(suf<O.length-pre&&suf<N.length-pre&&O[O.length-1-suf]===N[N.length-1-suf]) suf++;
-  const fin=O.length-suf, ins=N.slice(pre,N.length-suf);
-  let pos=0, puesto=false;
-  zona.forEach((g,k)=>{ const a=pos, e=pos+g.antes.length; pos=e;
-   const aca=!puesto&&(pre<e||(pre===e&&k===zona.length-1)||(pre===a&&fin===a));
-   const corta=pre<e&&fin>a; /* lo borrado pasa por este tramo */
-   if(!corta&&!aca){ g.despues=g.antes; return; }
-   const dd=Math.max(0,Math.min(g.antes.length,pre-a)), hh=Math.max(0,Math.min(g.antes.length,fin-a));
-   g.despues=g.antes.slice(0,dd)+(aca?ins:"")+g.antes.slice(Math.max(dd,hh)); if(aca) puesto=true; });
-  i=j;
- }
+ /* Lo que cambió se busca en la minuta entera, palabra por palabra, y no tramo por tramo (19/11/2026: corrigiendo
+    sólo el corresponde decía «tocaste un dato de este lote»). Chrome deja lo escrito donde quiere —al borrar de un tramo
+    a otro, en el de antes; a veces, en el de al lado—: el texto de la hoja, de corrido, es lo único seguro. Se compara
+    con el de antes (Myers, como para el violeta) y cada palabra nueva va al tramo de lo que reemplaza, o al de la
+    palabra de antes si es sólo un agregado. Lo igual queda donde estaba. */
+ const TK=/[\p{L}\p{N}]+|\s+|[^\p{L}\p{N}\s]/gu;
+ const A=[], ga=[]; gs.forEach((g,gi)=>{ (g.antes.match(TK)||[]).forEach(t=>{ A.push(t); ga.push(gi); }); });
+ const B=gs.map(g=>g.despues).join("").match(TK)||[];
+ if(A.join("")!==B.join("")){
+  const ops=difPalabras(A,B,8000);
+  if(ops){
+   const out=gs.map(()=>[]); let hunkG=null, ultG=0;
+   for(let k=0;k<ops.length;k++){ const o=ops[k];
+    if(o.op==="="){ out[ga[o.a]].push(A[o.a]); ultG=ga[o.a]; hunkG=null; continue; }
+    if(o.op==="-"){ if(hunkG==null) hunkG=ga[o.a]; continue; }
+    /* «+»: al tramo de lo que reemplaza; si no reemplaza nada, al de la palabra de antes (o de después, al principio) */
+    let g=hunkG; if(g==null){ let m=k+1; while(m<ops.length&&ops[m].op==="+") m++;
+     const sig=m<ops.length?ga[ops[m].a]:null;
+     if(m<ops.length&&ops[m].op==="-") g=sig;
+     else if(k===0||ops.slice(0,k).every(x=>x.op==="+")) g=sig!=null?sig:ultG;
+     /* justo en el borde entre dos tramos: al que no es un dato del lote, si uno lo es (Chrome deja lo escrito en el de antes) */
+     else{ g=ultG; if(sig!=null&&sig!==ultG){ const deLote=gi=>{ const kk=gs[gi].k, d=kk&&CAT_K[kk]; return !!d&&(d.a==="lote"||d.a==="conc"); }; if(deLote(ultG)&&!deLote(sig)) g=sig; } }
+     hunkG=g; }
+    out[g].push(B[o.b]); }
+   gs.forEach((g,gi)=>{ g.despues=out[gi].join(""); });
+  }
+ } else gs.forEach(g=>{ g.despues=g.antes; });
  return gs.filter(g=>g.antes!==g.despues);
 }
+/* Cada cosa cambiada, con su elección (Baltasar, 19/11/2026, en la revisión: «lo importante es el corresponde: que me
+   deje mantener o pasar ese corresponde a todos», con otros cambios del lote en la misma corrección). «Sólo en este
+   lote» o «En todos» por renglón; lo de un dato de este lote, sólo acá. Lo elegido se recuerda mientras se escribe. */
+const puedeTodosG=g=>{ if(!g.k) return true; const d=CAT_K[g.k]; return !!d&&!!d.campo&&(d.a==="barrio"||d.a==="tanda"||d.a==="mza"); };
+const nombreG=g=>!g.k?"Texto de la minuta base":(CAT_K[g.k]?CAT_K[g.k].r.split(" — ")[0]:g.k);
+function muestraG(g){ const a=g.antes, d=g.despues; let p=0; while(p<a.length&&p<d.length&&a[p]===d[p]) p++; let q=0; while(q<a.length-p&&q<d.length-p&&a[a.length-1-q]===d[d.length-1-q]) q++;
+ const recorta=x=>{ x=x.trim(); return x.length>60?x.slice(0,57)+"…":x; }, sa=recorta(a.slice(p,a.length-q)), sd=recorta(d.slice(p,d.length-q));
+ return sa&&sd?"«"+sa+"» → «"+sd+"»":sa?"se sacó «"+sa+"»":"se agregó «"+sd+"»"; }
 function barraWordHtml(b,t,l){
  const cs=cambiosWord(); if(!cs.length) return "";
- const delLote=cs.some(g=>g.k&&CAT_K[g.k]&&(CAT_K[g.k].a==="lote"||CAT_K[g.k].a==="conc"));
- const imp=impacto(b,"barrio",t,l);
- return '<div class="card rev-box rev-word"><h3>Cambiaste la minuta en la hoja</h3><p class="hint" style="margin:0 0 8px">'+cs.length+(cs.length===1?" tramo":" tramos")+'. ¿Dónde va?</p>'
-  +'<div class="pbtn"><button type="button" class="p" id="wSolo">Sólo en este lote</button>'+(delLote?"":'<button type="button" class="p" id="wTodos">En todos los lotes ('+(imp.total-imp.firmados)+')</button>')+'<button type="button" id="wNo">Descartar</button></div>'
-  +(delLote?'<p class="hint" style="margin:6px 0 0">Tocaste un dato de este lote: va sólo en este lote.</p>':"")+'</div>';
+ WORD.elec=WORD.elec||{};
+ return '<div class="card rev-box rev-word"><h3>Cambiaste la minuta en la hoja</h3><p class="hint" style="margin:0 0 8px">Elegí, para cada cosa, dónde va.</p>'
+  +cs.map((g,i)=>{ const pt=puedeTodosG(g), el=pt&&WORD.elec[g.key]==="todos";
+   return '<div class="wg"><div class="wg-t"><b>'+esc(nombreG(g))+'</b><span class="hint">'+esc(muestraG(g))+'</span></div>'
+    +'<div class="wg-op" role="group" aria-label="Dónde va: '+esc(nombreG(g))+'"><button type="button" data-wg="'+esc(g.key)+'" data-v="lote" class="'+(el?"":"on")+'">Sólo en este lote</button>'
+    +(pt?'<button type="button" data-wg="'+esc(g.key)+'" data-v="todos" class="'+(el?"on":"")+'">En todos</button>':'<span class="hint">es de este lote</span>')+'</div></div>'; }).join("")
+  +'<div class="pbtn" style="margin-top:10px"><button type="button" class="p" id="wGuardar">Guardar</button><button type="button" id="wNo">Descartar</button></div></div>';
 }
 function pintarBarraWord(){
  const z=loteDeVista(), p=$("#rPanel"); if(!z||!p) return; const {b,t,l}=z;
  const vieja=$("#rPanel .rev-word"); if(vieja) vieja.remove();
  const h=barraWordHtml(b,t,l); p.classList.toggle("word-sucio",!!h); if(!h) return;
  const ref=$("#rPanel .rev-decide"); if(ref) ref.insertAdjacentHTML("afterend",h); else p.insertAdjacentHTML("afterbegin",h);
- $("#wSolo").onclick=()=>aplicarWord(false); const wt=$("#wTodos"); if(wt) wt.onclick=()=>aplicarWord(true);
- $("#wNo").onclick=()=>{ WORD.orig=null; p.classList.remove("word-sucio"); pintarHojaRev(true); pintarPanelRev(); avisar("Descartado: la minuta quedó como estaba."); };
+ document.querySelectorAll("#rPanel [data-wg]").forEach(bt=>{ bt.addEventListener("mousedown",e=>e.preventDefault()); bt.onclick=()=>{ WORD.elec[bt.dataset.wg]=bt.dataset.v; pintarBarraWord(); }; });
+ $("#wGuardar").onclick=()=>aplicarWord(null);
+ $("#wNo").onclick=()=>{ WORD.orig=null; WORD.elec={}; p.classList.remove("word-sucio"); pintarHojaRev(true); pintarPanelRev(); avisar("Descartado: la minuta quedó como estaba."); };
 }
-function aplicarWord(todos){
+function aplicarWord(todosTodo){
  const z=loteDeVista(); if(!z) return; const {b,t,l}=z, ctx=ctxDe(b,t,l), cs=cambiosWord(); if(!cs.length) return;
- const hechos=[];
+ const hechos=[], elec=WORD.elec||{}; let nTodos=0, nLote=0;
  for(const g of cs){
+  const todos=todosTodo==null?(puedeTodosG(g)&&elec[g.key]==="todos"):!!todosTodo; if(todos) nTodos++; else nLote++;
   if(g.k&&SIN_REVISAR_K.has(g.k)) continue;
   if(g.bi==null||!b.base.runs[g.bi]){ avisar("No pude ubicar un cambio en la minuta: deshacelo con Ctrl+Z y hacelo de a un tramo.",true); return; }
   const rb=b.base.runs[g.bi];
@@ -7347,13 +7375,14 @@ function aplicarWord(todos){
   } else hechos.push(()=>{ ponerPropioDato(l,g.k,g.bi,dice,full); registrarCorr(l,{alcance:"lote",k:"",etiqueta:d.r.toLowerCase()+" sólo en esta escritura (en la hoja)",antes:actual.trim(),despues:full.trim(),ref:null}); });
  }
  /* en «Corregido en esta revisión», lo de una vez es una sola línea (19/11/2026: borrar varios párrafos anotaba una por tramo) */
+ const todos=nTodos>0&&!nLote;
  const regOrig=registrarCorr, notas=[]; registrarCorr=(ll,c)=>{ if(ll===l) notas.push(c); else regOrig(ll,c); };
  try{ hechos.forEach(f=>f()); } finally{ registrarCorr=regOrig; }
  if(notas.length){ const antes=notas.map(c=>c.antes).join(" … "), despues=notas.map(c=>c.despues).join(" … ");
-  registrarCorr(l,{alcance:todos?"base":"lote",k:notas.length===1?notas[0].k:"",etiqueta:notas.length===1?notas[0].etiqueta:"en la hoja, "+notas.length+" tramos"+(todos?" en todos los lotes":" sólo en esta escritura"),antes:antes.length>300?antes.slice(0,297)+"…":antes,despues:despues.length>300?despues.slice(0,297)+"…":despues,ref:null}); }
- WORD.orig=null; const p=$("#rPanel"); if(p) p.classList.remove("word-sucio");
+  registrarCorr(l,{alcance:todos?"base":"lote",k:notas.length===1?notas[0].k:"",etiqueta:notas.length===1?notas[0].etiqueta:"en la hoja, "+notas.length+" tramos"+(todos?" en todos los lotes":nTodos?" ("+nTodos+" en todos, "+nLote+" sólo en esta escritura)":" sólo en esta escritura"),antes:antes.length>300?antes.slice(0,297)+"…":antes,despues:despues.length>300?despues.slice(0,297)+"…":despues,ref:null}); }
+ WORD.orig=null; WORD.elec={}; const p=$("#rPanel"); if(p) p.classList.remove("word-sucio");
  VISTA.ri=null; VISTA.rk=""; guardar(true); pintarHojaRev(true); pintarPanelRev();
- avisar(todos?"Cambiado en todos los lotes sin firmar.":"Cambiado sólo en esta escritura. Queda en violeta.");
+ avisar(todos?"Cambiado en todos los lotes sin firmar.":nTodos?"Guardado: "+nTodos+(nTodos===1?" cambio":" cambios")+" en todos los lotes sin firmar, y "+nLote+" sólo en esta escritura (en violeta).":"Cambiado sólo en esta escritura. Queda en violeta.");
 }
 /* el cursor en un texto: en la columna, el cuadro de ese tramo, para quien lo prefiera */
 function pintarCursorWord(){
