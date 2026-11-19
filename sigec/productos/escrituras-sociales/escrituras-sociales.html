@@ -602,7 +602,8 @@ html.modo-escribana[data-theme="dark"] .top-pant{border-top-color:#4A3F1C}
 .rev-lote,.rev-decide{display:grid;gap:8px}
 .rev-lote .rev-nav b{flex:1;text-align:center;font-size:14px}
 .rev-lote .rev-nav button{min-width:42px;min-height:38px;padding:0 10px;font-size:17px;line-height:1}
-.rev-lote #rSigUno{font-size:13px;min-width:0;padding:0 12px}
+.rev-lote #rSigUno,.rev-lote #rAntUno,.rev-lote #rAnt,.rev-lote #rSig{font-size:13px;min-width:0;padding:0 12px;white-space:nowrap}
+.rev-lote .rev-nav{flex-wrap:wrap}
 .rev-buscar{display:flex;align-items:center;gap:8px;font-size:12.5px;font-weight:600;color:var(--muted);margin:0}
 .rev-buscar .inp{flex:1;min-height:32px;font-size:13px}
 .rev-ult{margin:0;font-size:12.5px;font-weight:600;color:var(--ok)}
@@ -2087,12 +2088,14 @@ function armarRuns(base,ctx){
  comerCorriente((base.runs||[]).map((r,i)=>Object.assign({},r,{bi:i}))).forEach((run,i,todos)=>{
   if(run.k==="DESCRIPCION") ctx.desigAntes=desigAntesDe(todos,i);
   if(run.pend){ out.push({t:"*****",b:false,u:false,hueco:run.t,k:"PENDIENTE"}); falta("texto de la base por reemplazar: "+run.t.slice(0,60),"base","PENDIENTE"); return; }
-  if(!run.k){ const ov=propioDe(ctx.l,base,run.bi); out.push({t:ov?ov.nuevo:run.t,b:!!run.b,u:!!run.u,bi:run.bi,bt:run.t,propio:!!ov}); return; }
+  if(!run.k){ const ov=propioDe(ctx.l,base,run.bi); out.push({t:ov?ov.nuevo:run.t,b:!!run.b,u:!!run.u,bi:run.bi,wbi:run.bi,bt:run.t,propio:!!ov}); return; }
   const def=CAT_K[run.k];
   if(!def){ out.push({t:run.t,b:!!run.b,u:!!run.u}); return; }
-  const dp=datoPropiable(run.k), dice=dp?textoDatoRun(def,ctx,run):null, od=dp?propioDatoDe(ctx.l,run.k,run.bi,dice):null;
-  if(od){ out.push({t:od.nuevo,b:!!run.b,u:!!run.u,bi:run.bi,bt:dice,propio:true,kp:run.k}); return; }
-  const lugar=dp?{bi:run.bi,bt:dice}:{};
+  /* un dato del lote también puede tener su texto cambiado en esta escritura: lo deja la hoja como Word (19/11/2026) */
+  const dl=!datoPropiable(run.k)&&def.a==="lote"&&!SIN_REVISAR_K.has(run.k)&&Array.isArray(ctx.l&&ctx.l.textoPropio)&&ctx.l.textoPropio.some(x=>x&&x.k===run.k&&x.bi===run.bi);
+  const dp=datoPropiable(run.k)||dl, dice=dp?textoDatoRun(def,ctx,run):null, od=dp?propioDatoDe(ctx.l,run.k,run.bi,dice):null;
+  if(od){ out.push({t:od.nuevo,b:!!run.b,u:!!run.u,bi:run.bi,wbi:run.bi,bt:dice,propio:true,kp:run.k}); return; }
+  const lugar=Object.assign(dp&&!dl?{bi:run.bi,bt:dice}:{},{wbi:run.bi});
   let r=null;
   try{ r=def.render(ctx,run); }catch(e){ r=null; }
   if(r==null){ out.push(Object.assign({t:def.flojo?"****":"*****",b:false,u:false,hueco:def.r,k:run.k,flojo:def.flojo},lugar)); falta(def.r,def.a,run.k,def.flojo); return; }
@@ -4586,6 +4589,7 @@ let VISTA={v:"tablero",b:null,t:null,l:null}, POS_TAB=0;
 let COLA_CAR=null;
 const hacerCaratula=l=>{ l.caratula={fecha:hoy(),quien:(typeof COMP!=="undefined"&&COMP.quien)||""}; guardar(); };
 function ir(v,o){
+ if(VISTA.v==="revision"&&!(o&&o.forzar)&&typeof wordFrena==="function"&&wordFrena()) return;
  if(typeof cerrarEdVivo==="function"&&ED_VIVO) cerrarEdVivo();
  if(typeof ocultarQuitar==="function"){ ocultarQuitar(); ocultarFlota(); }
  /* volver a los barrios termina la revisión, venga de donde venga: lo que se haga después ya no
@@ -7135,9 +7139,10 @@ function revisarUno(b,l){ if(!esCompuDelCargo()){ avisoCargo(); return; } if(car
 /* desde el 18/11/2026 (Baltasar: «que siempre esté la minuta entera, como predeterminado») cada lote abre entero;
    «Ver sólo lo que cambia» vale para ese lote y no se recuerda */
 function enteraFija(){ return true; }
-function irSesion(i){ const x=SESION.ids[i]; ir("revision",{b:x.b,l:x.l,i,ri:null,rk:null,entera:enteraFija()}); }
+function irSesion(i){ if(wordFrena()) return; const x=SESION.ids[i]; ir("revision",{b:x.b,l:x.l,i,ri:null,rk:null,entera:enteraFija()}); }
 function siguienteEnSesion(){ const i=VISTA.i||0; if(i<SESION.ids.length-1) irSesion(i+1); else terminarRevision(); }
 function terminarRevision(){
+ if(wordFrena()) return;
  if(SESION){
   const hs=Object.values(SESION.hecho), rev=hs.filter(x=>x==="revisada").length, pen=hs.filter(x=>x==="pendiente").length;
   const cs=[].concat(...Object.values(SESION.corr)), porA={}; cs.forEach(c=>porA[c.alcance]=(porA[c.alcance]||0)+1);
@@ -7219,13 +7224,139 @@ function pintarRevision(){
  /* lo de afuera ya está a la vista: la pantalla quedó al día */
  if(typeof COMP!=="undefined") COMP.repintar=false;
  const en=$("#rEntera"); if(en) en.onclick=()=>{ VISTA.entera=!VISTA.entera; pintarRevision(); };
+ const hj=$("#rHoja");
+ hj.addEventListener("input",()=>{ const z=loteDeVista(); if(!z) return; pintarBarraWord(); });
+ hj.addEventListener("keydown",e=>{ if(hj.isContentEditable&&e.key==="Enter"){ e.preventDefault(); } }); /* un solo párrafo */
+ hj.addEventListener("paste",e=>{ if(!hj.isContentEditable) return; e.preventDefault(); const tx=(e.clipboardData&&e.clipboardData.getData("text/plain")||"").replace(/\s*\n\s*/g," "); document.execCommand("insertText",false,tx); });
+ hj.addEventListener("drop",e=>{ if(hj.isContentEditable) e.preventDefault(); });
+ /* el cursor en un dato que se corrige en el cuadro (los adjudicatarios, una fecha, un número): la columna lo muestra */
+ if(!window._selWord){ window._selWord=true; let tSel=null; document.addEventListener("selectionchange",()=>{ clearTimeout(tSel); tSel=setTimeout(()=>{
+  const h=$("#rHoja"); if(VISTA.v!=="revision"||!h||!h.isContentEditable) return; const sl=getSelection(); if(!sl.rangeCount||!h.contains(sl.anchorNode)) return;
+  const el=sl.anchorNode.nodeType===3?sl.anchorNode.parentElement:sl.anchorNode, sp=el&&el.closest&&el.closest("[data-ri]"); const ri=sp?+sp.dataset.ri:null;
+  const z=loteDeVista(); if(!z) return; const run=ri!=null?(WORD.runs||[])[ri]:null;
+  const enCuadro=run&&run.k&&!run.kp&&(CAT_K[run.k]&&(CAT_K[run.k].a==="lote"||CAT_K[run.k].a==="conc"||SIN_REVISAR_K.has(run.k)||CAT_K[run.k].tipo==="fecha"||run.k==="ADJUDICATARIOS"||run.k==="NOMBRES"));
+  WORD.cursor=run&&!enCuadro&&ri!=null&&!SIN_REVISAR_K.has(run.k||"")?ri:null;
+  const nri=enCuadro?ri:null; if(nri===VISTA.ri){ pintarCursorWord(); return; } VISTA.ri=nri; VISTA.rk=run&&enCuadro?run.k:""; pintarPanelRev(); },160); }); }
  $("#rHoja").onclick=e=>{
+  if($("#rHoja").isContentEditable) return; /* como Word: el clic pone el cursor */
   if(EN_HOJA){ if(e.target.closest(".ed-hoja,.hoja-bar")) return; if(EN_HOJA.sucio()){ avisar("Primero elegí, abajo del tramo, «Sólo en este lote», «En todos» o «Cancelar».",true); EN_HOJA.span.focus(); return; } }
   const s=e.target.closest("[data-ri]"); if(!s) return; VISTA.ri=+s.dataset.ri; VISTA.rk=(runsRevision(b,t,l)[VISTA.ri]||{}).k||""; pintarHojaRev(); pintarPanelRev();
   if(abrirEnHoja(e.clientX,e.clientY)) return;
   const f=$("#rCorr input,#rCorr textarea,#rCorr select"); if(f) f.focus(); };
  $("#rHoja").onkeydown=e=>{ if(e.key!=="Enter"&&e.key!==" ") return; if(e.target.isContentEditable) return; const s=e.target.closest(".dt"); if(!s) return; e.preventDefault(); s.click(); };
 }
+/* La hoja como un Word (Baltasar, 19/11/2026: «me gustaría que sea directamente un Word: si quiero borrar cinco párrafos,
+   que se borren»). En la revisión, en la computadora del cargo, la hoja entera se puede escribir: se selecciona de un
+   párrafo a otro, se borra, se escribe. Al cambiar algo, la columna muestra «Sólo en este lote», «En todos los lotes» y
+   «Descartar». Lo cambiado se reparte entre los tramos que tocó (cada uno sabe de dónde viene: la base, el corresponde,
+   un dato del barrio, de la tanda o del lote) y en cada uno se hace lo mismo que con el cuadro: sólo en este lote queda
+   en violeta, como cambio propio; en todos cambia la base o el dato común. «En todos» no va si se tocó un dato de este
+   lote (el nombre, la matrícula): eso es sólo de él. El número y la fecha, que pone quien imprime, no se tocan. Todo lo
+   de una vez es un solo paso para deshacer. Los adjudicatarios, las fechas y los números se siguen corrigiendo también
+   en el cuadro: al poner el cursor en uno, la columna lo muestra. */
+const WORD={orig:null,runs:null,lid:null};
+const wordSucio=()=>!!(WORD.orig&&VISTA.v==="revision"&&$("#rHoja")&&$("#rHoja").isContentEditable&&textosHoja()!==null&&!igualesMapas(WORD.orig,textosHoja()));
+function igualesMapas(a,b){ if(!a||!b||a.size!==b.size) return false; for(const [k,v] of a) if(b.get(k)!==v) return false; return true; }
+/* el texto de la hoja, tramo por tramo (lo escrito afuera de un tramo va con el de antes) */
+function textosHoja(){
+ const h=$("#rHoja"); if(!h) return null; const m=new Map(); (WORD.runs||[]).forEach((x,i)=>m.set(i,""));
+ let ult=null; const tw=document.createTreeWalker(h,NodeFilter.SHOW_TEXT); let n;
+ while((n=tw.nextNode())){ const el=n.parentElement; if(el&&el.closest(".imprime,.pliegue,.hoja-bar")) continue;
+  const sp=el&&el.closest("[data-ri]"); let ri=sp&&h.contains(sp)?+sp.dataset.ri:ult; if(ri==null) ri=0; ult=ri;
+  m.set(ri,(m.get(ri)||"")+n.textContent.replace(/\u00a0/g," ")); }
+ return m;
+}
+const puedeWord=(b,t,l)=>esCompuDelCargo()&&cargoDe(l)===ROL()&&l.estado!=="firmada"&&l.estado!=="inscripta"&&!($("#rHoja")&&$("#rHoja").classList.contains("plegada"));
+function armarWord(b,t,l){
+ const h=$("#rHoja"); if(!h) return;
+ if(!puedeWord(b,t,l)){ h.contentEditable="false"; WORD.orig=null; return; }
+ WORD.runs=runsRevision(b,t,l); WORD.lid=l.id;
+ h.querySelectorAll(".imprime,.pliegue,.hueco").forEach(x=>x.contentEditable="false");
+ h.contentEditable="true"; h.spellcheck=false; WORD.orig=textosHoja();
+}
+/* lo que cambió, por tramo de origen: {k, bi, antes, despues, runs} */
+function cambiosWord(){
+ const ahora=textosHoja(); if(!WORD.orig||!ahora) return [];
+ const gr=new Map();
+ WORD.runs.forEach((x,ri)=>{ const a=WORD.orig.get(ri)||"", d=ahora.get(ri)||""; const key=(x.wbi==null?"r"+ri:x.wbi)+"|"+(x.kp||x.k||"");
+  if(!gr.has(key)) gr.set(key,{k:x.kp||x.k||"",bi:x.wbi,antes:"",despues:"",runs:[]}); const g=gr.get(key); g.antes+=a; g.despues+=d; g.runs.push(x); });
+ const gs=[...gr.values()];
+ /* Lo que cambió, visto de corrido y no tramo por tramo: al borrar de un tramo a otro y escribir, Chrome deja lo escrito
+    en el tramo de antes (ahí queda el cursor). Los tramos cambiados que están pegados se miran juntos: se saca lo igual
+    del principio y del final, y lo que de verdad cambió queda en el tramo donde empieza. Así «LE CORRESPONDE: A la Comuna
+    de Paso…» → «LE CORRESPONDE: A la Comuna le…» es sólo un cambio en el corresponde, y no en la base. */
+ for(let i=0;i<gs.length;i++){
+  if(gs[i].antes===gs[i].despues) continue;
+  let j=i; while(j+1<gs.length&&gs[j+1].antes!==gs[j+1].despues) j++;
+  const zona=gs.slice(i,j+1), O=zona.map(g=>g.antes).join(""), N=zona.map(g=>g.despues).join("");
+  let pre=0; while(pre<O.length&&pre<N.length&&O[pre]===N[pre]) pre++;
+  let suf=0; while(suf<O.length-pre&&suf<N.length-pre&&O[O.length-1-suf]===N[N.length-1-suf]) suf++;
+  const fin=O.length-suf, ins=N.slice(pre,N.length-suf);
+  let pos=0, puesto=false;
+  zona.forEach((g,k)=>{ const a=pos, e=pos+g.antes.length; pos=e;
+   const aca=!puesto&&(pre<e||(pre===e&&k===zona.length-1)||(pre===a&&fin===a));
+   const corta=pre<e&&fin>a; /* lo borrado pasa por este tramo */
+   if(!corta&&!aca){ g.despues=g.antes; return; }
+   const dd=Math.max(0,Math.min(g.antes.length,pre-a)), hh=Math.max(0,Math.min(g.antes.length,fin-a));
+   g.despues=g.antes.slice(0,dd)+(aca?ins:"")+g.antes.slice(Math.max(dd,hh)); if(aca) puesto=true; });
+  i=j;
+ }
+ return gs.filter(g=>g.antes!==g.despues);
+}
+function barraWordHtml(b,t,l){
+ const cs=cambiosWord(); if(!cs.length) return "";
+ const delLote=cs.some(g=>g.k&&CAT_K[g.k]&&(CAT_K[g.k].a==="lote"||CAT_K[g.k].a==="conc"));
+ const imp=impacto(b,"barrio",t,l);
+ return '<div class="card rev-box rev-word"><h3>Cambiaste la minuta en la hoja</h3><p class="hint" style="margin:0 0 8px">'+cs.length+(cs.length===1?" tramo":" tramos")+'. ¿Dónde va?</p>'
+  +'<div class="pbtn"><button type="button" class="p" id="wSolo">Sólo en este lote</button>'+(delLote?"":'<button type="button" class="p" id="wTodos">En todos los lotes ('+(imp.total-imp.firmados)+')</button>')+'<button type="button" id="wNo">Descartar</button></div>'
+  +(delLote?'<p class="hint" style="margin:6px 0 0">Tocaste un dato de este lote: va sólo en este lote.</p>':"")+'</div>';
+}
+function pintarBarraWord(){
+ const z=loteDeVista(), p=$("#rPanel"); if(!z||!p) return; const {b,t,l}=z;
+ const vieja=$("#rPanel .rev-word"); if(vieja) vieja.remove();
+ const h=barraWordHtml(b,t,l); p.classList.toggle("word-sucio",!!h); if(!h) return;
+ const ref=$("#rPanel .rev-decide"); if(ref) ref.insertAdjacentHTML("afterend",h); else p.insertAdjacentHTML("afterbegin",h);
+ $("#wSolo").onclick=()=>aplicarWord(false); const wt=$("#wTodos"); if(wt) wt.onclick=()=>aplicarWord(true);
+ $("#wNo").onclick=()=>{ WORD.orig=null; p.classList.remove("word-sucio"); pintarHojaRev(true); pintarPanelRev(); avisar("Descartado: la minuta quedó como estaba."); };
+}
+function aplicarWord(todos){
+ const z=loteDeVista(); if(!z) return; const {b,t,l}=z, ctx=ctxDe(b,t,l), cs=cambiosWord(); if(!cs.length) return;
+ const hechos=[];
+ for(const g of cs){
+  if(g.k&&SIN_REVISAR_K.has(g.k)) continue;
+  if(g.bi==null||!b.base.runs[g.bi]){ avisar("No pude ubicar un cambio en la minuta: deshacelo con Ctrl+Z y hacelo de a un tramo.",true); return; }
+  const rb=b.base.runs[g.bi];
+  if(!g.k){ /* texto de la base */
+   const ov=propioDe(l,b.base,g.bi), actual=ov?ov.nuevo:rb.t, full=pasarEdicion(g.antes,g.despues,actual)??pasarEdicion(g.antes.trim(),g.despues.trim(),actual);
+   if(full==null){ avisar("No pude ubicar un cambio en el texto de la base: deshacelo con Ctrl+Z y hacelo de a un tramo.",true); return; }
+   hechos.push(()=>{ if(todos){ quitarPropio(b,l,g.bi); rb.t=full; b.base.ver++; b.base.guardada=hoy(); if(SESION) SESION.baseVer=b.base.ver; registrarCorr(l,{alcance:"base",k:"BASE",etiqueta:"la minuta base (en la hoja)",antes:actual.trim(),despues:full.trim(),ref:null}); }
+    else { ponerPropio(b,l,g.bi,rb.t,rb.t,full); registrarCorr(l,{alcance:"lote",k:"",etiqueta:"texto sólo en esta escritura (en la hoja)",antes:actual.trim(),despues:full.trim(),ref:null}); } });
+   continue; }
+  const d=CAT_K[g.k]; if(!d){ continue; }
+  const dice=textoDatoRun(d,ctx,Object.assign({},rb,{bi:g.bi})), ov=propioDatoDe(l,g.k,g.bi,dice), actual=ov?ov.nuevo:dice;
+  const full=pasarEdicion(g.antes,g.despues,actual)??pasarEdicion(g.antes.trim(),g.despues.trim(),actual);
+  if(full==null){ avisar("No pude ubicar un cambio en «"+d.r+"»: deshacelo con Ctrl+Z y corregilo en el cuadro.",true); return; }
+  if(todos&&(d.a==="barrio"||d.a==="tanda"||d.a==="mza")&&d.campo){
+   const ref=d.a==="mza"?{tipo:"mza",mza:String(l.mza||"").trim(),campo:d.campo==="corresponde"?corrCampo(l):d.campo}:d.a==="tanda"?{tipo:"tanda",t:t.id,campo:d.campo}:{tipo:"barrio",campo:d.campo};
+   const crudo=String(valorRef(b,ref)||""), nuevoCrudo=pasarEdicion(dice,full,crudo);
+   if(nuevoCrudo==null){ avisar("No pude llevar a todos el cambio en «"+d.r+"»: hacelo sólo en este lote, o en el cuadro.",true); return; }
+   hechos.push(()=>{ quitarPropioDato(l,g.k,g.bi); ponerRef(b,ref,nuevoCrudo); registrarCorr(l,{alcance:d.a,k:g.k,etiqueta:d.r.toLowerCase()+" (en la hoja)",antes:crudo,despues:nuevoCrudo,ref}); });
+  } else hechos.push(()=>{ ponerPropioDato(l,g.k,g.bi,dice,full); registrarCorr(l,{alcance:"lote",k:"",etiqueta:d.r.toLowerCase()+" sólo en esta escritura (en la hoja)",antes:actual.trim(),despues:full.trim(),ref:null}); });
+ }
+ hechos.forEach(f=>f());
+ WORD.orig=null; const p=$("#rPanel"); if(p) p.classList.remove("word-sucio");
+ VISTA.ri=null; VISTA.rk=""; guardar(true); pintarHojaRev(true); pintarPanelRev();
+ avisar(todos?"Cambiado en todos los lotes sin firmar.":"Cambiado sólo en esta escritura. Queda en violeta.");
+}
+/* el cursor en un texto: en la columna, el cuadro de ese tramo, para quien lo prefiera */
+function pintarCursorWord(){
+ const p=$("#rPanel"), t=$("#rPanel .rev-tocar"); if(!p||!t) return;
+ const ri=WORD.cursor, x=ri!=null?(WORD.runs||[])[ri]:null;
+ t.innerHTML=x?'Escribí en la hoja como en un Word. <button type="button" class="link" id="wCuadro" style="width:auto;margin:0">Corregir este tramo en el cuadro</button>':"Escribí en la hoja como en un Word, o tocá un nombre, una fecha o un número para corregirlo en el cuadro.";
+ const wc=$("#wCuadro"); if(wc) wc.onclick=()=>{ if(wordFrena()) return; VISTA.ri=ri; VISTA.rk=x.k||""; pintarPanelRev(); const f=$("#rCorr textarea,#rCorr input"); if(f) f.focus(); };
+}
+/* con algo sin elegir en la hoja, no se va a otro lado */
+function wordFrena(){ if(!wordSucio()) return false; avisar("Cambiaste la minuta en la hoja: primero elegí «Sólo en este lote», «En todos» o «Descartar».",true); pintarBarraWord(); return true; }
 /* Corregir en la hoja (Baltasar, 19/11/2026: «¿por qué no es más fácil editar todo el texto de la minuta? ¿por qué se
    tiene que transpolar a ese cuadrito?»; «hacé lo de corregir en la hoja»). El tramo tocado se escribe ahí mismo, en la
    minuta, y abajo de él aparecen «Sólo en este lote», «En todos los lotes» y «Cancelar». Por dentro es el mismo cuadro
@@ -7265,12 +7396,20 @@ function abrirEnHoja(x,y){
  const guardarEn=cual=>{
   const nuevo=txtDe();
   if(nuevo===viejo){ cerrarEnHoja(); pintarHojaRev(); pintarPanelRev(); avisar("No cambió nada."); return; }
-  const full=pasarEdicion(viejo,nuevo,m.ta.value);
+  let full=pasarEdicion(viejo,nuevo,m.ta.value);
+  /* sin los espacios del borde (el cuadro los saca): vaciar un tramo entero no se encontraba (19/11/2026) */
+  if(full==null) full=pasarEdicion(viejo.trim(),nuevo.trim(),m.ta.value);
+  /* …y sin el punto o la coma que cierra lo anterior, que el cuadro tampoco muestra */
+  const pel=x=>x.replace(/^[\s.,;:]+/,"").trim();
+  if(full==null) full=pasarEdicion(pel(viejo),pel(nuevo),m.ta.value);
+  if(full==null&&!pel(nuevo)&&pel(viejo)===m.ta.value.trim()) full="";
   if(full==null){ avisar("No pude ubicar el cambio en el texto: hacelo en el cuadro.",true); cerrarEnHoja(); pintarHojaRev(); pintarPanelRev(); return; }
-  m.ta.value=full; const bt=$(cual==="todos"?m.todos:m.solo); cerrarEnHoja(); if(bt) bt.click(); };
+  m.ta.value=full; const bt=$(cual==="todos"?m.todos:m.solo); cerrarEnHoja(); if(bt) bt.click();
+  /* terminado en la hoja, la columna queda como antes de tocar: sin el cuadro escondido */
+  VISTA.ri=null; VISTA.rk=""; pintarHojaRev(); pintarPanelRev(); };
  span.nextElementSibling.querySelectorAll("[data-h]").forEach(bt=>{
   bt.addEventListener("mousedown",ev=>ev.preventDefault()); /* que no se vaya el foco antes del clic */
-  bt.onclick=ev=>{ ev.stopPropagation(); const h=bt.dataset.h; if(h==="no"){ cerrarEnHoja(); pintarHojaRev(); pintarPanelRev(); return; } guardarEn(h); }; });
+  bt.onclick=ev=>{ ev.stopPropagation(); const h=bt.dataset.h; if(h==="no"){ cerrarEnHoja(); VISTA.ri=null; VISTA.rk=""; pintarHojaRev(); pintarPanelRev(); return; } guardarEn(h); }; });
  return true;
 }
 /* El tramo tocado, buscado por su clave: si un dato que faltaba se completa, los tramos se
@@ -7289,7 +7428,8 @@ function notarAfuera(b,t,l,deAfuera){
  const rc=runsComparar(b,t,l), tx=textoDe(rc), fmt=firmaFormato(rc);
  if((tx!==v.t||fmt!==v.fmt)&&(deAfuera||(typeof COMP!=="undefined"&&COMP.repintar))) VISTA.afuera={antes:v.t,ver:v.ver,fmt:v.fmt};
 }
-function pintarHojaRev(){
+function pintarHojaRev(forzar){
+ if(!forzar&&wordSucio()) return;
  const z=loteDeVista(); if(!z) return; const {b,t,l}=z, rol=ROL();
  notarAfuera(b,t,l,false);
  const runs=runsRevision(b,t,l);
@@ -7305,6 +7445,7 @@ function pintarHojaRev(){
  h.classList.toggle("plegada",solo||soloCambio);
  h.innerHTML=hojaRevisionHtml(runs,{solo,soloCambio,cambios:cm,sel:riVigente(runs),corr:new Set(((SESION&&SESION.corr[l.id])||[]).map(c=>c.k))});
  VISTA.vio={l:l.id,t:textoDe(rc0),fmt:firmaFormato(rc0),ver:b.base.ver};
+ try{ armarWord(b,t,l); }catch(e){}
  const ra=$("#rAfuera"); if(ra) ra.innerHTML=af?'<div class="alerta"><b>Cambió mientras la leías</b>Llegó un cambio de otra computadora'+(af.antes===VISTA.vio.t?": cambió sólo la negrita o el subrayado.":". Lo distinto de lo que tenías en pantalla está marcado en naranja.")+' Miralo antes de aprobar.</div>':"";
 }
 
@@ -7552,6 +7693,7 @@ function revPaso(b,l){
  REV_UNDO.pend={bid:b.id,l:l.id,antes:ah,corrLen:((SESION&&SESION.corr[l.id])||[]).length};
 }
 function revDeshacer(){
+ if(wordSucio()){ document.execCommand("undo"); pintarBarraWord(); return; }
  const z=loteDeVista(); if(z&&REV_UNDO.abierto) revPaso(z.b,z.l);
  const paso=REV_UNDO.pila.pop(); if(!paso){ avisar("No hay nada para deshacer en esta revisión."); return; }
  const b=bDe(paso.bid); if(!b){ avisar("Ese barrio ya no está.",true); return; }
@@ -7586,9 +7728,9 @@ function pintarPanelRev(){
  /* opción 1 (Baltasar, 18/11/2026: «hacela»): la columna en orden fijo. Arriba, el lote y pasar de uno a
     otro; después «Revisada», siempre a la misma altura; corregir aparece sólo al tocar la minuta */
  p.innerHTML='<div class="card rev-box rev-lote">'
-   +(SESION.ids.length>1?'<div class="rev-nav"><button type="button" id="rAnt" aria-label="Lote anterior"'+(iS?"":" disabled")+'>‹</button><b>'+esc(loteCorto(l))+' · '+(iS+1)+' de '+SESION.ids.length+'</b><button type="button" id="rSig" aria-label="Lote siguiente"'+(iS<SESION.ids.length-1?"":" disabled")+'>›</button></div>'
+   +(SESION.ids.length>1?'<div class="rev-nav"><button type="button" id="rAnt" aria-label="Lote anterior"'+(iS?"":" disabled")+'>‹ Anterior</button><b>'+esc(loteCorto(l))+' · '+(iS+1)+' de '+SESION.ids.length+'</b><button type="button" id="rSig" aria-label="Lote siguiente"'+(iS<SESION.ids.length-1?"":" disabled")+'>Siguiente ›</button></div>'
      +'<label class="rev-buscar">Buscar<input class="inp" id="rBuscar" inputmode="numeric" placeholder="los últimos números del expediente" autocomplete="off"></label>'
-    :'<div class="rev-nav"><b>'+esc(loteCorto(l))+'</b>'+(SESION.uno&&lotesParaRevisar(SESION.con).some(x=>x.l!==l.id)?'<button type="button" id="rSigUno">Siguiente lote para revisar ›</button>':"")+'</div>')
+    :'<div class="rev-nav">'+(SESION.uno&&lotesParaRevisar(SESION.con).some(x=>x.l!==l.id)?'<button type="button" id="rAntUno" title="El lote anterior para revisar">‹ Anterior</button>':"")+'<b>'+esc(loteCorto(l))+'</b>'+(SESION.uno&&lotesParaRevisar(SESION.con).some(x=>x.l!==l.id)?'<button type="button" id="rSigUno" title="El siguiente lote para revisar">Siguiente ›</button>':"")+'</div>')
    +(ult?'<p class="rev-ult'+(ult.pend?" pend":"")+'">'+esc(ult.txt)+'</p>':"")
    +(REV_UNDO.pila.length||REV_UNDO.abierto?'<p class="rev-undo"><button type="button" class="link" id="rDeshacer" title="También con Ctrl+Z">↶ Deshacer el último cambio</button> <span class="hint">o Ctrl+Z</span></p>':"")
   +'</div>'
@@ -7609,6 +7751,8 @@ function pintarPanelRev(){
   +'<div class="rev-fin"><button type="button" class="link" id="rWord">Descargar el Word</button><button type="button" class="link" id="rTerminar">Terminar la revisión</button></div>'
   +historiaHtml(l);
  if(cc.atar) cc.atar();
+ if(wordSucio()) pintarBarraWord(); else p.classList.remove("word-sucio");
+ if($("#rHoja")&&$("#rHoja").isContentEditable) pintarCursorWord();
  atarDeshacer();
  $$("#rPanel [data-ir-ses]").forEach(bt=>bt.onclick=()=>irSesion(+bt.dataset.irSes));
  const pq=$("#rPorQue"); if(pq) pq.onclick=avisoCargo;
@@ -7622,6 +7766,10 @@ function pintarPanelRev(){
   if(hits.length===1) irSesion(hits[0].k); else avisar(hits.length?"Hay "+hits.length+" expedientes que terminan así: escribí más números.":"Ese expediente no está en esta revisión.",!hits.length); };
  const ra=$("#rAnt"); if(ra) ra.onclick=()=>{ if(iS>0) irSesion(iS-1); };
  const rs=$("#rSig"); if(rs) rs.onclick=()=>{ if(iS<SESION.ids.length-1) irSesion(iS+1); };
+ /* el anterior: el de antes en la lista de lo que hay para revisar con esa persona (si éste no está, el último) */
+ const rau=$("#rAntUno"); if(rau) rau.onclick=()=>{ const todos=lotesParaRevisar(SESION.con), i=todos.findIndex(x=>x.l===l.id);
+  const ids=i>=0?todos:todos.concat([{b:b.id,l:l.id}]), k=i>=0?i:ids.length-1; if(ids.length<2) return;
+  SESION={con:SESION.con,ids,corr:SESION.corr,hecho:SESION.hecho}; irSesion(k>0?k-1:ids.length-1); };
  const ru=$("#rSigUno"); if(ru) ru.onclick=()=>{ const ids=lotesParaRevisar(SESION.con).filter(x=>x.l!==l.id); if(!ids.length) return; SESION={con:SESION.con,ids:[{b:b.id,l:l.id}].concat(ids),corr:SESION.corr,hecho:SESION.hecho}; irSesion(1); };
  /* El segundo clic de un doble clic cae en el botón de la siguiente, que todavía no se vio: se
     ignora (10/11/2026). Y no se aprueba un texto distinto del que está en pantalla. */
@@ -7635,6 +7783,7 @@ const candado=()=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" s
 /* Con quién se revisó: quien trajo el lote a la sesión, o quien lo lleva. */
 function conDe(l){ return SESION&&SESION.con&&SESION.con!=="__cambios__"?SESION.con:String(l.responsable||"").trim(); }
 function aprobar(b,t,l,enSesion){
+ if(wordFrena()) return;
  if(!esCompuDelCargo()){ avisoCargo(); return false; }
  if(cargoDe(l)!==ROL()){ avisar("Este lote lo revisa la "+CARGO_TXT[cargoDe(l)]+".",true); return false; }
  if(l.estado==="firmada"||l.estado==="inscripta"){ avisar("Este lote ya está firmado: no se revisa más.",true); return false; }
