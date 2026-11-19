@@ -633,6 +633,9 @@ tr.fila.oculta{display:none}
 .principal-et{font-size:11px;font-weight:800;color:#6B5210;background:#FBF3DC;border:1px solid #D9B23A;border-radius:999px;padding:1px 7px;white-space:nowrap}
 html[data-theme="dark"] .principal-et{color:#F4E8C4;background:#3A3016;border-color:#C9A84C}
 select.mini.principal{max-width:260px}
+/* el número de escritura, a la vista en la lista (19/11/2026); el «tuyo» se sacó: los tuyos ya van primero, agrupados */
+.nro-et{font-size:11.5px;font-weight:800;color:#172033;background:#EEF2F6;border:1px solid #CDD5DF;border-radius:999px;padding:1px 8px;white-space:nowrap}
+html[data-theme="dark"] .nro-et{color:#E6EAF2;background:#262F42;border-color:#3A4660}
 .rev-principal:not(.es){border-color:#D9B23A}
 p.rev-principal{margin:0 0 10px}
 .protocolo{margin-top:14px;padding:12px 16px}
@@ -4866,7 +4869,7 @@ function bloqueTanda(b,t){
  return h+repartoHtml(t)+'<div class="tabla"><table><thead><tr><th>Adjudicatarios</th><th>Lote</th><th>Manzana</th><th>Responsable</th><th>Escribana</th><th>Estado</th></tr></thead><tbody>'
   +filasPorPersona(b,t,ordenLotes(t.lotes),l=>{ const e=estadoLote(b,t,l);
    const nt=notarialTarde(t,l), dup=repetidoDe(l,rep), fp=fechaPropiaDistinta(t,l), mio=esMio(l);
-   return '<tr class="fila'+(mio?' mio':'')+'" data-acc="lote" data-b="'+b.id+'" data-l="'+l.id+'" tabindex="0" title="Abrir el lote"><td class="nom">'+esc(nombreLote(l))+(mio?' <span class="tuyo">tuyo</span>':'')+(t.principal===l.id?' <span class="principal-et">★ principal</span>':'')+'<div class="chica">Expte. '+esc(l.expediente||"sin número")+(ultimoCambio(l)?' · último cambio: '+ultimoCambio(l):"")+'</div>'+(e.det?'<div class="obsx">'+esc(e.det)+'</div>':"")+(nt?'<div class="obsx tarde">'+esc(nt)+'</div>':"")+(fp?'<div class="obsx tarde">'+esc(fp)+': si firma con la tanda, abrí el lote y tocá «Que firme con la tanda»</div>':"")+(dup?'<div class="obsx tarde">'+esc(dup)+'</div>':"")+'</td>'
+   return '<tr class="fila'+(mio?' mio':'')+'" data-acc="lote" data-b="'+b.id+'" data-l="'+l.id+'" tabindex="0" title="Abrir el lote"><td class="nom">'+esc(nombreLote(l))+(String(l.nroEscritura||"").trim()?' <span class="nro-et" title="Número de escritura">Esc. N° '+esc(String(l.nroEscritura).trim())+'</span>':'')+(t.principal===l.id?' <span class="principal-et">★ principal</span>':'')+'<div class="chica">Expte. '+esc(l.expediente||"sin número")+(ultimoCambio(l)?' · último cambio: '+ultimoCambio(l):"")+'</div>'+(e.det?'<div class="obsx">'+esc(e.det)+'</div>':"")+(nt?'<div class="obsx tarde">'+esc(nt)+'</div>':"")+(fp?'<div class="obsx tarde">'+esc(fp)+': si firma con la tanda, abrí el lote y tocá «Que firme con la tanda»</div>':"")+(dup?'<div class="obsx tarde">'+esc(dup)+'</div>':"")+'</td>'
     +'<td class="lm">'+esc(l.lote||"?")+'</td><td class="lm">'+esc(l.mza||"?")+'</td><td class="lm"><input class="mini resp" list="dlResp" data-b="'+b.id+'" data-l="'+l.id+'" value="'+esc(l.responsable||"")+'" placeholder="sin designar" aria-label="Responsable del lote '+esc(l.lote||"")+'"></td>'
     +'<td class="lm"><select class="mini esc" data-b="'+b.id+'" data-l="'+l.id+'" aria-label="Escribana que revisa el lote '+esc(l.lote||"")+'"'+((l.estado==="firmada"||l.estado==="inscripta")&&!ADMIN()?" disabled":"")+'>'+[["General","titular"],["Sustituta","sustituta"]].map(([k,n])=>'<option value="'+k+'"'+((l.escribana||"General")===k?" selected":"")+'>'+esc(nombresEscribanas()[n]||k)+'</option>').join("")+'</select></td>'
     +'<td><span class="et '+e.et+'">'+esc(e.txt)+'</span></td>'
