@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mapa de escrituras sociales — Escribanía General de Gobierno</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<script>
+/* Modo oscuro de SIGEC. Una sola preferencia, sigec.tema, que vale para la cáscara y para
+   todas las herramientas, estén sueltas o adentro del marco. */
+(function(){
+  var K='sigec.tema';
+  function aplicar(t){document.documentElement.setAttribute('data-theme',t==='oscuro'?'dark':'light');}
+  function leer(){try{var v=localStorage.getItem(K);return (v==='oscuro'||v==='claro')?v:null;}catch(e){return null;}}
+  aplicar(leer()||((window.matchMedia&&matchMedia('(prefers-color-scheme: dark)').matches)?'oscuro':'claro'));
+  window.SIGEC_TEMA={
+    actual:function(){return document.documentElement.getAttribute('data-theme')==='dark'?'oscuro':'claro';},
+    poner:function(t){try{localStorage.setItem(K,t);}catch(e){}aplicar(t);this.avisar();},
+    alternar:function(){this.poner(this.actual()==='oscuro'?'claro':'oscuro');},
+    avisar:function(){document.dispatchEvent(new CustomEvent('sigec:tema'));}
+  };
+  window.addEventListener('storage',function(e){if(e.key===K&&e.newValue){aplicar(e.newValue);window.SIGEC_TEMA.avisar();}});
+})();
+</script>
+<style>
+/* Mapa de escrituras sociales. Diseño D desde el principio (no lleva capa aparte).
+   Lateral con estados, la ficha del barrio, los barrios, «Sin ubicar» y Catastro; el mapa a la derecha. */
+:root{
+  --bg:#F6F7F9; --card:#FFFFFF; --fg:#172033; --sec:#5B6478; --line:#E4E7EC;
+  --tool:#3F6E4E; --toolTxt:#FFFFFF; --rojo:#B42318; --rojoFondo:#FEF3F2; --azul:#2D5BA8; --naranja:#B54708; --ok:#067647;
+  --prep:#A86A12; --prepFondo:#FFF4DF;
+  --firm:#2F68B0; --firmFondo:#A9C6EA;
+  --insc:#163F2C; --inscFondo:#3E7A5A;
+  --mapa:#EEF0EA;
+  --font:"Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;
+  --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+}
+html[data-theme="dark"]{
+  --bg:#0F1420; --card:#161C2B; --fg:#E6EAF2; --sec:#98A2B3; --line:#262F42;
+  --tool:#7DBF94; --toolTxt:#0F1420; --rojo:#FDA29B; --rojoFondo:#3A1714; --azul:#8DB4F0; --naranja:#FEC84B; --ok:#75E0A7;
+  --prep:#F2B451; --prepFondo:#2A2414; --firm:#7FAEEB; --firmFondo:#2C4A72; --insc:#C4ECD3; --inscFondo:#5FA97F;
+  --mapa:#111724; color-scheme:dark}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{background:var(--bg);color:var(--fg);font-family:var(--font);font-size:14px;line-height:1.45}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--tool);outline-offset:2px}
+.envuelve{max-width:1480px;margin:0 auto;padding:16px;display:grid;gap:12px}
+
+.cab{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.ico{width:50px;height:50px;border-radius:14px;background:var(--tool);color:var(--toolTxt);display:grid;place-items:center;flex:none}
+.cab h1{font-size:24px;margin:0;font-weight:800;letter-spacing:-.02em;line-height:1.15}
+.cab p{margin:2px 0 0;color:var(--sec)}
+.cab .txt{flex:1;min-width:240px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--card);border-radius:999px;padding:4px 10px;font-size:12.5px;color:var(--sec)}
+.chip .pt{width:7px;height:7px;border-radius:50%;background:var(--tool)}
+.chip.rojo .pt{background:var(--rojo)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.seg button{border:0;background:transparent;padding:7px 14px;cursor:pointer;color:var(--sec);font-weight:600}
+.seg button[aria-pressed="true"]{background:var(--tool);color:var(--toolTxt)}
+.seg button:disabled{opacity:.5;cursor:default}
+
+.ejemplo{border:1px solid var(--line);background:var(--prepFondo);border-radius:12px;padding:10px 14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.ejemplo span{flex:1;min-width:220px}
+
+.app{display:grid;grid-template-columns:370px minmax(0,1fr);gap:12px;height:calc(100vh - 150px);min-height:620px}
+html.suelto .app{height:calc(100vh - 210px)}
+.lat{display:flex;flex-direction:column;gap:12px;min-width:0;overflow:auto;padding-right:2px}
+.caja{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px}
+.caja h2{font-size:14px;margin:0 0 10px;font-weight:700;display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+.caja h2 small{font-weight:500;color:var(--sec);font-size:12.5px}
+.vacio{color:var(--sec);font-size:13px;margin:0}
+
+.ley{display:grid;gap:4px}
+.ley button{display:flex;gap:10px;align-items:center;text-align:left;border:1px solid transparent;background:transparent;border-radius:9px;padding:6px 8px;cursor:pointer;width:100%}
+.ley button:hover{border-color:var(--line)}
+.ley button[aria-pressed="false"]{opacity:.45}
+.ley button[aria-pressed="false"] b{text-decoration:line-through}
+.ley em{font-style:normal;color:var(--sec);font-size:12.5px;display:block}
+.ley .n{margin-left:auto;font-variant-numeric:tabular-nums;font-weight:700}
+
+.barrio{display:grid;gap:6px;padding:10px;border-radius:10px;border:1px solid transparent;cursor:pointer;background:transparent;text-align:left;width:100%}
+.barrio:hover{border-color:var(--line)}
+.barrio[aria-current="true"]{border-color:var(--tool);background:var(--bg)}
+.barrio b{font-size:14px}
+.loc{color:var(--sec);font-size:12.5px}
+.barra{display:flex;height:10px;border-radius:5px;overflow:hidden;background:var(--line)}
+.barra i{display:block;height:100%}
+.barra .p{background:var(--prepFondo);box-shadow:inset 0 0 0 1.5px var(--prep)}
+.barra .f{background:var(--firm)}
+.barra .n{background:var(--insc)}
+.cuenta{display:flex;gap:10px;flex-wrap:wrap;font-size:12.5px;color:var(--sec);font-variant-numeric:tabular-nums}
+.cuenta span{display:inline-flex;gap:5px;align-items:center}
+.aviso{font-size:12.5px;font-weight:600}
+.aviso.rojo{color:var(--rojo)}.aviso.nar{color:var(--naranja)}.aviso.azul{color:var(--azul)}
+
+.ficha dl{display:grid;grid-template-columns:auto 1fr;gap:4px 12px;margin:0 0 12px;font-size:13px}
+.ficha dt{color:var(--sec)}.ficha dd{margin:0;min-width:0}
+code{font-family:var(--mono);font-size:12px}
+.tandas{display:grid;gap:6px;margin:0 0 12px;padding:0;list-style:none}
+.tandas li{display:flex;gap:8px;align-items:center;font-size:13px;flex-wrap:wrap}
+.tandas li span{color:var(--sec)}
+.mzas{display:grid;gap:10px}
+.mz b{font-size:12.5px;display:block;margin-bottom:6px}
+.lotes{display:flex;flex-wrap:wrap;gap:5px}
+.lotes button{display:inline-flex;gap:5px;align-items:center;border:1px solid var(--line);background:var(--card);border-radius:7px;padding:3px 7px 3px 5px;cursor:pointer;font-size:12px;font-weight:600;font-variant-numeric:tabular-nums}
+.lotes button:hover{border-color:var(--sec)}
+.lotes button.sin{border-style:dashed;border-color:var(--rojo)}
+.abrir{margin-top:12px}
+
+.su{display:grid;gap:10px}
+.su .grupo{font-size:12.5px;font-weight:700;color:var(--sec);margin-top:4px}
+.su .it{display:grid;gap:6px;border-top:1px solid var(--line);padding-top:10px}
+.su .it b{font-size:13.5px}
+.su .it span{color:var(--sec);font-size:12.5px;display:block}
+.su .it .acc{display:flex;gap:6px;flex-wrap:wrap}
+.bt{border:1px solid var(--line);background:var(--card);border-radius:8px;padding:5px 10px;cursor:pointer;font-weight:600;font-size:12.5px;white-space:nowrap;text-decoration:none;color:var(--fg);display:inline-block}
+.bt:hover{border-color:var(--sec)}
+.bt:disabled{opacity:.6;cursor:wait}
+.bt.pri{background:var(--tool);color:var(--toolTxt);border-color:var(--tool)}
+.cat p{margin:0 0 8px;font-size:13px}
+.cat .estado{display:flex;gap:8px;align-items:flex-start}
+.cat .estado i{width:9px;height:9px;border-radius:50%;margin-top:5px;flex:none;background:var(--sec)}
+.cat .estado.ok i{background:var(--ok)}.cat .estado.mal i{background:var(--rojo)}
+.cat details{font-size:12.5px;color:var(--sec);margin-top:6px}
+.cat details code{word-break:break-all}
+.chk{display:flex;gap:8px;align-items:center;font-size:13px;margin-top:8px;cursor:pointer}
+.nube p{margin:0 0 8px;font-size:13px}
+.fnube{display:grid;gap:8px;width:100%;max-width:520px}
+.fnube label{display:grid;gap:3px;font-size:12.5px;font-weight:600;color:var(--sec)}
+.fnube input{border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:var(--card);font-size:15px;width:100%}
+.fnube .acc{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ejemplo .fnube{flex:1 1 100%}
+
+.der{display:flex;flex-direction:column;min-width:0;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.franja{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-bottom:1px solid var(--line);min-height:54px}
+.franja .msg{flex:1;min-width:220px;color:var(--sec)}
+.franja .msg b{color:var(--fg)}
+.franja.modo{background:var(--prepFondo)}
+.franja.modo .msg{color:var(--fg)}
+.franja.mal{background:var(--rojoFondo)}
+.franja input{border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:var(--card);width:230px;max-width:100%;font-variant-numeric:tabular-nums}
+.ok{color:var(--ok);font-weight:600}
+.err{color:var(--rojo);font-weight:600}
+.lienzo{position:relative;flex:1;display:flex;min-height:0}
+#mapa{flex:1;min-height:460px;background:var(--mapa)}
+#lista{flex:1;overflow:auto}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12.5px;color:var(--sec);font-weight:600;position:sticky;top:0;background:var(--card);z-index:1}
+td .e{display:inline-flex;gap:6px;align-items:center}
+tr.ir{cursor:pointer}
+tr.ir:hover td{background:var(--bg)}
+
+/* ---- Leaflet 1.9.4: su hoja de estilo, recortada a lo que se usa (va adentro: el archivo se abre sin servidor) ---- */
+.leaflet-pane,.leaflet-tile,.leaflet-marker-icon,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;-webkit-tap-highlight-color:transparent;font-family:var(--font);position:relative;outline-offset:1px}
+.leaflet-tile,.leaflet-marker-icon{user-select:none;-webkit-user-select:none}
+.leaflet-container img.leaflet-tile,.leaflet-container svg,.leaflet-container img{max-width:none!important;max-height:none!important}
+.leaflet-tile{filter:inherit;visibility:hidden}
+.leaflet-tile-loaded{visibility:inherit}
+.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-marker-pane{z-index:600}.leaflet-popup-pane{z-index:700}
+.leaflet-map-pane svg{z-index:200}
+.leaflet-marker-icon,.leaflet-pane>svg path,.leaflet-tile-container{pointer-events:none}
+.leaflet-marker-icon.leaflet-interactive,.leaflet-pane>svg path.leaflet-interactive{pointer-events:auto;cursor:pointer}
+.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab{cursor:grabbing}
+.ubicando .leaflet-grab{cursor:crosshair}
+.ubicando .leaflet-marker-icon.leaflet-interactive,.ubicando .leaflet-pane>svg path.leaflet-interactive{pointer-events:none}
+.leaflet-zoom-animated{transform-origin:0 0}
+.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}
+.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}
+.leaflet-fade-anim .leaflet-popup{opacity:0;transition:opacity .2s linear}
+.leaflet-fade-anim .leaflet-map-pane .leaflet-popup{opacity:1}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}
+.leaflet-top{top:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}.leaflet-right{right:0}
+.leaflet-right .leaflet-control{float:right}
+.leaflet-top .leaflet-control{margin-top:10px}.leaflet-left .leaflet-control{margin-left:10px}
+.leaflet-bottom .leaflet-control{margin-bottom:10px}.leaflet-right .leaflet-control{margin-right:10px}
+.leaflet-bar{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--card)}
+.leaflet-bar a{display:block;width:32px;height:32px;text-align:center;text-decoration:none;color:var(--fg);font:600 18px/32px var(--font)}
+.leaflet-bar a+a{border-top:1px solid var(--line)}
+.leaflet-bar a.leaflet-disabled{color:var(--line);cursor:default}
+.leaflet-control-scale-line{border:2px solid var(--sec);border-top:none;padding:0 6px;font-size:11px;color:var(--fg);background:var(--card);white-space:nowrap;box-sizing:content-box}
+.leaflet-control-attribution{background:var(--card);color:var(--sec);font-size:10.5px;padding:1px 6px;margin:0!important;border-top-left-radius:6px;opacity:.9}
+.leaflet-control-attribution a{color:var(--sec)}
+.leaflet-popup{position:absolute;margin-bottom:22px}
+.leaflet-popup-content-wrapper{background:var(--card);color:var(--fg);border:1px solid var(--line);border-radius:12px;box-shadow:0 6px 24px rgba(15,20,32,.22)}
+.leaflet-popup-content{margin:12px 16px;min-width:210px}
+.leaflet-popup-tip-container{width:40px;height:20px;position:absolute;left:50%;margin-left:-20px;overflow:hidden;pointer-events:none}
+.leaflet-popup-tip{width:16px;height:16px;margin:-9px auto 0;transform:rotate(45deg);background:var(--card);border:1px solid var(--line)}
+.leaflet-container a.leaflet-popup-close-button{position:absolute;top:4px;right:6px;width:24px;height:24px;font:18px/24px var(--font);color:var(--sec);text-decoration:none;text-align:center}
+
+/* las capas propias, con los colores del tema */
+path.par{stroke-width:1.6}
+path.par-p{fill:var(--prepFondo);stroke:var(--prep);fill-opacity:.75}
+path.par-f{fill:var(--firmFondo);stroke:var(--firm);fill-opacity:.8}
+path.par-n{fill:var(--inscFondo);stroke:var(--insc);fill-opacity:.85}
+path.par.elegido{stroke:var(--fg);stroke-width:3}
+.duda svg{border-radius:50%;box-shadow:0 0 0 3px var(--card),0 0 0 6px var(--naranja)}
+.et{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;font-size:10.5px;font-weight:700;color:var(--fg);background:var(--card);border-radius:4px;padding:0 3px;opacity:.85}
+.pin{display:grid;justify-items:center}
+.pin .tallo{width:2px;height:10px;background:var(--sec)}
+.pin .pt{width:9px;height:9px;border-radius:50%;background:var(--fg);border:2px solid var(--card)}
+.mb{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 9px;box-shadow:0 2px 10px rgba(15,20,32,.18);display:grid;gap:4px;width:168px;cursor:pointer;color:var(--fg)}
+.mb b{font-size:12.5px;line-height:1.2}
+.mb .barra{height:8px}
+.mb small{font-size:11px;color:var(--sec);font-variant-numeric:tabular-nums}
+.pop h3{margin:0 0 6px;font-size:14px}
+.pop dl{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;margin:0 0 10px;font-size:13px}
+.pop dt{color:var(--sec)}.pop dd{margin:0;display:flex;gap:6px;align-items:center}
+.pop .acc{display:flex;gap:6px;flex-wrap:wrap}
+
+@media (max-width:900px){
+  .app,html.suelto .app{grid-template-columns:1fr;height:auto;min-height:0}
+  .der{order:-1}
+  #mapa{min-height:460px}
+  .lat{overflow:visible}
+}
+@media (prefers-reduced-motion:no-preference){
+ body{animation:sigecEntra .22s ease-out}
+ button,a,input,select{transition:background-color .15s,border-color .15s,box-shadow .15s,color .15s,opacity .15s}
+ @keyframes sigecEntra{from{opacity:0}}
+}
+@media (prefers-reduced-motion:reduce){.leaflet-zoom-anim .leaflet-zoom-animated{transition:none}}
+</style>
+</head>
+<body>
+<div class="envuelve">
+<header class="cab">
+  <div class="ico" aria-hidden="true"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-6.5-5.6-6.5-11a6.5 6.5 0 0 1 13 0c0 5.4-6.5 11-6.5 11zM12 7.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z"/></svg></div>
+  <div class="txt">
+    <h1>Mapa de escrituras sociales</h1>
+    <p>Cada barrio o localidad con su avance y cada lote con su estado. Sólo para la Escribanía.</p>
+  </div>
+  <div class="chips">
+    <span class="chip" id="chipDatos"><span class="pt"></span><span></span></span>
+    <button class="bt" id="bRecargar" title="Volver a leer los lotes de escrituras-sociales">Actualizar</button>
+    <div class="seg" role="group" aria-label="Cómo ver">
+      <button id="vMapa" aria-pressed="true">Mapa</button>
+      <button id="vLista" aria-pressed="false">Lista</button>
+    </div>
+  </div>
+</header>
+<div class="ejemplo" id="avisoEjemplo" hidden></div>
+
+<main class="app">
+  <aside class="lat">
+    <section class="caja">
+      <h2>Estados <small>tocá uno para ocultarlo</small></h2>
+      <div class="ley" id="ley"></div>
+    </section>
+    <section class="caja" id="cajaFicha" hidden><div class="ficha" id="ficha"></div></section>
+    <section class="caja">
+      <h2>Barrios y localidades <small id="totLotes"></small></h2>
+      <div id="barrios"></div>
+    </section>
+    <section class="caja" id="cajaRev" hidden>
+      <h2>Para revisar <small id="totRev"></small></h2>
+      <div class="su" id="rev"></div>
+    </section>
+    <section class="caja" id="cajaSU">
+      <h2>Sin ubicar <small id="totSU"></small></h2>
+      <div class="su" id="su"></div>
+    </section>
+    <section class="caja nube" id="cajaNube" hidden>
+      <h2>GitHub <small id="nubeSub"></small></h2>
+      <div id="nube"></div>
+    </section>
+    <section class="caja cat" id="cajaCat">
+      <h2>Catastro <small>de dónde sale cada punto</small></h2>
+      <div id="cat"></div>
+    </section>
+  </aside>
+  <section class="der">
+    <div class="franja" id="franja"><span class="msg"></span></div>
+    <div class="lienzo">
+      <div id="mapa" role="application" aria-label="Mapa de la provincia con los barrios y sus lotes"></div>
+      <div id="lista" hidden></div>
+    </div>
+  </section>
+</main>
+</div>
+
+<script>
+"use strict";
+/* ════════════ Qué es esto ════════════
+   El mapa no tiene datos propios: lee los lotes de escrituras-sociales (sigec_sociales_v2, que
+   escrituras-sociales mantiene al día juntando la carpeta del R:) y les agrega sólo el punto.
+   Los puntos viven aparte, en sigec_mapa_sociales: así el mapa nunca escribe sobre los datos de
+   otra herramienta. A Catastro (IDECOR) se le manda sólo la nomenclatura: nunca nombres ni DNI. */
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const plural=(n,a,b)=>n+" "+(n===1?a:b);
+const hoyTxt=()=>{const d=new Date();return String(d.getDate()).padStart(2,"0")+"/"+String(d.getMonth()+1).padStart(2,"0")+"/"+d.getFullYear();};
+const horaTxt=t=>new Date(t).toLocaleTimeString("es-AR",{hour:"2-digit",minute:"2-digit",hourCycle:"h23"});
+const fechaTxt=t=>new Date(t).toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});
+const lsLeer=k=>{ try{ return localStorage.getItem(k); }catch(e){ return null; } };
+const lsPoner=(k,v)=>{ try{ localStorage.setItem(k,v); return true; }catch(e){ return false; } };
+
+/* ════════════ Los tres estados ════════════ */
+const EST={p:{et:"En preparación",ay:"desde que el lote se carga"},f:{et:"Firmada",ay:"con la fecha de firma"},n:{et:"Inscripta",ay:"la carpeta ya no se toca"}};
+const VIS={p:true,f:true,n:true};
+/* forma y claridad, no sólo color: círculo vacío claro · círculo lleno · cuadrado oscuro con tilde */
+function forma(e,t){
+  t=t||16;
+  if(e==="p") return `<svg width="${t}" height="${t}" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="5.6" style="fill:var(--prepFondo);stroke:var(--prep)" stroke-width="2.4"/></svg>`;
+  if(e==="f") return `<svg width="${t}" height="${t}" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.6" style="fill:var(--firm);stroke:var(--card)" stroke-width="1.4"/></svg>`;
+  return `<svg width="${t}" height="${t}" viewBox="0 0 16 16" aria-hidden="true"><rect x="1.5" y="1.5" width="13" height="13" rx="2" style="fill:var(--insc);stroke:var(--card)" stroke-width="1.2"/><path d="M4.6 8.2l2.3 2.3 4.6-4.8" fill="none" style="stroke:var(--card)" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+}
+const estadoDe=l=>l.estado==="inscripta"?"n":(l.estado==="firmada"?"f":"p");
+
+/* ════════════ Los lotes, de escrituras-sociales ════════════ */
+const LLAVE_SOC="sigec_sociales_v2", LLAVE_PTS="sigec_mapa_sociales";
+const ES_EJEMPLO_SOC=b=>!!b&&(b.id==="villa-los-robles"||!!b.ejemplo);
+let EJEMPLO=false;            // con datos inventados: no se guarda nada
+let BARRIOS=[], LOTES=[];     // armados en leer()
+let LEIDO=0;
+/* lugar(): la misma de escrituras-sociales, para que la localidad salga igual en las dos */
+const PARTICULAS=new Set(["de","del","la","las","los","el","y","e","en"]);
+function lugar(v){
+ v=String(v||"").trim(); if(!v) return v;
+ const mx=v.toLocaleUpperCase("es-AR"), mn=v.toLocaleLowerCase("es-AR"), parejo=v===mn||(v===mx&&mx!==mn);
+ return v.split(/(\s+)/).map((w,i)=>{
+  if(!w||/^\s+$/.test(w)) return w;
+  const bajo=w.toLocaleLowerCase("es-AR");
+  if(i>0&&PARTICULAS.has(bajo)) return parejo?bajo:w;
+  if(!parejo&&w.length>1&&w===w.toLocaleUpperCase("es-AR")&&w!==bajo) return w;
+  const base=parejo?bajo:w; return base.charAt(0).toLocaleUpperCase("es-AR")+base.slice(1);
+ }).join("");
+}
+
+function nomenDe(l){
+  const n=String(l.nomen||"").trim();
+  const dig=n.replace(/\D/g,"");
+  return dig.length>=16?n:"";   // los diecinueve dígitos (o dieciséis sin P.H.); a medias no sirve para preguntar
+}
+/* Los adjudicatarios, como en la minuta: nombre y APELLIDO; «A y B», «A; B y C» (Baltasar, 13/11/2026:
+   «poné también el nombre de los adjudicatarios»). */
+function adjDe(l){
+  if(SOLO_VER) return "";   // en el celular, nunca un nombre (17/11/2026)
+  const ns=(l.adj||[]).map(a=>[String(a.nombre||"").trim(),String(a.apellido||"").trim().toLocaleUpperCase("es-AR")].filter(Boolean).join(" ")).filter(Boolean);
+  if(ns.length<2) return ns[0]||"";
+  return ns.slice(0,-1).join(ns.length>2?"; ":", ")+" y "+ns[ns.length-1];
+}
+/* «Melo» o «Villa Cañada del Sauce» no son barrios: el nombre va solo, sin «Barrio» adelante (Baltasar,
+   13/11/2026). Y si el nombre es la misma localidad, no se repite. */
+const sinTilde=s=>String(s||"").toLocaleLowerCase("es-AR").normalize("NFD").replace(/[\u0300-\u036f]/g,"").trim();
+const mismoLugar=B=>!!B.loc&&sinTilde(B.loc)===sinTilde(B.n);
+const dondeDe=B=>[mismoLugar(B)?"":B.loc,B.dpto?"Dpto. "+B.dpto:""].filter(Boolean).join(" · ")||"sin localidad";
+function armar(db){
+  BARRIOS=[]; LOTES=[];
+  for(const b of (db&&db.barrios)||[]){
+    if(ES_EJEMPLO_SOC(b)&&!EJEMPLO) continue;
+    const d=b.datos||{};
+    const B={id:b.id,n:b.nombre||"Sin nombre",loc:lugar(d.localidad),dpto:lugar(d.departamento),exp:d.expedienteMadre||"",tandas:[],src:b};
+    for(const t of b.tandas||[]){
+      const T={id:t.id,res:t.resolucion||"",fecha:t.fechaFirma||"",lotes:[]};
+      for(const l of t.lotes||[]){
+        const e=estadoDe(l);
+        const L={id:l.id,B,T,l:String(l.lote||"").trim()||"?",m:String(l.mza||"").trim()||"?",e,
+          firma:(l.firmada&&l.firmada.fecha)||(e!=="p"?T.fecha:"")||"",
+          nomen:nomenDe(l),nomenTxt:String(l.nomen||"").trim(),cuenta:l.cuenta||"",adj:adjDe(l),nAdj:SOLO_VER?0:(l.adj||[]).filter(a=>(a.nombre||a.apellido)).length};
+        T.lotes.push(L); LOTES.push(L);
+      }
+      B.tandas.push(T);
+    }
+    BARRIOS.push(B);
+  }
+  const num=s=>{const x=parseInt(s,10);return isNaN(x)?1e9:x;};
+  LOTES.sort((a,b)=>a.B.n.localeCompare(b.B.n)||num(a.m)-num(b.m)||num(a.l)-num(b.l));
+}
+function leer(){
+  let db=null;
+  if(EJEMPLO) db=EJ.db; else if(WEB) db=NUBE_DB; else { try{ db=JSON.parse(lsLeer(LLAVE_SOC)||"null"); }catch(e){} }
+  armar(db); LEIDO=Date.now();
+}
+
+/* ════════════ Los puntos: lo único propio del mapa ════════════ */
+/* lotes: {id:{p:[lat,lng], o:"catastro"|"mano", poly, nomen, t}}  fallas: {id:{nomen, motivo, t}}
+   barrios: {id:{p, o:"mano", t}}  catastro: {campo, modo, prueba:{ok, txt, t, url}} */
+let PTS={lotes:{},fallas:{},barrios:{},catastro:{}};
+/* Versión 2 de los puntos (18/11/2026): los que trajo Catastro antes del diagnóstico del 17/11 se tiran y se
+   vuelven a pedir —esas versiones buscaban mal y cortaban a mitad—. Los marcados a mano se quedan. */
+const VER_PTS=2;
+function cargarPts(){ if(EJEMPLO){ PTS=EJ.pts(); return; }
+  try{ const g=JSON.parse(lsLeer(LLAVE_PTS)||"null"); if(g&&g.lotes) PTS=Object.assign({lotes:{},fallas:{},barrios:{},catastro:{}},g); }catch(e){}
+  if((PTS.v||0)<VER_PTS){ for(const k of Object.keys(PTS.lotes)) if(PTS.lotes[k].o==="catastro") delete PTS.lotes[k]; PTS.fallas={}; PTS.catastro={}; PTS.v=VER_PTS; guardarPts(); }
+}
+let avisadoPts=false;
+function guardarPts(){ if(EJEMPLO) return; if(!lsPoner(LLAVE_PTS,JSON.stringify(PTS))&&!avisadoPts&&!WEB){ avisadoPts=true; ayuda('<span class="err">No se pudo guardar en esta computadora.</span> Los puntos marcados se pierden al cerrar.',"mal"); } programarSubida(); }
+/* el punto de un lote sólo vale para la nomenclatura con la que se buscó: si la corrigieron, se vuelve a preguntar */
+const dig16=x=>{ const d=String(x||"").replace(/\D/g,""); return d.length===19?d.slice(0,16):d; };
+const ptoDe=L=>{ const q=PTS.lotes[L.id]; if(!q) return null; if(q.o==="catastro"&&q.nomen&&claveCat(L)&&dig16(q.nomen)!==dig16(claveCat(L))) return null; return q; };
+/* ¿Está bien puesto? Lo que se puede comprobar sin salir del mapa (18/11/2026, Baltasar: «¿por qué los
+   puntos aparecen en cualquier lado?»): que el lote no quede lejos de los demás de su barrio, y que
+   Catastro diga el mismo departamento que el barrio. Si no, el lote va a «Para revisar»: casi siempre es
+   la nomenclatura mal cargada en escrituras-sociales. */
+const LEJOS_KM=3;
+const km=(a,b)=>{ const dy=(a[0]-b[0])*110.57, dx=(a[1]-b[1])*111.32*Math.cos(a[0]*Math.PI/180); return Math.sqrt(dx*dx+dy*dy); };
+const mediana=ps=>{ const m=xs=>{ const o=[...xs].sort((x,y)=>x-y), k=o.length>>1; return o.length%2?o[k]:(o[k-1]+o[k])/2; }; return [m(ps.map(p=>p[0])),m(ps.map(p=>p[1]))]; };
+const llano=s=>sinTilde(s).replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim();
+function dudas(L){
+  const q=ptoDe(L); if(!q) return [];
+  const out=[];
+  if(q.o==="catastro"&&q.cat&&q.cat.dep&&L.B.dpto&&llano(q.cat.dep)!==llano(L.B.dpto))
+    out.push("Catastro ubica esa nomenclatura en "+lugar(q.cat.loc||"")+(q.cat.loc?", ":"")+"departamento "+lugar(q.cat.dep)+", y "+L.B.n+" es del departamento "+L.B.dpto+". Revisá la nomenclatura en escrituras-sociales.");
+  const otros=lotesDe(L.B).filter(x=>x!==L).map(ptoDe).filter(Boolean).map(x=>x.p);
+  if(otros.length>=2){ const d=km(q.p,mediana(otros)); if(d>LEJOS_KM) out.push("Queda a "+(d<10?d.toFixed(1):Math.round(d))+" km de los demás lotes de "+L.B.n+"."); }
+  return out;
+}
+function centroBarrio(B){
+  const m=PTS.barrios[B.id]; if(m&&m.p) return {p:m.p,o:"mano"};
+  let ps=lotesDe(B).map(ptoDe).filter(Boolean).map(q=>q.p); if(!ps.length) return null;
+  const md=mediana(ps), cerca=ps.filter(p=>km(p,md)<=LEJOS_KM); if(cerca.length) ps=cerca;
+  return {p:[ps.reduce((s,p)=>s+p[0],0)/ps.length,ps.reduce((s,p)=>s+p[1],0)/ps.length],o:"lotes"};
+}
+const lotesDe=B=>LOTES.filter(L=>L.B===B);
+const cuenta=ls=>({p:ls.filter(L=>L.e==="p").length,f:ls.filter(L=>L.e==="f").length,n:ls.filter(L=>L.e==="n").length,t:ls.length});
+function barra(c){
+  const pc=x=>(100*x/Math.max(c.t,1)).toFixed(2)+"%";
+  return `<div class="barra" role="img" aria-label="${c.n} inscriptas, ${c.f} firmadas, ${c.p} en preparación"><i class="n" style="width:${pc(c.n)}"></i><i class="f" style="width:${pc(c.f)}"></i><i class="p" style="width:${pc(c.p)}"></i></div>`;
+}
+function motivoDe(L){
+  if(ptoDe(L)) return "";
+  if(!claveCat(L)) return L.nomenTxt?"La nomenclatura está a medias en escrituras-sociales: completala para poder preguntarle a Catastro.":"Falta la nomenclatura en escrituras-sociales.";
+  const f=PTS.fallas[L.id];
+  if(f&&dig16(f.nomen)===dig16(claveCat(L))){
+    if(f.motivo==="sacado") return "Se le sacó el punto ("+fechaTxt(f.t)+"). Si se corrige la nomenclatura en escrituras-sociales, se vuelve a preguntar sola.";
+    if(f.motivo==="no-encontrada") return "Catastro no encontró esa nomenclatura ("+fechaTxt(f.t)+"). Pasa cuando el plano todavía no está registrado.";
+    return "Catastro no contestó ("+fechaTxt(f.t)+").";
+  }
+  return "Todavía no se le preguntó a Catastro.";
+}
+
+/* ════════════ Catastro: IDECOR ════════════
+   La capa de parcelas de toda la provincia, en el GeoServer de IDECOR (público, sin clave). Se pide la
+   parcela de un lote y vuelve su contorno; el punto es el centro. Lo que se sabe, medido el 17/11/2026
+   (diagnostico-idecor.md):
+   - deja leer desde un archivo abierto con doble clic: contesta con Access-Control-Allow-Origin: *;
+   - no tiene JSONP;
+   - la nomenclatura está en «Nomenclatura», en 16 dígitos corridos, sin P.H.; la cuenta, en
+     «Nro_Cuenta», como número de 12;
+   - buscar por cualquiera de las dos tarda alrededor de un segundo. **Nunca pedir sin filtro**: el
+     servidor cuenta las dos millones de parcelas y tarda más de un minuto (era lo que cortaba antes).
+   Lo que viaja: la nomenclatura o la cuenta, nunca un nombre. */
+const IDECOR_WFS="https://idecor-ws.mapascordoba.gob.ar/geoserver/idecor/wfs";
+const IDECOR_WMS="https://idecor-ws.mapascordoba.gob.ar/geoserver/idecor/wms";
+const CAPA="idecor:parcelas", CAMPO_NOMEN="Nomenclatura", CAMPO_CUENTA="Nro_Cuenta", CAMPO_GEOM="geom";
+const CBA={s:-35.2,n:-29.3,o:-66,e:-61.6};
+const enCba=p=>p&&p[0]>CBA.s&&p[0]<CBA.n&&p[1]>CBA.o&&p[1]<CBA.e;
+/* la nomenclatura del lote, como la guarda Catastro: 16 dígitos (si viene con P.H., se le saca) */
+function nomen16(n){ let d=String(n||"").replace(/\D/g,""); if(d.length===19) d=d.slice(0,16); return d.length===16?d:""; }
+const cuenta12=c=>{ const d=String(c||"").replace(/\D/g,""); return d.length===12?d:""; };
+/* con qué se le pregunta a Catastro por un lote; si cambia, el punto viejo deja de valer */
+const claveCat=L=>nomen16(L.nomen)||(cuenta12(L.cuenta)?"cuenta "+cuenta12(L.cuenta):"");
+
+async function pedir(params,ms){
+  const qs=Object.entries(params).map(([k,v])=>k+"="+encodeURIComponent(v)).join("&");
+  const ctl=new AbortController(), tm=setTimeout(()=>ctl.abort(),ms||30000);
+  let r;
+  try{ r=await fetch(IDECOR_WFS+"?"+qs,{signal:ctl.signal,referrerPolicy:"no-referrer"}); }
+  catch(e){
+    clearTimeout(tm);
+    if(ctl.signal.aborted) throw Object.assign(new Error("Catastro tardó más de "+Math.round((ms||30000)/1000)+" segundos en contestar"),{lento:true});
+    throw new Error("no se pudo llegar a Catastro desde esta computadora ("+String(e.message||e)+")");
+  }
+  const txt=await r.text(); clearTimeout(tm);
+  if(!r.ok) throw new Error("Catastro contestó "+r.status+": "+txt.replace(/\s+/g," ").slice(0,140));
+  /* GeoServer avisa sus errores con un XML y código 200 */
+  try{ return JSON.parse(txt); }catch(e){ throw new Error("Catastro contestó, pero con un error: «"+txt.replace(/<[^>]+>/g," ").replace(/\s+/g," ").trim().slice(0,160)+"»"); }
+}
+const buscarPor=filtro=>pedir({service:"WFS",version:"2.0.0",request:"GetFeature",typeNames:CAPA,count:1,srsName:"EPSG:4326",
+  propertyName:[CAMPO_NOMEN,CAMPO_GEOM,"departamento","localidad","desig_oficial"].join(","),outputFormat:"application/json",CQL_FILTER:filtro},30000);
+function centroide(anillo){ // [[lng,lat],…] → [lat,lng], por área
+  let a=0,x=0,y=0;
+  for(let i=0,j=anillo.length-1;i<anillo.length;j=i++){ const [x0,y0]=anillo[j],[x1,y1]=anillo[i],f=x0*y1-x1*y0; a+=f; x+=(x0+x1)*f; y+=(y0+y1)*f; }
+  if(Math.abs(a)<1e-14){ const n=anillo.length; return [anillo.reduce((s,p)=>s+p[1],0)/n,anillo.reduce((s,p)=>s+p[0],0)/n]; }
+  return [y/(3*a),x/(3*a)];
+}
+function anilloDe(geom){
+  if(!geom) return null;
+  if(geom.type==="Polygon") return geom.coordinates[0];
+  if(geom.type==="MultiPolygon"){ let mejor=null,area=-1; for(const pol of geom.coordinates){ const r=pol[0]; let a=0; for(let i=0,j=r.length-1;i<r.length;j=i++) a+=r[j][0]*r[i][1]-r[i][0]*r[j][1]; if(Math.abs(a)>area){area=Math.abs(a);mejor=r;} } return mejor; }
+  if(geom.type==="Point") return [geom.coordinates];
+  return null;
+}
+async function buscarParcela(L){
+  const t0=Date.now();
+  let d=null; const n=nomen16(L.nomen), c=cuenta12(L.cuenta);
+  if(n) d=await buscarPor(CAMPO_NOMEN+"='"+n+"'");
+  if((!d||!(d.features||[]).length)&&c) d=await buscarPor(CAMPO_CUENTA+"="+c);
+  PTS.catastro.tarda=Date.now()-t0;
+  const f=((d&&d.features)||[])[0]; if(!f) return null;
+  let r=anilloDe(f.geometry); if(!r||!r.length) return null;
+  let p=centroide(r);
+  if(!enCba(p)&&enCba([p[1],p[0]])){ r=r.map(([a,b])=>[b,a]); p=[p[1],p[0]]; }   // por si vino la latitud primero
+  if(!enCba(p)) throw new Error("la parcela vino en coordenadas que no caen en Córdoba ("+p.map(x=>x.toFixed(4)).join(", ")+")");
+  const pr=f.properties||{};
+  return {cat:{dep:String(pr.departamento||""),loc:String(pr.localidad||""),desig:String(pr.desig_oficial||"")},p:[+p[0].toFixed(7),+p[1].toFixed(7)],poly:r.length>2&&r.length<400?r.map(([lng,lat])=>[+lat.toFixed(7),+lng.toFixed(7)]):null};
+}
+async function preguntar(L){
+  try{
+    const k=claveCat(L), r=await buscarParcela(L);
+    if(r){ PTS.lotes[L.id]={p:r.p,o:"catastro",poly:r.poly,cat:r.cat,nomen:k,t:Date.now()}; delete PTS.fallas[L.id]; }
+    else PTS.fallas[L.id]={nomen:k,motivo:"no-encontrada",t:Date.now()};
+    if(!(PTS.catastro.prueba&&PTS.catastro.prueba.ok&&/encontrar una parcela/.test(PTS.catastro.prueba.txt))) PTS.catastro.prueba={ok:true,t:Date.now(),txt:"contesta"+(PTS.catastro.tarda?" ("+(PTS.catastro.tarda/1000).toFixed(1)+" s la última parcela)":"")+"."};
+    guardarPts(); return r?"ok":"no";
+  }catch(e){
+    PTS.fallas[L.id]={nomen:claveCat(L),motivo:"sin-respuesta",t:Date.now(),err:String(e.message||e)};
+    PTS.catastro.prueba={ok:false,t:Date.now(),txt:"al buscar la parcela de un lote: "+String(e.message||e)};
+    guardarPts(); return "error";
+  }
+}
+/* sola, al abrir: los lotes con nomenclatura que no tienen punto y no fallaron en los últimos tres días */
+let COLA=false;
+async function preguntarPendientes(forzar){
+  if(COLA||EJEMPLO||!navigator.onLine) return; COLA=true;
+  const tres=3*864e5;
+  const sacado=L=>{ const f=PTS.fallas[L.id]; return f&&f.motivo==="sacado"&&f.nomen===claveCat(L); };
+  const ls=LOTES.filter(L=>claveCat(L)&&!ptoDe(L)&&!sacado(L)&&(forzar||!(PTS.fallas[L.id]&&PTS.fallas[L.id].nomen===claveCat(L)&&Date.now()-PTS.fallas[L.id].t<tres))).slice(0,80);
+  let ok=0,no=0,mal=0,lentos=0;
+  for(let i=0;i<ls.length;i++){
+    ayuda(`Preguntándole a Catastro por las parcelas nuevas: <b>${i+1} de ${ls.length}</b>. Sólo viaja la nomenclatura o la cuenta.`);
+    const r=await preguntar(ls[i]); if(r==="ok") ok++; else if(r==="no") no++; else { mal++; const f=PTS.fallas[ls[i].id]; lentos=(f&&/tardó más/.test(f.err||""))?lentos+1:0; if((mal>=2&&ok===0)||lentos>=2) break; }
+    if(i%5===4) pintarTodo();
+  }
+  COLA=false; pintarTodo();
+  if(ls.length&&lentos>=2&&!ok) ayuda(`<span class="err">Catastro tarda más de medio minuto en encontrar cada parcela.</span> Por ahora los lotes se marcan a mano. El detalle está en la caja «Catastro».`,"mal");
+  else if(ls.length) ayuda(mal&&!ok?`<span class="err">Catastro no contestó desde esta computadora.</span> Los lotes siguen en «Sin ubicar»: se pueden marcar a mano. El detalle está en la caja «Catastro».`
+    :`Catastro: ${plural(ok,"lote ubicado","lotes ubicados")}${no?", "+plural(no,"no encontrado","no encontrados"):""}${mal?", "+plural(mal,"sin respuesta","sin respuesta"):""}.`,mal&&!ok?"mal":"");
+}
+/* «Probar Catastro»: busca la parcela de un lote de verdad (por nomenclatura o cuenta) y mide cuánto tarda.
+   Sin lotes para probar, pide la descripción de la capa, que no recorre las parcelas. */
+async function probarCatastro(btn){
+  btn.disabled=true; btn.textContent="Probando…";
+  const L=LOTES.find(x=>claveCat(x)), t0=Date.now();
+  try{
+    if(L){
+      const r=await buscarParcela(L), s=((Date.now()-t0)/1000).toFixed(1);
+      PTS.catastro.prueba={ok:true,t:Date.now(),txt:r?"contesta: encontró la parcela del Lote "+L.l+" de la Manzana "+L.m+" ("+L.B.n+") en "+s+" s."
+        :"contesta, pero no tiene ninguna parcela con la nomenclatura del Lote "+L.l+" de la Manzana "+L.m+" ("+L.B.n+"). Tardó "+s+" s."};
+    } else {
+      const d=await pedir({service:"WFS",version:"1.0.0",request:"DescribeFeatureType",typeName:CAPA,outputFormat:"application/json"},30000);
+      const ok=((d.featureTypes||[])[0]||{}).properties||[];
+      PTS.catastro.prueba={ok:true,t:Date.now(),txt:"contesta ("+ok.length+" campos en la capa de parcelas, "+((Date.now()-t0)/1000).toFixed(1)+" s). No hay lotes con nomenclatura o cuenta para buscar uno."};
+    }
+  }catch(e){ PTS.catastro.prueba={ok:false,t:Date.now(),txt:String(e.message||e)}; }
+  guardarPts(); pintarCat(); btn.disabled=false; btn.textContent="Probar Catastro";
+  if(PTS.catastro.prueba.ok) preguntarPendientes(true);
+}
+
+/* ════════════ GitHub: el mapa en el celular (17/11/2026) ════════════
+   La Escribana General quiere ver el mapa en su celular; Baltasar: «Si hacelo». El código se publica en GitHub
+   Pages (fuera del menú, como el cotejo) y los datos siguen cifrados, en el mismo repositorio privado que usa
+   escrituras-sociales para el puente con casa (escrituras-sociales-datos):
+   - compartido/sigec/<computadora>.txt: lo de cada computadora, cifrado (lo escribe escrituras-sociales). El mapa
+     los lee todos, los descifra en el teléfono y los junta: de cada barrio, tanda y lote, la versión más nueva.
+   - mapa/puntos.txt: los puntos del mapa (de Catastro y marcados a mano), cifrados con la misma llave. Lo escribe
+     el mapa de la oficina, si la computadora tiene la llave de GitHub (la de escrituras-sociales, o una pegada acá).
+   Abierto desde GitHub (http/https) el mapa es SÓLO PARA MIRAR: no escribe nada en GitHub, no muestra «Marcar a
+   mano» ni «Mover el punto», y no muestra ningún nombre (ni en el globo ni en la lista). Lo descifrado queda sólo
+   en la memoria de la página; en el teléfono se guardan la llave de GitHub y la llave de los datos, no la clave. */
+const WEB=/^https?:$/.test(location.protocol);
+const SOLO_VER=WEB;
+const NUBE_REPO="cornabalta3-web/escrituras-sociales-datos", NUBE_API="https://api.github.com";
+const NUBE_LOTES="compartido/sigec", NUBE_PTS_DIR="mapa", NUBE_PTS="mapa/puntos.txt";
+const APP_SOC="sigec-sociales-nube", APP_PTS="sigec-mapa-sociales", LLAVE_NUBE="sigec_mapa_nube";
+let NUBE_DB=null, NUBE_MEM=null;
+const NUBE={estado:"",error:"",leido:0,compus:0,ultimo:0,subido:0,soloLeer:false,ocupado:false,t:null,reloj:null,form:false,malos:0};
+const nErr=(t,c)=>Object.assign(new Error(t),{c:c||"red"});
+function cfgDe(k){ try{ const o=JSON.parse(lsLeer(k)||"null"); return o&&typeof o.token==="string"&&o.token&&typeof o.k==="string"&&typeof o.sal==="string"?o:null; }catch(e){ return null; } }
+/* en la oficina vale la llave de escrituras-sociales de esta computadora (la del puente); si no, la pegada acá */
+const cfgSoc=()=>WEB?null:cfgDe("sigec_sociales_nube");
+const nubeCfg=()=>cfgSoc()||cfgDe(LLAVE_NUBE)||NUBE_MEM;
+
+/* el cifrado, el mismo de escrituras-sociales: AES-GCM 256 con la llave del equipo (PBKDF2-SHA256), comprimido */
+const aB64=u=>{ let t=""; for(let i=0;i<u.length;i+=0x8000) t+=String.fromCharCode.apply(null,u.subarray(i,i+0x8000)); return btoa(t); };
+const deB64=t=>Uint8Array.from(atob(String(t||"").replace(/\s+/g,"")),c=>c.charCodeAt(0));
+const deB64Texto=t=>new TextDecoder().decode(deB64(t)), aB64Texto=t=>aB64(new TextEncoder().encode(t));
+async function gzip(b,comprimir){ const s=new Blob([b]).stream().pipeThrough(comprimir?new CompressionStream("gzip"):new DecompressionStream("gzip")); return new Uint8Array(await new Response(s).arrayBuffer()); }
+async function llaveDe(clave,sal,vueltas){ const base=await crypto.subtle.importKey("raw",new TextEncoder().encode(clave),"PBKDF2",false,["deriveKey"]);
+ return crypto.subtle.deriveKey({name:"PBKDF2",salt:sal,iterations:vueltas,hash:"SHA-256"},base,{name:"AES-GCM",length:256},true,["encrypt","decrypt"]); }
+const llaveGuardada=k=>crypto.subtle.importKey("raw",deB64(k),"AES-GCM",false,["encrypt","decrypt"]);
+const llaveTexto=async k=>aB64(new Uint8Array(await crypto.subtle.exportKey("raw",k)));
+async function cifrarCon(texto,llave,sal,vueltas){ const iv=crypto.getRandomValues(new Uint8Array(12));
+ let b=new TextEncoder().encode(texto), z=false; if(window.CompressionStream){ b=await gzip(b,true); z=true; }
+ const c=new Uint8Array(await crypto.subtle.encrypt({name:"AES-GCM",iv},llave,b));
+ return {alg:"AES-GCM-256/PBKDF2-SHA256",vueltas,sal,iv:aB64(iv),gzip:z,datos:aB64(c)}; }
+async function descifrarCon(c,llave){ let p=new Uint8Array(await crypto.subtle.decrypt({name:"AES-GCM",iv:deB64(c.iv)},llave,deB64(c.datos)));
+ if(c.gzip){ if(!window.DecompressionStream) throw nErr("este navegador es muy viejo para abrir los datos: actualizalo."); p=await gzip(p,false); }
+ return new TextDecoder().decode(p); }
+let LLAVE_MEM=null; async function llaveCfg(cfg){ if(!LLAVE_MEM||LLAVE_MEM.k!==cfg.k) LLAVE_MEM={k:cfg.k,l:await llaveGuardada(cfg.k)}; return LLAVE_MEM.l; }
+
+async function gh(cfg,metodo,ruta,cuerpo){
+ const ctl=new AbortController(), tm=setTimeout(()=>ctl.abort(),45000);
+ try{ return await fetch(NUBE_API+"/repos/"+NUBE_REPO+ruta,{method:metodo,cache:"no-store",signal:ctl.signal,
+   headers:Object.assign({Authorization:"Bearer "+cfg.token,Accept:"application/vnd.github+json"},cuerpo?{"Content-Type":"application/json"}:{}),
+   body:cuerpo?JSON.stringify(cuerpo):undefined}); }
+ catch(e){ throw nErr(ctl.signal.aborted?"GitHub no contestó en 45 segundos.":"no hay conexión con GitHub (¿hay internet?)."); }
+ finally{ clearTimeout(tm); } }
+async function fallo(r){ let m=""; try{ m=(await r.json()).message||""; }catch(e){}
+ if(r.status===401) return nErr("la llave de GitHub no sirve: venció, la borraron o está mal copiada.","llave");
+ if(r.status===429||(r.status===403&&(/rate limit/i.test(m)||r.headers.get("x-ratelimit-remaining")==="0"))) return nErr("GitHub pidió esperar un rato. Probá de nuevo en unos minutos.");
+ if(r.status===403) return nErr("la llave de GitHub no tiene permiso para esto.","permiso");
+ if(r.status===404) return nErr("con esa llave no se ve el repositorio "+NUBE_REPO+": la llave no tiene acceso a él.","llave");
+ return nErr("GitHub contestó "+r.status+(m?" ("+m+")":"")+"."); }
+async function listar(cfg,dir){ const r=await gh(cfg,"GET","/contents/"+dir); if(r.status===404) return []; if(!r.ok) throw await fallo(r);
+ const j=await r.json(); return Array.isArray(j)?j.filter(x=>x.type==="file").map(x=>({name:String(x.name),path:String(x.path),sha:String(x.sha)})):[]; }
+/* un archivo, por su sha (no cambia nunca): se baja y se descifra una sola vez por visita */
+const BLOBS=new Map();
+async function leerBlob(cfg,sha,app){
+ if(BLOBS.has(sha)) return BLOBS.get(sha);
+ const r=await gh(cfg,"GET","/git/blobs/"+sha); if(!r.ok) throw await fallo(r);
+ let env=null; try{ env=JSON.parse(deB64Texto((await r.json()).content)); }catch(e){}
+ if(!env||env.app!==app||!env.cifrado) throw nErr("hay un archivo que no es del mapa ni de escrituras-sociales.");
+ let txt; try{ txt=await descifrarCon(env.cifrado,await llaveCfg(cfg)); }catch(e){ throw nErr(e&&e.c?e.message:"un archivo no abre con la clave del equipo.","clave"); }
+ const x={txt,env}; BLOBS.set(sha,x); return x; }
+
+/* Entrar: la llave de GitHub y la clave del equipo, una vez por teléfono o computadora. La clave se prueba contra
+   clave.json (la sal y una prueba cifrada que dejó escrituras-sociales). No se escribe nada en GitHub. */
+async function conectar(token,clave){
+ const c0={token};
+ const r=await gh(c0,"GET",""); if(!r.ok) throw await fallo(r);
+ let j={}; try{ j=await r.json(); }catch(e){}
+ if(j.private!==true) throw nErr("el repositorio "+NUBE_REPO+" no es privado, y tiene que serlo: ahí van los datos de las escrituras.");
+ const rc=await gh(c0,"GET","/contents/clave.json");
+ if(rc.status===404) throw nErr("en GitHub todavía no está la clave del equipo: se elige la primera vez que escrituras-sociales se conecta a GitHub.");
+ if(!rc.ok) throw await fallo(rc);
+ let c=null; try{ c=JSON.parse(deB64Texto((await rc.json()).content)); }catch(e){}
+ if(!c||typeof c.sal!=="string"||!c.prueba) throw nErr("en GitHub, clave.json está dañado: avisale a quien mantiene SIGEC.");
+ const vueltas=Number.isInteger(c.vueltas)&&c.vueltas>=100000&&c.vueltas<=5e6?c.vueltas:310000;
+ const l=await llaveDe(clave,deB64(c.sal),vueltas); let ok=false; try{ ok=await descifrarCon(c.prueba,l)==="sigec-sociales-nube"; }catch(e){}
+ if(!ok) throw nErr("la clave del equipo no es ésa: es la misma que se usa en escrituras-sociales para GitHub.","clave");
+ const cfg={token,k:await llaveTexto(l),sal:c.sal,vueltas,repo:NUBE_REPO,desde:Date.now()};
+ NUBE_MEM=null; if(!lsPoner(LLAVE_NUBE,JSON.stringify(cfg))) NUBE_MEM=cfg;   // ventana privada: vale mientras esté abierta
+ LLAVE_MEM=null; NUBE.soloLeer=false; NUBE.error=""; NUBE.malos=0;
+ return cfg; }
+function desconectar(){ try{ localStorage.removeItem(LLAVE_NUBE); }catch(e){} NUBE_MEM=null; LLAVE_MEM=null; BLOBS.clear(); NUBE_DB=null; NUBE.estado=""; NUBE.error=""; NUBE.leido=0;
+ if(WEB){ try{ localStorage.removeItem(LLAVE_PTS); }catch(e){} PTS={lotes:{},fallas:{},barrios:{},catastro:{}}; } }
+
+/* Los lotes: lo de cada computadora, juntado. De cada barrio, tanda y lote queda la versión más nueva (mod); lo
+   borrado no aparece, salvo que se haya cambiado después o tenga adentro algo vivo (como escrituras-sociales). */
+function juntarArchivos(ds){
+ const bor={}, mod=o=>+(o&&o.mod)||0;
+ ds.forEach(d=>Object.entries(d.borrados||{}).forEach(([k,v])=>{ if(!(bor[k]>=v)) bor[k]=v; }));
+ const B=new Map(), T=new Map(), Ls=new Map();
+ for(const d of ds) for(const b of d.barrios||[]){ if(!b||ES_EJEMPLO_SOC(b)) continue;
+  if(!B.has(b.id)||mod(b)>mod(B.get(b.id))) B.set(b.id,b);
+  for(const t of b.tandas||[]){ const kt=b.id+"/"+t.id, x=T.get(kt); if(!x||mod(t)>mod(x.t)) T.set(kt,{b:b.id,t});
+   for(const l of t.lotes||[]){ const y=Ls.get(l.id); if(!y||mod(l)>mod(y.l)) Ls.set(l.id,{kt,l}); } } }
+ const lotesT=new Map(); for(const [id,{kt,l}] of Ls){ if(bor["l:"+id]>mod(l)) continue; (lotesT.get(kt)||lotesT.set(kt,[]).get(kt)).push(l); }
+ const tandasB=new Map();
+ for(const [kt,{b,t}] of T){ const ls=lotesT.get(kt)||[]; if(bor["t:"+kt]>mod(t)&&!ls.length) continue; (tandasB.get(b)||tandasB.set(b,[]).get(b)).push(Object.assign({},t,{lotes:ls})); }
+ const barrios=[];
+ for(const [id,b] of B){ const ts=tandasB.get(id)||[]; if(bor["b:"+id]>mod(b)&&!ts.some(t=>t.lotes.length)) continue; barrios.push(Object.assign({},b,{tandas:ts})); }
+ barrios.sort((a,b)=>String(a.nombre||"").localeCompare(String(b.nombre||"")));
+ return {barrios}; }
+async function leerLotesNube(cfg){
+ const xs=(await listar(cfg,NUBE_LOTES)).filter(x=>/^sigec-sociales-.*\.txt$/.test(x.name));
+ const ds=[]; let malos=0, ultimo=0, err=null;
+ for(const x of xs){
+  try{ const {txt,env}=await leerBlob(cfg,x.sha,APP_SOC); const d=JSON.parse(txt);
+   if(!d||d.app!=="sigec-sociales") continue; ds.push(d);
+   const m=/-(\d{10,})\.(?:txt|json)$/.exec(String(env.nombre||"")); if(m) ultimo=Math.max(ultimo,+m[1]); }
+  catch(e){ if(e&&e.c==="llave") throw e; malos++; err=e; } }
+ if(!ds.length&&err) throw err;
+ NUBE_DB=juntarArchivos(ds); NUBE.compus=ds.length; NUBE.malos=malos; NUBE.ultimo=ultimo; }
+
+/* Los puntos: mapa/puntos.txt. De cada lote, barrio o falla queda el más nuevo (t). La oficina sube lo que tenga
+   más nuevo que GitHub; el celular sólo lee. */
+function juntarPts(rem){
+ let aca=false, arriba=false;
+ for(const sec of ["lotes","barrios","fallas"]){ const R=(rem&&rem[sec])||{}, Lc=PTS[sec]||(PTS[sec]={});
+  for(const [id,q] of Object.entries(R)){ if(!q||typeof q!=="object") continue; if(!Lc[id]||(+q.t||0)>(+Lc[id].t||0)){ Lc[id]=q; aca=true; } }
+  for(const [id,q] of Object.entries(Lc)) if(!R[id]||(+q.t||0)>(+R[id].t||0)) arriba=true; }
+ if(aca) lsPoner(LLAVE_PTS,JSON.stringify(PTS));
+ return {aca,arriba}; }
+async function puntosNube(cfg,vez){
+ const x=(await listar(cfg,NUBE_PTS_DIR)).find(f=>f.path===NUBE_PTS);
+ let rem=null; if(x){ const {txt}=await leerBlob(cfg,x.sha,APP_PTS); try{ rem=JSON.parse(txt); }catch(e){} }
+ const {aca,arriba}=juntarPts(rem);
+ if(!WEB&&arriba&&!NUBE.soloLeer){
+  const txt=JSON.stringify({lotes:PTS.lotes,barrios:PTS.barrios,fallas:PTS.fallas});
+  const env={app:APP_PTS,version:1,cifrado:await cifrarCon(txt,await llaveCfg(cfg),cfg.sal,cfg.vueltas)};
+  const w=await gh(cfg,"PUT","/contents/"+NUBE_PTS,Object.assign({message:"Los puntos del mapa",content:aB64Texto(JSON.stringify(env))},x?{sha:x.sha}:{}));
+  if(w.status===409||w.status===422){ if(!vez) return (await puntosNube(cfg,1))||aca; }      // otra computadora escribió a la vez
+  else if(w.status===403||w.status===404){ NUBE.soloLeer=true; }
+  else if(!w.ok) throw await fallo(w);
+  else NUBE.subido=Date.now(); }
+ return aca; }
+
+/* una vuelta: en el celular, los lotes y los puntos; en la oficina, sólo los puntos */
+async function sincNube(){
+ const cfg=nubeCfg(); if(!cfg||EJEMPLO||NUBE.ocupado) return;
+ NUBE.ocupado=true; clearTimeout(NUBE.t); const primera=!NUBE.leido; if(WEB&&primera) NUBE.estado="leyendo"; pintarNube();
+ try{
+  if(WEB) await leerLotesNube(cfg);
+  await puntosNube(cfg);
+  NUBE.estado="ok"; NUBE.error=""; NUBE.leido=Date.now();
+ }catch(e){ NUBE.estado="error"; NUBE.error=String((e&&e.message)||e); if(e&&e.c==="llave"&&WEB){ desconectar(); NUBE.error=String(e.message); } }
+ finally{ NUBE.ocupado=false; }
+ if(WEB){ leer(); if(MAP&&primera&&NUBE.estado==="ok") encuadrar(); avisoEjemplo(); pintarTodo(); if(NUBE.estado==="ok") preguntarPendientes(false); }
+ else pintarTodo(); }
+/* en la oficina, después de marcar o de que Catastro ubique: sube al rato, no más de una vez cada 20 segundos */
+function programarSubida(){ if(WEB||EJEMPLO||!nubeCfg()||NUBE.soloLeer) return; clearTimeout(NUBE.t);
+ NUBE.t=setTimeout(sincNube,Math.max(4000,20000-(Date.now()-NUBE.subido))); }
+function relojNube(){ clearInterval(NUBE.reloj); NUBE.reloj=setInterval(()=>{ if(!document.hidden&&nubeCfg()&&Date.now()-NUBE.leido>120000) sincNube(); },30000); }
+document.addEventListener("visibilitychange",()=>{ if(!document.hidden&&nubeCfg()&&Date.now()-NUBE.leido>60000) sincNube(); });
+
+function formNube(){
+ return `<form class="fnube" id="fNube" autocomplete="off">
+  <label>Llave de GitHub<input id="nTok" type="password" autocomplete="off" spellcheck="false" placeholder="github_pat_…"></label>
+  <label>Clave del equipo<input id="nCla" type="password" autocomplete="current-password"></label>
+  <span class="acc"><button class="bt pri" type="submit" id="nEntrar">Entrar</button>${WEB?`<button class="bt" type="button" id="bVerEj">Ver un ejemplo</button>`:`<button class="bt" type="button" id="nCancelar">Cancelar</button>`}<span class="err" id="nErr"></span></span>
+ </form>`; }
+function atarForm(){
+ const f=$("#fNube"); if(!f) return;
+ f.onsubmit=async e=>{ e.preventDefault();
+  const tk=$("#nTok").value.trim().replace(/^Bearer\s+/i,""), cl=$("#nCla").value;
+  if(!tk) return $("#nErr").textContent="Pegá la llave de GitHub.";
+  if(!/^(github_pat_|gh[pousr]_)/.test(tk)) return $("#nErr").textContent="Eso no parece una llave de GitHub: empieza con «github_pat_».";
+  if(!cl) return $("#nErr").textContent="Escribí la clave del equipo.";
+  const b=$("#nEntrar"); b.disabled=true; b.textContent="Entrando…"; $("#nErr").textContent="";
+  try{ await conectar(tk,cl); NUBE.form=false; NUBE.leido=0; await sincNube(); relojNube(); }
+  catch(err){ $("#nErr").textContent="No entró: "+String((err&&err.message)||err); b.disabled=false; b.textContent="Entrar"; } };
+ const c=$("#nCancelar"); if(c) c.onclick=()=>{ NUBE.form=false; pintarNube(); };
+ const v=$("#bVerEj"); if(v) v.onclick=()=>{ EJEMPLO=true; arrancar(); };
+}
+function pintarNube(){
+ const caja=$("#cajaNube"), cfg=nubeCfg();
+ if(EJEMPLO||(WEB&&!cfg)){ caja.hidden=true; return; }
+ caja.hidden=false;
+ const err=NUBE.error?`<p class="aviso rojo">GitHub: ${esc(NUBE.error)}</p>`:"";
+ if(WEB){
+  $("#nubeSub").textContent="sólo para mirar";
+  $("#nube").innerHTML=(NUBE.estado==="leyendo"?`<p>Leyendo los lotes de GitHub…</p>`:
+    `<p>Los lotes de escrituras-sociales${NUBE.compus?`, de ${plural(NUBE.compus,"computadora","computadoras")}`:""}${NUBE.ultimo?`; lo más nuevo, del ${fechaTxt(NUBE.ultimo)} a las ${horaTxt(NUBE.ultimo)}`:""}. Desde acá no se cambia nada.</p>`)
+   +(NUBE.malos?`<p class="aviso nar">${plural(NUBE.malos,"archivo no abrió","archivos no abrieron")} con la clave del equipo.</p>`:"")+err
+   +`<p style="display:flex;gap:8px;flex-wrap:wrap"><button class="bt" id="nSalir">Salir de este teléfono</button></p>`;
+  $("#nSalir").onclick=()=>{ if(!confirm("¿Salir? Para volver a entrar hacen falta la llave de GitHub y la clave del equipo.")) return; desconectar(); arrancar(); };
+  return; }
+ $("#nubeSub").textContent="para verlo en el celular";
+ if(!cfg){ $("#nube").innerHTML=NUBE.form?`<p>La llave de GitHub (con permiso de escribir) y la clave del equipo, las mismas de escrituras-sociales.</p>${formNube()}`
+   :`<p>Los puntos marcados en esta computadora quedan acá. Para que se vean en el celular, conectá el mapa a GitHub.</p><p><button class="bt" id="nAbrir">Conectar a GitHub</button></p>`;
+  const a=$("#nAbrir"); if(a) a.onclick=()=>{ NUBE.form=true; pintarNube(); $("#nTok").focus(); }; atarForm(); return; }
+ $("#nube").innerHTML=`<p>Los puntos de esta computadora viajan a GitHub cifrados, y se traen los marcados en las otras.${cfgSoc()?" Usa la llave de GitHub de escrituras-sociales.":""}</p>`
+  +(NUBE.soloLeer?`<p class="aviso nar">La llave de GitHub de esta computadora deja mirar pero no escribir: los puntos marcados acá no viajan.</p>`:"")
+  +(NUBE.estado==="ok"?`<p class="loc">Al día a las ${horaTxt(NUBE.leido)}${NUBE.subido?` · lo último salió a las ${horaTxt(NUBE.subido)}`:""}.</p>`:"")+err
+  +(cfgSoc()?"":`<p><button class="bt" id="nDesc">Desconectar de GitHub</button></p>`);
+ const d=$("#nDesc"); if(d) d.onclick=()=>{ desconectar(); pintarNube(); };
+}
+
+/* ════════════ El lateral ════════════ */
+let SEL=null, ELEG=null, UB=null; // barrio elegido, lote elegido, lo que se está marcando
+function pintarLey(){
+  const c=cuenta(LOTES);
+  $("#ley").innerHTML=["p","f","n"].map(e=>`<button data-est="${e}" aria-pressed="${VIS[e]}">${forma(e,18)}<span><b>${EST[e].et}</b><em>${EST[e].ay}</em></span><span class="n">${c[e]}</span></button>`).join("");
+}
+function pintarBarrios(){
+  $("#totLotes").textContent=LOTES.length?plural(LOTES.length,"lote","lotes"):"";
+  if(!BARRIOS.length){ $("#barrios").innerHTML=`<p class="vacio">Todavía no hay barrios ${WEB?"en GitHub":"en esta computadora"}.</p>`; return; }
+  $("#barrios").innerHTML=BARRIOS.map(B=>{
+    const ls=lotesDe(B), c=cuenta(ls), sin=ls.filter(L=>!ptoDe(L)).length, cen=centroBarrio(B);
+    return `<button class="barrio" data-b="${esc(B.id)}" aria-current="${SEL===B}">
+      <span><b>${esc(B.n)}</b><br><span class="loc">${esc(dondeDe(B))}</span></span>
+      ${c.t?barra(c):""}
+      <span class="cuenta">${c.t?`<span>${forma("n",12)}${c.n}</span><span>${forma("f",12)}${c.f}</span><span>${forma("p",12)}${c.p}</span><span>· ${plural(c.t,"lote","lotes")}</span>`:"Sin lotes cargados"}</span>
+      ${c.t&&!cen?`<span class="aviso rojo">Todavía no tiene punto</span>`:(sin?`<span class="aviso nar">${plural(sin,"lote sin ubicar","lotes sin ubicar")}</span>`:"")}
+    </button>`;}).join("");
+}
+function pintarFicha(){
+  const B=SEL; $("#cajaFicha").hidden=!B; if(!B) return;
+  const ls=lotesDe(B), c=cuenta(ls), cen=centroBarrio(B);
+  const mzas=new Map(); ls.forEach(L=>{ if(!mzas.has(L.m)) mzas.set(L.m,[]); mzas.get(L.m).push(L); });
+  const ub=!cen?`<span class="aviso rojo">Sin punto</span>`:(cen.o==="mano"?"Marcado a mano":"El medio de sus lotes ubicados");
+  $("#ficha").innerHTML=`<h2>${esc(B.n)} <small>${esc(mismoLugar(B)?"":B.loc)}</small></h2>
+    <dl>${B.dpto?`<dt>Departamento</dt><dd>${esc(B.dpto)}</dd>`:""}
+      ${B.exp?`<dt>Expediente madre</dt><dd><code>${esc(B.exp)}</code></dd>`:""}
+      <dt>Ubicación</dt><dd>${ub}</dd>
+      <dt>Avance</dt><dd>${c.n} inscriptas · ${c.f} firmadas · ${c.p} en preparación</dd></dl>
+    ${B.tandas.length?`<ul class="tandas">${B.tandas.map(T=>{const cc=cuenta(T.lotes);const e=cc.t&&cc.n===cc.t?"n":(cc.f+cc.n?"f":"p");
+      return `<li>${forma(e,14)}<b>${T.res?"Resolución "+esc(T.res):"Tanda sin resolución"}</b><span>${T.fecha?"firma "+esc(T.fecha)+" · ":""}${plural(cc.t,"lote","lotes")}${cc.n?" · "+cc.n+" inscriptos":""}${cc.f?" · "+cc.f+" firmados":""}</span></li>`;}).join("")}</ul>`:""}
+    <div class="mzas">${[...mzas.entries()].map(([m,arr])=>`<div class="mz"><b>Manzana ${esc(m)}</b><div class="lotes">${arr.map(L=>`<button data-lote="${esc(L.id)}" class="${ptoDe(L)?"":"sin"}" title="Lote ${esc(L.l)}${L.adj?" · "+esc(L.adj):""}: ${EST[L.e].et}${ptoDe(L)?"":" · sin ubicar"}">${forma(L.e,12)}${esc(L.l)}</button>`).join("")}</div></div>`).join("")}</div>
+    ${WEB?"":`<a class="bt abrir" href="../escrituras-sociales/escrituras-sociales.html" target="_blank" rel="opener">Abrir escrituras-sociales</a>`}`;
+}
+function pintarSU(){
+  const out=[];
+  const sinPunto=BARRIOS.filter(B=>lotesDe(B).length&&!centroBarrio(B));
+  sinPunto.forEach(B=>out.push(`<div class="it"><b>${esc(B.n)}</b><span>${mismoLugar(B)||!B.loc?"":esc(B.loc)+" · "}Ningún lote ubicado todavía.${SOLO_VER?"":` Toma su punto solo apenas Catastro ubique uno; si no, se marca con un clic.`}</span>${SOLO_VER?"":`<span class="acc"><button class="bt" data-ub="b:${esc(B.id)}">Marcarlo a mano</button></span>`}</div>`));
+  const rev=LOTES.filter(L=>dudas(L).length);
+  $("#cajaRev").hidden=SOLO_VER||!rev.length; $("#totRev").textContent=rev.length?plural(rev.length,"lote","lotes"):"";
+  $("#rev").innerHTML=rev.map(L=>`<div class="it"><b>Lote ${esc(L.l)} · Manzana ${esc(L.m)} · ${esc(L.B.n)}</b>${L.nomen?`<span><code>${esc(L.nomen)}</code></span>`:""}${dudas(L).map(d=>`<span class="aviso nar">${esc(d)}</span>`).join("")}
+    <span class="acc"><button class="bt" data-lote="${esc(L.id)}">Verlo en el mapa</button><button class="bt" data-borrar="${esc(L.id)}">Sacar el punto</button></span></div>`).join("");
+  const sin=LOTES.filter(L=>!ptoDe(L));
+  let grupo="";
+  sin.forEach(L=>{
+    if(L.B.n!==grupo){ grupo=L.B.n; out.push(`<div class="grupo">${esc(grupo)}</div>`); }
+    out.push(`<div class="it"><b>Lote ${esc(L.l)} · Manzana ${esc(L.m)}</b>${L.adj?`<span>${esc(L.adj)}</span>`:""}${L.nomen?`<span><code>${esc(L.nomen)}</code></span>`:""}<span>${esc(motivoDe(L))}</span>
+      ${SOLO_VER?"":`<span class="acc">${claveCat(L)&&!EJEMPLO?`<button class="bt" data-cat="${esc(L.id)}">Preguntar a Catastro</button>`:""}<button class="bt pri" data-ub="l:${esc(L.id)}">Marcar a mano</button></span>`}</div>`);
+  });
+  $("#totSU").textContent=sin.length?plural(sin.length,"lote","lotes"):"";
+  $("#su").innerHTML=out.join("")||`<p class="vacio">${LOTES.length?"Todo ubicado.":"Nada por ahora."}</p>`;
+}
+function pintarCat(){
+  $("#cajaCat").hidden=SOLO_VER; if(SOLO_VER) return;
+  const c=PTS.catastro, pr=c.prueba;
+  const nCat=Object.values(PTS.lotes).filter(q=>q.o==="catastro").length, nMano=Object.values(PTS.lotes).filter(q=>q.o==="mano").length;
+  $("#cat").innerHTML=`<p>${plural(nCat,"lote ubicado","lotes ubicados")} por Catastro y ${plural(nMano,"marcado","marcados")} a mano en esta computadora.</p>
+    <div class="estado ${pr?(pr.ok?"ok":"mal"):""}"><i></i><span>${pr?(pr.ok?"Catastro ":"Catastro falló: ")+esc(pr.txt)+` <span class="loc">(${fechaTxt(pr.t)} ${horaTxt(pr.t)})</span>`:"Todavía no se le preguntó nada a Catastro desde esta computadora."}</span></div>
+    ${EJEMPLO?"":`<p style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><button class="bt" id="bProbar">Probar Catastro</button><button class="bt" id="bRepreguntar" title="Borra los puntos que trajo Catastro y los vuelve a pedir. Los marcados a mano no se tocan">Volver a preguntar todo</button><a class="bt" href="${IDECOR_WFS}?service=WFS&amp;version=1.0.0&amp;request=DescribeFeatureType&amp;typeName=${CAPA}&amp;outputFormat=application/json" target="_blank" rel="noopener" title="Abre en una pestaña la descripción de la capa de parcelas: si aparece texto, desde esta computadora se llega a Catastro">Abrir la prueba en una pestaña</a></p>`}
+    <label class="chk"><input type="checkbox" id="chkParc" ${VER_PARC?"checked":""}> Mostrar las parcelas de Catastro de fondo (de cerca)</label>
+    <details><summary>Qué se le pregunta y cómo</summary><p>Al servicio público de parcelas de IDECOR (<code>${CAPA}</code>), por la nomenclatura del lote y, si no la encuentra, por la cuenta. Nada más: ningún nombre.</p></details>`;
+  const b=$("#bProbar"); if(b) b.onclick=()=>probarCatastro(b);
+  $("#chkParc").onchange=e=>{ VER_PARC=e.target.checked; lsPoner("sigec_mapa_parcelas",VER_PARC?"1":"0"); capaParcelas(); };
+}
+function pintarChip(){
+  const ch=$("#chipDatos");
+  if(EJEMPLO){ ch.className="chip"; ch.lastChild.textContent="Ejemplo inventado"; return; }
+  if(WEB&&!NUBE.leido){ ch.className="chip"+(NUBE.estado==="error"?" rojo":""); ch.lastChild.textContent=NUBE.estado==="leyendo"?"Leyendo de GitHub…":(nubeCfg()?"Sin leer":"Sin entrar"); return; }
+  ch.className="chip"+(LOTES.length&&NUBE.estado!=="error"?"":" rojo");
+  ch.lastChild.textContent=(LOTES.length?(WEB?"Lotes de GitHub":"Lotes de escrituras-sociales"):"Sin lotes")+" · leídos a las "+horaTxt(WEB?NUBE.leido:LEIDO);
+}
+function pintarTodo(){ pintarChip(); pintarLey(); pintarBarrios(); pintarFicha(); pintarSU(); pintarCat(); pintarNube(); pintarLista(); dibujar(); }
+
+/* ════════════ La franja de arriba del mapa ════════════ */
+const AYUDA="De lejos, un recuadro por barrio o localidad con su avance. Acercate para ver cada lote; tocá uno para ver su estado.";
+function franja(html,cls){ const f=$("#franja"); f.className="franja"+(cls?" "+cls:""); f.innerHTML=html; }
+function ayuda(t,cls){ if(UB) return; franja(`<span class="msg">${t||AYUDA}</span>`,cls); }
+function modoUbicar(){
+  const q=UB.tipo==="b" ? `Marcando <b>${esc(UB.obj.n)}</b>${UB.obj.loc&&!mismoLugar(UB.obj)?" ("+esc(UB.obj.loc)+")":""}. Hacé clic donde está, o pegá las coordenadas.`
+                        : `Marcando el <b>Lote ${esc(UB.obj.l)} de la Manzana ${esc(UB.obj.m)}</b>, ${esc(UB.obj.B.n)}. Hacé clic sobre su parcela, o pegá las coordenadas de Mapas Córdoba.`;
+  franja(`<span class="msg">${q}</span>
+    <input id="coords" placeholder="-31,41352  -64,18315" aria-label="Coordenadas copiadas de Mapas Córdoba" inputmode="decimal">
+    <button class="bt pri" id="poner">Poner</button><button class="bt" id="cancelar">Cancelar</button><span id="cErr" class="err"></span>`,"modo");
+  $("#poner").onclick=()=>{
+    const nums=($("#coords").value.match(/-?\d+(?:[.,]\d+)?/g)||[]).map(x=>parseFloat(x.replace(",",".")));
+    if(nums.length<2){ $("#cErr").textContent="Pegá latitud y longitud, por ejemplo -31,41352 -64,18315."; return; }
+    let p=[nums[0],nums[1]]; if(!enCba(p)&&enCba([p[1],p[0]])) p=[p[1],p[0]];
+    if(!enCba(p)){ $("#cErr").textContent="Ese punto cae fuera de la provincia: revisá los números."; return; }
+    poner(p);
+  };
+  $("#coords").onkeydown=e=>{ if(e.key==="Enter") $("#poner").click(); if(e.key==="Escape") salirUbicar(); };
+  $("#cancelar").onclick=salirUbicar;
+  $("#mapa").classList.add("ubicando");
+}
+function salirUbicar(){ UB=null; $("#mapa").classList.remove("ubicando"); ayuda(); }
+function poner(p){
+  const o=UB.obj, t=UB.tipo; UB=null; $("#mapa").classList.remove("ubicando");
+  p=[+p[0].toFixed(7),+p[1].toFixed(7)];
+  if(t==="b"){ PTS.barrios[o.id]={p,o:"mano",t:Date.now()}; guardarPts(); SEL=o; pintarTodo();
+    ayuda(`<span class="ok">Listo: ${esc(o.n)} quedó marcado a mano.</span> Sus lotes siguen en «Sin ubicar» hasta que Catastro los encuentre o se marquen.`);
+    if(MAP) MAP.flyTo(p,16.5,{duration:.7}); }
+  else { PTS.lotes[o.id]={p,o:"mano",poly:null,nomen:o.nomen,t:Date.now()}; delete PTS.fallas[o.id]; guardarPts(); pintarTodo();
+    ayuda(`<span class="ok">Listo: el Lote ${esc(o.l)} de la Manzana ${esc(o.m)} quedó marcado a mano.</span> El punto queda guardado y no se vuelve a preguntar.`); }
+}
+
+/* ════════════ El mapa ════════════ */
+let MAP=null, cBarrios=null, cLotes=null, cEt=null, FONDO=null, PARC=null, MARC={};
+let VER_PARC=lsLeer("sigec_mapa_parcelas")!=="0";
+const Z_LOTES=14, Z_NUM=17.5;
+const PROV_BB=[[-35.05,-65.8],[-29.45,-61.75]];
+/* Argenmap, el mapa base del IGN, que es el que usa IDECOR en sus guías. OpenStreetMap no sirve
+   acá: bloquea los mapas abiertos con doble clic (piden el «Referer», que un archivo no manda). */
+const ARGENMAP=t=>`https://wms.ign.gob.ar/geoserver/gwc/service/tms/1.0.0/${t}@EPSG%3A3857@png/{z}/{x}/{-y}.png`;
+function capaFondo(){
+  if(!MAP) return;
+  const osc=window.SIGEC_TEMA&&SIGEC_TEMA.actual()==="oscuro";
+  if(FONDO) MAP.removeLayer(FONDO);
+  let fallas=0;
+  FONDO=L.tileLayer(ARGENMAP(osc?"argenmap_oscuro":"capabaseargenmap"),{minZoom:3,maxZoom:20,maxNativeZoom:18,
+    attribution:'<a href="https://www.ign.gob.ar/" target="_blank" rel="noopener">IGN · Argenmap</a> · Parcelas: <a href="https://www.idecor.gob.ar/" target="_blank" rel="noopener">IDECOR</a>'});
+  FONDO.on("tileerror",()=>{ fallas++; if(fallas===8&&osc){ MAP.removeLayer(FONDO); FONDO=L.tileLayer(ARGENMAP("capabaseargenmap"),{maxZoom:20,maxNativeZoom:18}).addTo(MAP); FONDO.bringToBack(); } });
+  FONDO.addTo(MAP); FONDO.bringToBack();
+}
+function capaParcelas(){
+  if(!MAP) return;
+  if(PARC){ MAP.removeLayer(PARC); PARC=null; }
+  if(!VER_PARC||EJEMPLO) return;
+  PARC=L.tileLayer.wms(IDECOR_WMS,{layers:CAPA,format:"image/png",transparent:true,minZoom:15,maxZoom:20,opacity:.75,version:"1.1.1"}).addTo(MAP);
+}
+const etiqueta=(ll,html)=>L.marker(ll,{interactive:false,keyboard:false,icon:L.divIcon({className:"",iconSize:[0,0],html:`<span class="et">${html}</span>`})});
+function iconoBarrio(B){
+  const c=cuenta(lotesDe(B));
+  return L.divIcon({className:"",iconSize:[168,80],iconAnchor:[84,76],
+    html:`<div class="pin"><div class="mb"><b>${esc(B.n)}</b>${barra(c)}<small>${c.t} lotes · ${c.n} inscr. · ${c.f} firm. · ${c.p} prep.</small></div><span class="tallo"></span><span class="pt"></span></div>`});
+}
+function globo(Lt){
+  return `<div class="pop"><h3>${esc(Lt.B.n)}</h3><dl>
+    <dt>Manzana</dt><dd>${esc(Lt.m)}</dd><dt>Lote</dt><dd>${esc(Lt.l)}</dd>
+    ${Lt.adj?`<dt>${Lt.nAdj>1?"Adjudicatarios":"Adjudicatario"}</dt><dd>${esc(Lt.adj)}</dd>`:""}
+    <dt>Estado</dt><dd>${forma(Lt.e,14)} ${EST[Lt.e].et}</dd>
+    <dt>Firma</dt><dd>${esc(Lt.firma)||"sin firmar"}</dd>
+    ${(()=>{const q=ptoDe(Lt);return q&&q.cat&&(q.cat.desig||q.cat.loc)?`<dt>Catastro</dt><dd>${esc([q.cat.desig,lugar(q.cat.loc)].filter(Boolean).join(" · "))}</dd>`:(q&&q.o==="mano"?`<dt>Punto</dt><dd>marcado a mano</dd>`:"");})()}</dl>
+    ${dudas(Lt).map(d=>`<p class="aviso nar" style="margin:0 0 8px">${esc(d)}</p>`).join("")}
+    ${SOLO_VER?"":`<div class="acc"><button class="bt" data-ub="l:${esc(Lt.id)}">Mover el punto</button>${ptoDe(Lt)?`<button class="bt" data-borrar="${esc(Lt.id)}">Sacar el punto</button>`:""}</div>`}</div>`;
+}
+function dibujar(){
+  if(!MAP) return;
+  if(MAP._popup&&MAP.hasLayer(MAP._popup)) return;   // se cerraría el globo
+  [cBarrios,cLotes,cEt].forEach(c=>c.clearLayers()); MARC={};
+  const z=MAP.getZoom(), vista=MAP.getBounds().pad(0.5);
+  if(z<Z_LOTES){
+    BARRIOS.forEach(B=>{ const c=centroBarrio(B); if(!c||!lotesDe(B).length) return;
+      L.marker(c.p,{icon:iconoBarrio(B),title:B.n}).on("click",()=>elegirBarrio(B,true)).addTo(cBarrios); });
+    return;
+  }
+  const t=z>=Z_NUM?18:14;
+  LOTES.forEach(Lt=>{
+    const q=ptoDe(Lt); if(!q||!VIS[Lt.e]||!vista.contains(q.p)) return;
+    if(q.poly) L.polygon(q.poly,{className:"par par-"+Lt.e+(ELEG===Lt?" elegido":"")}).bindPopup(()=>globo(Lt)).on("click",()=>{ELEG=Lt;}).addTo(cLotes);
+    const duda=dudas(Lt).length;
+    const mk=L.marker(q.p,{icon:L.divIcon({className:duda?"duda":"",iconSize:[t,t],iconAnchor:[t/2,t/2],html:forma(Lt.e,t)}),title:"Lote "+Lt.l+", Manzana "+Lt.m+": "+EST[Lt.e].et}).bindPopup(()=>globo(Lt)).on("click",()=>{ELEG=Lt;}).addTo(cLotes);
+    MARC[Lt.id]=mk;
+    if(z>=Z_NUM) etiqueta([q.p[0]-0.00007,q.p[1]],"Mz "+esc(Lt.m)+" · L "+esc(Lt.l)).addTo(cEt);
+  });
+}
+function elegirBarrio(B,volar){
+  SEL=B; pintarBarrios(); pintarFicha();
+  const c=centroBarrio(B);
+  if(volar&&MAP){ ver("mapa"); subirAlMapa(); if(c){ const ps=lotesDe(B).map(ptoDe).filter(Boolean).map(q=>q.p); if(ps.length>1) MAP.flyToBounds(L.latLngBounds(ps).pad(0.25),{maxZoom:18,duration:.9}); else MAP.flyTo(c.p,17,{duration:.9}); }
+    else ayuda(`${esc(B.n)} todavía no tiene punto. Está en «Sin ubicar».`); }
+}
+/* en el celular el mapa está arriba del lateral: al elegir algo abajo, se sube hasta el mapa */
+const subirAlMapa=()=>{ if(window.innerWidth<=900){ const d=$(".der"); if(d&&d.getBoundingClientRect().top<0) d.scrollIntoView({block:"start",behavior:"smooth"}); } };
+function irALote(Lt){
+  SEL=Lt.B; ELEG=Lt; pintarBarrios(); pintarFicha(); ver("mapa"); subirAlMapa();
+  const q=ptoDe(Lt);
+  if(!q&&SOLO_VER){ const c=centroBarrio(Lt.B); if(c&&MAP) MAP.flyTo(c.p,17,{duration:.8}); ayuda(`El Lote ${esc(Lt.l)} de la Manzana ${esc(Lt.m)} todavía no está ubicado en el mapa.`); return; }
+  if(!q){ UB={tipo:"l",obj:Lt}; const c=centroBarrio(Lt.B); if(c&&MAP) MAP.flyTo(c.p,17.5,{duration:.8}); modoUbicar(); return; }
+  if(!MAP) return;
+  MAP.closePopup();
+  MAP.once("moveend",()=>{ dibujar(); const mk=MARC[Lt.id]; if(mk) mk.openPopup(); });
+  MAP.flyTo(q.p,18.5,{duration:.9});
+}
+function iniciarMapa(){
+  if(!window.L){ ayuda(`<span class="err">Sin conexión, el mapa no se ve.</span> La lista de lotes sí: está abajo, completa.`,"mal"); ver("lista"); $("#vMapa").disabled=true; return; }
+  MAP=L.map("mapa",{zoomSnap:.25,zoomDelta:.5,minZoom:5,maxZoom:20});
+  MAP.attributionControl.setPrefix(false);
+  L.control.scale({imperial:false,position:"bottomleft"}).addTo(MAP);
+  capaFondo(); capaParcelas();
+  cBarrios=L.layerGroup().addTo(MAP); cLotes=L.layerGroup().addTo(MAP); cEt=L.layerGroup().addTo(MAP);
+  const todos=LOTES.map(ptoDe).filter(Boolean).map(q=>q.p).concat(BARRIOS.map(centroBarrio).filter(Boolean).map(c=>c.p));
+  if(todos.length>1) MAP.fitBounds(L.latLngBounds(todos).pad(0.3),{maxZoom:9}); else MAP.fitBounds(PROV_BB);
+  MAP.on("zoomend moveend",dibujar);
+  MAP.on("popupclose",()=>setTimeout(dibujar,0));
+  MAP.on("click",e=>{ if(UB) poner([e.latlng.lat,e.latlng.lng]); });
+  document.addEventListener("sigec:tema",capaFondo);
+  dibujar();
+}
+
+/* ════════════ Mapa o lista ════════════ */
+function pintarLista(){
+  const filas=LOTES.filter(L=>VIS[L.e]);
+  if(!filas.length){ $("#lista").innerHTML=`<p class="vacio" style="padding:16px">${LOTES.length?"Ningún lote con esos estados.":"Todavía no hay lotes."}</p>`; return; }
+  $("#lista").innerHTML=`<table><thead><tr><th>Barrio o localidad</th><th>Mza.</th><th>Lote</th>${SOLO_VER?"":"<th>Adjudicatario</th>"}<th>Estado</th><th>Firma</th><th>Nomenclatura</th><th>Punto</th></tr></thead><tbody>${
+    filas.map(L=>{const q=ptoDe(L);return `<tr class="ir" data-lote="${esc(L.id)}"><td>${esc(L.B.n)}</td><td>${esc(L.m)}</td><td>${esc(L.l)}</td>${SOLO_VER?"":`<td>${esc(L.adj)||"—"}</td>`}<td><span class="e">${forma(L.e,13)} ${EST[L.e].et}</span></td><td>${esc(L.firma)||"—"}</td><td>${L.nomen?`<code>${esc(L.nomen)}</code>`:`<span class="err">${L.nomenTxt?"a medias":"falta"}</span>`}</td><td>${q?(q.o==="catastro"?"Catastro":"a mano"):`<span class="err">sin ubicar</span>`}</td></tr>`;}).join("")
+  }</tbody></table>`;
+}
+function ver(v){
+  $("#vMapa").setAttribute("aria-pressed",v==="mapa"); $("#vLista").setAttribute("aria-pressed",v==="lista");
+  $("#mapa").hidden=v!=="mapa"; $("#lista").hidden=v!=="lista";
+  if(v==="mapa"&&MAP) setTimeout(()=>MAP.invalidateSize(),0);
+}
+$("#vMapa").onclick=()=>ver("mapa"); $("#vLista").onclick=()=>{ if(UB) salirUbicar(); ver("lista"); };
+
+/* ════════════ Clics ════════════ */
+document.addEventListener("click",e=>{
+  const t=e.target;
+  const es=t.closest("[data-est]"); if(es){ const k=es.dataset.est; VIS[k]=!VIS[k]; pintarLey(); pintarLista(); dibujar(); return; }
+  const bb=t.closest("[data-b]"); if(bb){ const B=BARRIOS.find(x=>x.id===bb.dataset.b); if(B) elegirBarrio(B,true); return; }
+  const lo=t.closest("[data-lote]"); if(lo){ const Lt=LOTES.find(x=>x.id===lo.dataset.lote); if(Lt) irALote(Lt); return; }
+  const u=t.closest("[data-ub]");
+  if(u&&SOLO_VER) return;
+  if(u){ const i=u.dataset.ub.indexOf(":"), k=u.dataset.ub.slice(0,i), id=u.dataset.ub.slice(i+1); if(!MAP) return; ver("mapa"); MAP.closePopup();
+    if(k==="b"){ const B=BARRIOS.find(x=>x.id===id); UB={tipo:"b",obj:B}; SEL=B; pintarBarrios(); pintarFicha(); modoUbicar(); }
+    else { const Lt=LOTES.find(x=>x.id===id); UB={tipo:"l",obj:Lt}; SEL=Lt.B; pintarFicha(); const q=ptoDe(Lt), c=centroBarrio(Lt.B); if(q||c) MAP.flyTo((q||c).p,18,{duration:.8}); modoUbicar(); }
+    return; }
+  const bo=t.closest("[data-borrar]"); if(bo){ const Lt=LOTES.find(x=>x.id===bo.dataset.borrar); if(!Lt) return;
+    delete PTS.lotes[Lt.id]; PTS.fallas[Lt.id]={nomen:claveCat(Lt),motivo:"sacado",t:Date.now()}; guardarPts(); if(MAP) MAP.closePopup(); pintarTodo();
+    ayuda(`Se sacó el punto del Lote ${esc(Lt.l)} de la Manzana ${esc(Lt.m)}. Quedó en «Sin ubicar»: corregí la nomenclatura en escrituras-sociales, o marcalo a mano.`); return; }
+  if(t.closest("#bRepreguntar")){ for(const k of Object.keys(PTS.lotes)) if(PTS.lotes[k].o==="catastro") delete PTS.lotes[k]; PTS.fallas={}; guardarPts(); pintarTodo(); preguntarPendientes(true); return; }
+  const c=t.closest("[data-cat]"); if(c){ const Lt=LOTES.find(x=>x.id===c.dataset.cat); c.disabled=true; c.textContent="Preguntando…";
+    preguntar(Lt).then(r=>{ pintarTodo();
+      ayuda(r==="ok"?`<span class="ok">Catastro ubicó el Lote ${esc(Lt.l)} de la Manzana ${esc(Lt.m)}.</span>`:r==="no"?`Catastro no tiene ninguna parcela con la nomenclatura <b>${esc(Lt.nomen)}</b>. Se puede marcar a mano.`:`<span class="err">Catastro no contestó.</span> El detalle está en la caja «Catastro».`,r==="error"?"mal":"");
+      if(r==="ok") irALote(Lt); }); return; }
+});
+$("#bRecargar").onclick=()=>{ if(nubeCfg()&&!EJEMPLO){ sincNube(); if(WEB) return; } leer(); cargarPts(); pintarTodo(); ayuda("Leídos de nuevo los lotes de escrituras-sociales."); preguntarPendientes(false); };
+/* escrituras-sociales abierto en otra pestaña: lo que cambia allá aparece acá solo */
+window.addEventListener("storage",e=>{ if(EJEMPLO||WEB) return; if(e.key===LLAVE_SOC){ leer(); pintarTodo(); preguntarPendientes(false); } else if(e.key===LLAVE_PTS){ cargarPts(); pintarTodo(); } });
+
+/* ════════════ El ejemplo, inventado ════════════
+   Para ver la herramienta en una computadora sin lotes cargados. Barrios, nomenclaturas y
+   coordenadas inventados; no se guarda nada y a Catastro no se le pregunta nada. */
+const EJ={db:null,pts:null};
+(function(){
+  const W=0.000105,H=0.00027,S=0.00016;
+  const defs=[
+   {id:"ej-esp",n:"Los Espinillos",loc:"salsipuedes",dep:"colón",c:[-31.1330,-64.2975],nom:"13-04-31-01-02",exp:"0000-000001/2026",
+    mzas:[{m:45,bi:0,est:i=>i<=8?"inscripta":(i<=11?"firmada":""),f:i=>i<=11?(i<=8?"18/08/2026":"22/10/2026"):""},{m:46,bi:2,est:()=>"",f:()=>"",sin:[7,8]}]},
+   {id:"ej-mis",n:"El Mistol",loc:"las higueras",dep:"río cuarto",c:[-33.0915,-64.2885],nom:"24-05-17-02-01",exp:"0000-000002/2026",
+    mzas:[{m:112,bi:0,est:()=>"firmada",f:()=>"30/10/2026"},{m:113,bi:1,est:()=>"",f:()=>""}]}];
+  const db={barrios:[]}, lotes={}, fallas={};
+  defs.forEach(d=>{
+    const t={id:"t1",resolucion:"000/2026",fechaFirma:"",lotes:[]};
+    d.mzas.forEach(z=>{ for(let i=1;i<=12;i++){
+      const id=d.id+"-"+z.m+"-"+i, fila=i<=6?0:1, col=fila?12-i:i-1;
+      const top=d.c[0]+H, left=d.c[1]+z.bi*(6*W+S)-6*W; const s=top-fila*H, w=left+col*W;
+      const nomen=d.nom+"-"+String(z.m).padStart(3,"0")+"-"+String(i).padStart(3,"0");
+      const est=z.est(i);
+      t.lotes.push({id,lote:String(i),mza:String(z.m),nomen,estado:est,firmada:est?{fecha:z.f(i)}:null});
+      if((z.sin||[]).includes(i)) fallas[id]={nomen,motivo:"no-encontrada",t:Date.now()};
+      else { const poly=[[s,w],[s,w+W],[s-H,w+W],[s-H,w]]; lotes[id]={p:[s-H/2,w+W/2],o:"catastro",poly,nomen,t:Date.now()}; }
+    }});
+    db.barrios.push({id:d.id,nombre:d.n,ejemplo:true,datos:{localidad:d.loc,departamento:d.dep,expedienteMadre:d.exp},tandas:[t]});
+  });
+  db.barrios.push({id:"ej-hor",nombre:"Nuevo Horizonte",ejemplo:true,datos:{localidad:"hernando",departamento:"tercero arriba",expedienteMadre:"0000-000003/2026"},
+    tandas:[{id:"t1",resolucion:"001/2026",fechaFirma:"",lotes:[1,2,3,4].map(i=>({id:"ej-hor-20-"+i,lote:String(i),mza:"20",nomen:i<4?"33-02-14-01-01-020-00"+i:"",estado:""}))}]});
+  ["ej-hor-20-1","ej-hor-20-2","ej-hor-20-3"].forEach(id=>fallas[id]={nomen:"33-02-14-01-01-020-00"+id.slice(-1),motivo:"no-encontrada",t:Date.now()});
+  EJ.db=db; EJ.pts=()=>JSON.parse(JSON.stringify({lotes,fallas,barrios:{},catastro:{}}));
+})();
+function avisoEjemplo(){
+  const a=$("#avisoEjemplo");
+  if(EJEMPLO){ a.hidden=false; a.innerHTML=`<span><b>Ejemplo inventado.</b> Barrios, lotes, nomenclaturas y coordenadas de mentira, para ver cómo anda. No se guarda nada y a Catastro no se le pregunta nada.</span><button class="bt pri" id="bSalirEj">Volver a los lotes de verdad</button>`;
+    $("#bSalirEj").onclick=()=>{ EJEMPLO=false; arrancar(); }; return; }
+  if(WEB&&!nubeCfg()){ a.hidden=false; a.innerHTML=`<span><b>Para ver los lotes, entrá con la llave de GitHub y la clave del equipo.</b> Se piden una sola vez en este teléfono. Los datos viajan cifrados y sólo se abren acá; el mapa es sólo para mirar.</span>${formNube()}${NUBE.error?`<span class="err" style="flex:1 1 100%">${esc(NUBE.error)}</span>`:""}`; atarForm(); return; }
+  if(WEB&&!NUBE.leido){ a.hidden=false; a.innerHTML=NUBE.estado==="error"?`<span><b class="err">No se pudieron leer los lotes de GitHub.</b> ${esc(NUBE.error)}</span><button class="bt pri" id="bReint">Probar de nuevo</button>`:`<span><b>Leyendo los lotes de GitHub…</b> La primera vez tarda unos segundos.</span>`;
+    const r=$("#bReint"); if(r) r.onclick=()=>sincNube(); return; }
+  if(WEB&&!LOTES.length){ a.hidden=false; a.innerHTML=`<span><b>En GitHub todavía no hay lotes.</b> Aparecen cuando una computadora de la oficina con escrituras-sociales conectada a GitHub los sube.</span>`; return; }
+  if(!LOTES.length){ a.hidden=false; a.innerHTML=`<span><b>Todavía no hay lotes en esta computadora.</b> El mapa muestra los lotes de escrituras-sociales: abrilo una vez acá, con la carpeta del R: elegida, y volvé. Los lotes aparecen solos.</span><a class="bt" href="../escrituras-sociales/escrituras-sociales.html" target="_blank" rel="opener">Abrir escrituras-sociales</a><button class="bt" id="bVerEj">Ver un ejemplo</button>`;
+    $("#bVerEj").onclick=()=>{ EJEMPLO=true; arrancar(); }; return; }
+  a.hidden=true;
+}
+
+/* ════════════ Arranque ════════════ */
+function encuadrar(){ if(!MAP) return; const ps=LOTES.map(ptoDe).filter(Boolean).map(q=>q.p).concat(BARRIOS.map(centroBarrio).filter(Boolean).map(c=>c.p)); if(ps.length>1) MAP.fitBounds(L.latLngBounds(ps).pad(0.3),{maxZoom:9}); else if(ps.length) MAP.setView(ps[0],14); else MAP.fitBounds(PROV_BB); }
+function arrancar(){
+  SEL=null; ELEG=null; UB=null; leer(); cargarPts(); avisoEjemplo();
+  if(MAP){ capaParcelas(); encuadrar(); }
+  pintarTodo(); ayuda();
+  if(!MAP) iniciarMapa();
+  if(EJEMPLO) return;
+  /* desde GitHub (el celular), los lotes salen de allá; en la oficina, si hay llave, se comparten los puntos */
+  if(nubeCfg()){ if(!(WEB&&NUBE.leido)) sincNube(); relojNube(); if(WEB) return; }
+  if(!WEB) preguntarPendientes(false);
+}
+/* Leaflet por CDN, con respaldo; sin internet, la lista */
+(function(){
+  const fuentes=["https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js","https://unpkg.com/leaflet@1.9.4/dist/leaflet.js","https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"];
+  let i=0;
+  const sig=()=>{ if(i>=fuentes.length){ arrancar(); return; } const s=document.createElement("script"); s.src=fuentes[i++]; s.onload=arrancar; s.onerror=sig; document.head.appendChild(s); };
+  sig();
+})();
+</script>
+
+<!-- Volver a SIGEC (diseño D, 02/11/2026). Sólo cuando la herramienta se abrió sola: adentro
+     del menú está el lateral. Es una barra azul arriba y no un botón flotante: el flotante
+     tapaba botones de la herramienta («Imprimir recibo»). Lleva el claro/oscuro, que adentro
+     del menú está en el pie del lateral. Es igual en todas las herramientas: sólo cambia
+     NOMBRE. -->
+<script>
+(function(){
+  try{ if(window.self !== window.top) return; }catch(e){ return; }
+  var NOMBRE='Mapa de escrituras sociales';
+  document.documentElement.classList.add('suelto');
+  var css='.sigec-suelta{flex:0 0 100%;width:100%;display:flex;align-items:center;gap:12px;min-height:58px;box-sizing:border-box;'
+    +'padding:8px 14px;background:#172A52;color:#fff;border-bottom:2px solid #C9A84C;'
+    +'font:600 14px/1.3 "Plus Jakarta Sans","Segoe UI",system-ui,sans-serif;position:relative;z-index:60}'
+    +'html[data-theme="dark"] .sigec-suelta{background:#0E1A33}'
+    +'.sigec-suelta a,.sigec-suelta button{display:flex;align-items:center;gap:8px;min-height:40px;padding:0 12px 0 7px;border:0;'
+    +'border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font:inherit;text-decoration:none;cursor:pointer;flex:0 0 auto}'
+    +'.sigec-suelta a:hover,.sigec-suelta button:hover{background:rgba(255,255,255,.15)}'
+    +'.sigec-suelta .s{width:26px;height:26px;border-radius:7px;display:grid;place-items:center;background:#C9A84C;color:#172A52;'
+    +'font-weight:800;font-size:13px}'
+    +'.sigec-suelta .n{font-size:16px;font-weight:800;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}'
+    +'.sigec-suelta button{margin-left:auto;padding:0 12px}'
+    +'.sigec-suelta svg{display:block}'
+    +'.sigec-suelta :focus-visible{outline:2px solid #C9A84C;outline-offset:2px}'
+    +'@media(max-width:560px){.sigec-suelta button span{display:none}}'
+    +'@media print{.sigec-suelta{display:none!important}}';
+  var LUNA='M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5z';
+  var SOL='M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8zM12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4';
+  function poner(){
+    var st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
+    var bar=document.createElement('div'); bar.className='sigec-suelta';
+    var a=document.createElement('a'); a.href='../../index.html'; a.title='Ir al menú de SIGEC';
+    a.innerHTML='<span class="s" aria-hidden="true">S</span>Volver a SIGEC';
+    if(/^sigec-/.test(window.name||'')){
+      a.title='Cierra esta pestaña: el menú de SIGEC quedó abierto en la de atrás';
+      a.addEventListener('click',function(e){ e.preventDefault(); try{ window.close(); }catch(x){} setTimeout(function(){ location.href=a.href; },400); });
+    }
+    var n=document.createElement('span'); n.className='n'; n.textContent=NOMBRE;
+    var b=document.createElement('button'); b.type='button';
+    function pintar(){
+      var osc=window.SIGEC_TEMA&&SIGEC_TEMA.actual()==='oscuro', t=osc?'Modo claro':'Modo oscuro';
+      b.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" '
+        +'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+(osc?SOL:LUNA)+'"/></svg><span></span>';
+      b.lastChild.textContent=t; b.title=t; b.setAttribute('aria-label',t);
+    }
+    b.addEventListener('click',function(){ if(window.SIGEC_TEMA) SIGEC_TEMA.alternar(); });
+    document.addEventListener('sigec:tema',pintar); pintar();
+    bar.appendChild(a); bar.appendChild(n); bar.appendChild(b);
+    document.body.insertBefore(bar,document.body.firstChild);
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',poner); else poner();
+})();
+</script>
+<!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 18/11/2026</p>
+</body>
+</html>
