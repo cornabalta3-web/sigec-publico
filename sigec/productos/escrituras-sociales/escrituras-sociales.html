@@ -4732,10 +4732,9 @@ function pintarTablero0(){
      en la oficina (con la carpeta del R:) «Importar el avance»; fuera de la oficina, «Descargar el avance» */
   /* desde el 16/11/2026, fuera de la vista (Baltasar: «sacalo de la vista»): con GitHub ya viaja todo. Descargar queda en
      la ventanita de GitHub («¿No podés conectarte?») y en la de casa; importar, en la ventanita del R: */
-  '<button type="button" id="bNuevo" class="p">+ Nuevo barrio o localidad</button>'
-  +(DB.barrios.length?'':'<button type="button" id="bEjemplo">Cargar el ejemplo</button>'));
- $("#bNuevo").onclick=nuevoBarrio;
- if($("#bEjemplo")) $("#bEjemplo").onclick=cargarEjemplo;
+  /* sin barrios, los botones están en «Para empezar»: arriba no se repiten (19/11/2026, Baltasar: «aparece 2 veces») */
+  DB.barrios.length?'<button type="button" id="bNuevo" class="p">+ Nuevo barrio o localidad</button>':"");
+ if($("#bNuevo")) $("#bNuevo").onclick=nuevoBarrio;
  const v=$("#v-tablero");
  if(!DB.barrios.length){
   v.innerHTML='<h2 class="pt">Barrios y localidades</h2><p class="ps">'+(webSinNube()?'Lo de la oficina está en GitHub.':'Todavía no hay ninguno.')+'</p>'
