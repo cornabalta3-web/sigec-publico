@@ -638,6 +638,8 @@ select.mini.principal{max-width:260px}
 html[data-theme="dark"] .nro-et{color:#E6EAF2;background:#262F42;border-color:#3A4660}
 .rev-principal:not(.es){border-color:#D9B23A}
 p.rev-principal{margin:0 0 10px}
+.rev-undo{margin:8px 0 0;font-size:13.5px}
+.rev-undo .link{font-weight:700}
 .protocolo{margin-top:14px;padding:12px 16px}
 .protocolo summary{cursor:pointer;font-size:14.5px}
 .protocolo .tabla{margin-top:10px}
@@ -1749,7 +1751,7 @@ const CAT=[
  {k:"CARGOS_UIF",r:"Sus cargos, como van en la declaración de la UIF",a:"barrio",campo:"cargosUIF",render:ctx=>o(dato(ctx,"cargosUIF"))},
  {k:"EXPEDIENTE_MADRE",r:"Expediente madre",a:"barrio",campo:"expedienteMadre",tipo:"expediente",render:ctx=>o(dato(ctx,"expedienteMadre"))},
  {k:"ESC_MADRE",r:"Escritura donde corren agregadas las copias",a:"barrio",campo:"escMadre",render:ctx=>{ const pr=principalCtx(ctx);
-   if(pr&&!pr.es) return pr.nro?numeroEscritura(pr.nro):[{hueco:"el número de la escritura principal ("+loteCorto(pr.l)+"): se imprime primero",flojo:true}];
+   if(pr&&!pr.es) return pr.nro?numeroEscritura(pr.nro):[{hueco:"el número de la escritura principal ("+loteCorto(pr.l)+"), que todavía no tiene",flojo:true}];
    return numeroEscritura(dato(ctx,"escMadre")); }},
  {k:"ESC_MADRE_FECHA",r:"Su fecha",a:"barrio",campo:"escMadreFecha",tipo:"fecha",render:ctx=>{ const pr=principalCtx(ctx);
    if(pr&&!pr.es) return o(fechaLarga(String(pr.l.fechaActo||(ctx.t&&ctx.t.fechaFirma)||"")));
@@ -6878,7 +6880,9 @@ function listaCambiosHtml(b,t,l){
 function verificarAntesDeImprimir(b,t,l,accion,seguir){
  if(l.estado==="firmada"||l.estado==="inscripta"||!b.base.runs.length) return seguir();
  const pr=principalCtx({t,l});
- if(pr&&!pr.es&&!pr.nro){ preguntar("<b>Primero se imprime la principal</b><br>Las copias de esta tanda van agregadas a la escritura del "+esc(loteCorto(pr.l))+" ("+esc(nombreLote(pr.l))+"), y el número de ésta sale de aquélla. Imprimí primero la principal.","Ir a la principal",()=>ir("lote",{b:b.id,l:pr.l.id})); return; }
+ /* La principal ya no tiene que imprimirse primero (Baltasar, 19/11/2026: «está mal esa regla»): se imprime igual, y
+    el número de la principal, si todavía no lo tiene, queda en blanco y se avisa */
+ if(pr&&!pr.es&&!pr.nro) setTimeout(()=>avisar("La principal ("+loteCorto(pr.l)+") todavía no tiene número: en ésta, el número de la escritura donde corren agregadas las copias sale en blanco. Completalo a mano o reimprimila cuando la principal tenga número.",true),400);
  const cargo=CARGO_TXT[cargoDe(l)], firma=accion==="Marcarla firmada", fl=faltasAlImprimir(b,t,l);
  if(fl.graves.length){ noSale(b,t,l,fl.graves,firma); return; }
  const imprime=!firma&&l.estado==="revisada", sigue=()=>imprime?pedirParaImprimir(b,t,l,accion,seguir):seguir(), luego=()=>{ setTimeout(sigue,60); };
@@ -7262,18 +7266,27 @@ function ponerRef(b,ref,v){
 }
 const claveRef=r=>r?[r.tipo,r.l||"",r.t||"",r.mza||"",r.i==null?"":r.i,r.campo].join("|"):"";
 function registrarCorr(l,c){
- if(!SESION) return; const xs=SESION.corr[l.id]=SESION.corr[l.id]||[];
+ if(!SESION) return;
+ if(REV_UNDO.pend&&!REV_UNDO.abierto){ REV_UNDO.abierto=REV_UNDO.pend; REV_UNDO.pend=null; } const xs=SESION.corr[l.id]=SESION.corr[l.id]||[];
  const k=claveRef(c.ref), y=c.ref?xs.find(z=>claveRef(z.ref)===k):null;
  if(y){ y.despues=c.despues; y.hora=horaComp(Date.now()); if(y.antes===y.despues) xs.splice(xs.indexOf(y),1); }
  else if(!c.ref||c.antes!==c.despues) xs.push(Object.assign({hora:horaComp(Date.now())},c));
 }
-function impacto(b,alcance,t,l){
+/* corr: el corresponde de la manzana toca sólo a los lotes que van con ese mismo (19/11/2026: la manzana puede tener dos,
+   y cada lote elige el suyo; el botón decía «En todos los lotes (2)» y el otro lote, que iba con el segundo, no cambiaba) */
+function impacto(b,alcance,t,l,corr){
  let ls=[];
  if(alcance==="tanda") ls=t.lotes.map(x=>({t,l:x}));
- else if(alcance==="mza") b.tandas.forEach(tt=>tt.lotes.forEach(x=>{ if(String(x.mza).trim()===String(l.mza).trim()) ls.push({t:tt,l:x}); }));
+ else if(alcance==="mza") b.tandas.forEach(tt=>tt.lotes.forEach(x=>{ if(String(x.mza).trim()===String(l.mza).trim()&&(!corr||corrCampo(x)===corrCampo(l))) ls.push({t:tt,l:x}); }));
  else b.tandas.forEach(tt=>tt.lotes.forEach(x=>ls.push({t:tt,l:x})));
  const firm=ls.filter(z=>z.l.estado==="firmada"||z.l.estado==="inscripta"), rev=ls.filter(z=>z.l.estado==="revisada"&&z.l!==l);
  return {total:ls.length,firmados:firm.length,revisados:rev,sinRevisar:ls.length-firm.length-rev.length};
+}
+/* si la manzana tiene dos corresponde, cuántos lotes van con el otro: no los toca */
+function otroCorrTxt(b,l){
+ const m=(b.manzanas||{})[String(l.mza||"").trim()]||{}; if(!String(m.corresponde2||"").trim()) return "";
+ let n=0; b.tandas.forEach(tt=>tt.lotes.forEach(x=>{ if(String(x.mza).trim()===String(l.mza).trim()&&corrCampo(x)!==corrCampo(l)) n++; }));
+ return n?"La Manzana "+l.mza+" tiene dos corresponde: éste es el "+(l.corr2?"segundo":"primero")+". "+(n===1?"Un lote va":n+" lotes van")+" con el otro y no cambia"+(n===1?"":"n")+": se corrige"+(n===1?"":"n")+" desde "+(n===1?"ese lote":"uno de ellos")+".":"";
 }
 function impactoTxt(imp,donde){
  return 'Toca los '+imp.total+' lotes '+donde+': '+[imp.sinRevisar?imp.sinRevisar+" sin revisar cambian solos":"",
@@ -7369,13 +7382,13 @@ function cajaCorregir(b,t,l,run){
  /* de la tanda, la manzana o el barrio: se dice antes a cuántos lotes toca, y se confirma */
  const donde={tanda:"de la tanda",mza:"de la Manzana "+(l.mza||""),barrio:"del barrio"}[al]||"";
  const ref=al==="tanda"?{tipo:"tanda",t:t.id,campo:d.campo}:al==="mza"?{tipo:"mza",mza:String(l.mza||"").trim(),campo:d.campo==="corresponde"?corrCampo(l):d.campo}:{tipo:"barrio",campo:d.campo};
- const imp=impacto(b,al==="barrio"?"barrio":al,t,l), v=valorRef(b,ref);
+ const imp=impacto(b,al==="barrio"?"barrio":al,t,l,d.campo==="corresponde"), v=valorRef(b,ref);
  const mask=d.tipo==="fecha"?"fecha":d.tipo==="expediente"?"expediente":d.tipo==="puntos"?"puntos":"";
  const inp=d.tipo==="largo"?'<textarea class="inp largo" id="rAlt">'+esc(v)+'</textarea>':'<input class="inp" id="rAlt" value="'+esc(v)+'"'+(mask?' data-mask="'+mask+'"':"")+'>';
  const nTodos=imp.total-imp.firmados, sol=run.bi!=null&&datoPropiable(k)&&l.estado!=="firmada"&&l.estado!=="inscripta";
  return {html:cab(d.r,"dato "+esc(donde))+inp
    +'<div class="pbtn">'+(sol?'<button type="button" class="p" id="rSoloDato">Sólo en este lote</button>':"")+'<button type="button" class="p" id="rAplicar">En todos los lotes ('+nTodos+')</button></div>'
-   +'<p class="n aviso-imp" style="margin:6px 0 0">'+esc(impactoTxt(imp,donde))+'</p></div>',
+   +'<p class="n aviso-imp" style="margin:6px 0 0">'+esc(impactoTxt(imp,donde))+'</p>'+(d.campo==="corresponde"&&otroCorrTxt(b,l)?'<p class="n" style="margin:6px 0 0;color:var(--warn)">'+esc(otroCorrTxt(b,l))+'</p>':"")+'</div>',
   atar:()=>{
    /* «Sólo en este lote»: abre, ahí abajo, lo que dice ahora en esta escritura para cambiarlo a mano (queda en violeta) */
    const sd=document.getElementById("rSoloDato"); if(sd) sd.onclick=()=>{
@@ -7404,9 +7417,16 @@ function cajaPropioDato(b,t,l,k,bi,dice,solo){
  const d=CAT_K[k]; if(!d||l.estado==="firmada"||l.estado==="inscripta") return {html:""};
  const ov=propioDatoDe(l,k,bi,dice), actual=ov?ov.nuevo:dice;
  const lead=(/^\s*/.exec(actual)||[""])[0], trail=(/\s*$/.exec(actual)||[""])[0];
+ /* Con el dato ya cambiado en este lote, también se puede llevar a todos (19/11/2026, en la revisión: el corresponde
+    cambiado «sólo en este lote» no ofrecía «En todos», y lo corregido ahí no llegaba a los demás). Lo que dice esta
+    escritura, comparado con lo de todos, se pasa al dato de la manzana, la tanda o el barrio, y esta escritura vuelve
+    a lo de todos. */
+ const refT=solo&&d.campo&&(d.a==="mza"||d.a==="tanda"||d.a==="barrio")?(d.a==="mza"?{tipo:"mza",mza:String(l.mza||"").trim(),campo:d.campo==="corresponde"?corrCampo(l):d.campo}:d.a==="tanda"?{tipo:"tanda",t:t.id,campo:d.campo}:{tipo:"barrio",campo:d.campo}):null;
+ const impT=refT?impacto(b,d.a,t,l,d.campo==="corresponde"):null;
  const html='<div class="card rev-box" id="rCorrP">'+(solo?'<h3>Corregir · '+esc(d.r)+'</h3><p class="hint" style="margin:0 0 8px">cambiado sólo en esta escritura; para todos dice: «'+esc(dice.trim().length>140?dice.trim().slice(0,137)+"…":dice.trim())+'»</p>':'<h3>O sólo en este lote</h3><p class="hint" style="margin:0 0 8px">queda en violeta; los demás no cambian</p>')
   +'<textarea class="inp largo" id="rPropioD">'+esc(actual.trim())+'</textarea>'
-  +'<div class="pbtn"><button type="button" class="'+(solo?"p":"")+'" id="rPropioDOk">Sólo en este lote</button></div>'
+  +'<div class="pbtn"><button type="button" class="'+(solo?"p":"")+'" id="rPropioDOk">Sólo en este lote</button>'+(refT?'<button type="button" class="p" id="rPropioDTodos">En todos los lotes ('+(impT.total-impT.firmados)+')</button>':"")+'</div>'
+  +(refT&&d.campo==="corresponde"&&otroCorrTxt(b,l)?'<p class="n" style="margin:6px 0 0;color:var(--warn)">'+esc(otroCorrTxt(b,l))+'</p>':"")
   +(ov?'<p class="n" style="margin:6px 0 0"><button type="button" class="link" id="rPropioDBase">Volver a lo que dice para todos</button></p>':"")+'</div>';
  return {html,atar:()=>{
   const hecho=msg=>{ guardar(true); pintarHojaRev(); pintarPanelRev(); avisar(msg); };
@@ -7415,6 +7435,15 @@ function cajaPropioDato(b,t,l,k,bi,dice,solo){
    const v=$("#rPropioD").value.trim(), nuevo=v?lead+v+trail:"", c=ponerPropioDato(l,k,bi,dice,nuevo);
    registrarCorr(l,{alcance:"lote",k:"",etiqueta:d.r.toLowerCase()+" sólo en esta escritura",antes:actual.trim(),despues:nuevo.trim(),ref:null});
    hecho(c?"Cambiado sólo en esta escritura. Queda en violeta.":"Quedó igual que para todos."); };
+  const vt=$("#rPropioDTodos"); if(vt) vt.onclick=()=>{
+   if(!b.base.runs[bi]||b.base.runs[bi].k!==k){ avisar("La base cambió mientras tanto: volvé a tocar el texto.",true); pintarPanelRev(); return; }
+   const v=$("#rPropioD").value.trim(); if(!v){ avisar("Vacío borraría el dato de todos: si es eso, hacelo en la lista.",true); return; }
+   const crudo=String(valorRef(b,refT)||""), nuevoCrudo=pasarEdicion(dice,lead+v+trail,crudo);
+   if(nuevoCrudo==null){ avisar("No pude llevar este cambio al dato de todos: el texto de esta escritura es muy distinto. Cambialo en la lista de la tanda.",true); return; }
+   quitarPropioDato(l,k,bi); ponerRef(b,refT,nuevoCrudo);
+   const donde={tanda:"de la tanda",mza:"de la Manzana "+(l.mza||""),barrio:"del barrio"}[d.a];
+   registrarCorr(l,{alcance:d.a,k,etiqueta:d.r.toLowerCase(),antes:crudo,despues:nuevoCrudo,ref:refT});
+   hecho("Cambiado "+donde+". "+impactoTxt(impT,donde)); };
   const vb=$("#rPropioDBase"); if(vb) vb.onclick=()=>{ quitarPropioDato(l,k,bi); registrarCorr(l,{alcance:"lote",k:"",etiqueta:d.r.toLowerCase()+": volvió a lo de todos",antes:actual.trim(),despues:dice.trim(),ref:null}); hecho("Volvió a lo que dice para todos."); };
  }};
 }
@@ -7444,8 +7473,45 @@ function marcarPrincipal(b,t,id){
  if(VISTA.v==="revision"){ pintarHojaRev(); pintarPanelRev(); }
  avisar(id?"Marcada la principal: dice «agrego a la presente», y las demás de la tanda citan su número.":"La tanda quedó sin principal: vale la escritura de los datos del barrio.");
 }
+/* Deshacer en la revisión (Baltasar, 19/11/2026: «no me deja apretar control z, y no está claro la opción de volver
+   atrás»). Cada corrección es un paso: antes de tocar, la foto de lo que hay (el barrio, sus tandas y sus lotes, como
+   los registros de sellar); al terminar, la de cómo quedó. Deshacer vuelve, objeto por objeto, a la de antes, sólo
+   en lo que esa corrección cambió y si nadie lo tocó después desde otra computadora. Ctrl+Z, fuera de un campo. */
+const REV_UNDO={pila:[],pend:null,abierto:null};
+function fotosRev(b){
+ const m=new Map(); const {tandas,mod,hist,plegado,modc,...hb}=b; m.set("b",{o:b,j:JSON.stringify(hb)});
+ for(const t of b.tandas||[]){ const {lotes,mod:a1,hist:a2,modc:a3,...ht}=t; m.set("t:"+t.id,{o:t,j:JSON.stringify(ht)});
+  for(const l of t.lotes||[]){ const {mod:c1,hist:c2,modc:c3,carpetaR:c4,...hl}=l; m.set("l:"+l.id,{o:l,j:JSON.stringify(hl)}); } }
+ return m;
+}
+const soloJ=m=>new Map([...m].map(([k,r])=>[k,r.j]));
+function revPaso(b,l){
+ const ah=soloJ(fotosRev(b));
+ if(REV_UNDO.abierto){ const a=REV_UNDO.abierto; a.despues=a.bid===b.id?ah:soloJ(fotosRev(bDe(a.bid)||b)); if([...a.despues].some(([k,j])=>a.antes.get(k)!==j)) REV_UNDO.pila.push(a); REV_UNDO.abierto=null; if(REV_UNDO.pila.length>40) REV_UNDO.pila.shift(); }
+ REV_UNDO.pend={bid:b.id,l:l.id,antes:ah,corrLen:((SESION&&SESION.corr[l.id])||[]).length};
+}
+function revDeshacer(){
+ const z=loteDeVista(); if(z&&REV_UNDO.abierto) revPaso(z.b,z.l);
+ const paso=REV_UNDO.pila.pop(); if(!paso){ avisar("No hay nada para deshacer en esta revisión."); return; }
+ const b=bDe(paso.bid); if(!b){ avisar("Ese barrio ya no está.",true); return; }
+ const ah=fotosRev(b); let n=0, otros=0;
+ for(const [k,jA] of paso.antes){ const jD=paso.despues.get(k); if(jD===jA) continue; const r=ah.get(k); if(!r) continue;
+  if(r.j!==jD){ otros++; continue; }
+  const v=JSON.parse(jA), guarda=new Set(["mod","hist","plegado","modc","tandas","lotes","carpetaR"]);
+  Object.keys(r.o).forEach(x=>{ if(!guarda.has(x)&&!(x in v)) delete r.o[x]; }); Object.assign(r.o,v); n++; }
+ if(SESION&&SESION.corr[paso.l]) SESION.corr[paso.l].length=Math.min(SESION.corr[paso.l].length,paso.corrLen);
+ REV_UNDO.pend=null; guardar(true); pedirSync(); pintarHojaRev(); pintarPanelRev();
+ avisar(n?(otros?"Deshecho en parte: "+otros+" cosa"+(otros===1?"":"s")+" la cambió después otra computadora, y eso no se tocó.":"Deshecho: quedó como estaba antes."):"No se pudo deshacer: otra computadora lo cambió después.",!n||!!otros);
+}
+document.addEventListener("keydown",e=>{
+ if(VISTA.v!=="revision"||!(e.ctrlKey||e.metaKey)||e.shiftKey||e.altKey||String(e.key).toLowerCase()!=="z") return;
+ const tg=e.target; if(tg&&(tg.closest("input,textarea,select")||tg.isContentEditable)) return; /* ahí, el de Chrome */
+ if($("#dialogo")&&$("#dialogo").classList.contains("on")) return;
+ e.preventDefault(); revDeshacer();
+});
 function pintarPanelRev(){
  const z=loteDeVista(), p=$("#rPanel"); if(!z||!p) return; const {b,t,l}=z;
+ revPaso(b,l);
  const runs=runsRevision(b,t,l), ri=riVigente(runs), run=ri!=null?runs[ri]:null;
  const cc0=cajaCorregir(b,t,l,run), cp=run&&run.k&&run.bi!=null&&datoPropiable(run.k)&&CAT_K[run.k].a==="conc"?cajaPropioDato(b,t,l,run.k,run.bi,run.bt||"",false):null;
  const cc=cp&&cp.html?{html:cc0.html+cp.html,atar:()=>{ if(cc0.atar) cc0.atar(); cp.atar(); }}:cc0;
@@ -7461,6 +7527,7 @@ function pintarPanelRev(){
      +'<label class="rev-buscar">Buscar<input class="inp" id="rBuscar" inputmode="numeric" placeholder="los últimos números del expediente" autocomplete="off"></label>'
     :'<div class="rev-nav"><b>'+esc(loteCorto(l))+'</b>'+(SESION.uno&&lotesParaRevisar(SESION.con).some(x=>x.l!==l.id)?'<button type="button" id="rSigUno">Siguiente lote para revisar ›</button>':"")+'</div>')
    +(ult?'<p class="rev-ult'+(ult.pend?" pend":"")+'">'+esc(ult.txt)+'</p>':"")
+   +(REV_UNDO.pila.length||REV_UNDO.abierto?'<p class="rev-undo"><button type="button" class="link" id="rDeshacer" title="También con Ctrl+Z">↶ Deshacer el último cambio</button> <span class="hint">o Ctrl+Z</span></p>':"")
   +'</div>'
   +'<div class="card rev-box rev-decide"><div class="rev-quien"><span>'+pr+'</span>'+(falt.length?'<details class="rev-faltan"><summary>Faltan '+falt.length+' dato'+(falt.length>1?"s":"")+'</summary><p>'+esc(falt.map(f=>f.que).join("; "))+'.</p></details>':"")+'</div>'
   +(l.estado==="firmada"||l.estado==="inscripta"?'<p class="n"><b>'+(l.estado==="inscripta"?"Inscripta":"Firmada"+(l.firmada&&l.firmada.fecha?" el "+esc(l.firmada.fecha):""))+':</b> no se revisa más.</p>'
@@ -7482,6 +7549,7 @@ function pintarPanelRev(){
  atarDeshacer();
  $$("#rPanel [data-ir-ses]").forEach(bt=>bt.onclick=()=>irSesion(+bt.dataset.irSes));
  const pq=$("#rPorQue"); if(pq) pq.onclick=avisoCargo;
+ const rd=$("#rDeshacer"); if(rd) rd.onclick=revDeshacer;
  document.querySelectorAll("#rPanel [data-principal]").forEach(bt=>bt.onclick=()=>marcarPrincipal(b,t,bt.dataset.principal));
  const rw=$("#rWord"); if(rw) rw.onclick=()=>descargarWord(b,t,l);
  const rt=$("#rTerminar"); if(rt) rt.onclick=terminarRevision;
