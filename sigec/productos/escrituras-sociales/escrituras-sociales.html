@@ -7172,6 +7172,9 @@ function hojaRevisionHtml(runs,o){
  const pieza=p=>{ const x=p.x; let h=esc(x.t);
   if(o.cambios&&o.cambios.length) h=cambiosEn(x.t,p.a,o.cambios);
   else if(x.propio&&!x.k) h=htmlPropio(x.bt,x.t);
+  /* lo sacado de varios tramos seguidos se marca una sola vez (19/11/2026: al borrar varios párrafos salía la marca
+     en cada tramo) */
+  if(x.propio&&!x.k&&!x.t.trim()){ let j=p.ri-1; while(j>=0&&!runs[j].t.trim()&&!(runs[j].propio&&!runs[j].k)) j--; if(j>=0&&runs[j].propio&&!runs[j].k&&!runs[j].t.trim()) h=""; }
   if(x.u) h="<u>"+h+"</u>"; if(x.b) h="<b>"+h+"</b>";
   if(p.al==="imprime") return '<span class="imprime" data-ri="'+p.ri+'" tabindex="0" role="button" aria-label="Corregir: '+esc((CAT_K[x.k]||{}).r||"número y fecha")+'" title="Lo pone quien imprime; se puede cargar acá">lo pone quien imprime</span>';
   if(x.k==="PENDIENTE") return '<span class="hueco" title="'+esc(x.hueco||"")+'">'+h+'</span>';
@@ -7261,7 +7264,7 @@ function igualesMapas(a,b){ if(!a||!b||a.size!==b.size) return false; for(const 
 function textosHoja(){
  const h=$("#rHoja"); if(!h) return null; const m=new Map(); (WORD.runs||[]).forEach((x,i)=>m.set(i,""));
  let ult=null; const tw=document.createTreeWalker(h,NodeFilter.SHOW_TEXT); let n;
- while((n=tw.nextNode())){ const el=n.parentElement; if(el&&el.closest(".imprime,.pliegue,.hoja-bar")) continue;
+ while((n=tw.nextNode())){ const el=n.parentElement; if(el&&el.closest(".imprime,.pliegue,.hoja-bar,.vacio")) continue;
   const sp=el&&el.closest("[data-ri]"); let ri=sp&&h.contains(sp)?+sp.dataset.ri:ult; if(ri==null) ri=0; ult=ri;
   m.set(ri,(m.get(ri)||"")+n.textContent.replace(/\u00a0/g," ")); }
  return m;
@@ -7271,7 +7274,7 @@ function armarWord(b,t,l){
  const h=$("#rHoja"); if(!h) return;
  if(!puedeWord(b,t,l)){ h.contentEditable="false"; WORD.orig=null; return; }
  WORD.runs=runsRevision(b,t,l); WORD.lid=l.id;
- h.querySelectorAll(".imprime,.pliegue,.hueco").forEach(x=>x.contentEditable="false");
+ h.querySelectorAll(".imprime,.pliegue,.hueco,.vacio").forEach(x=>x.contentEditable="false");
  h.contentEditable="true"; h.spellcheck=false; WORD.orig=textosHoja();
 }
 /* lo que cambió, por tramo de origen: {k, bi, antes, despues, runs} */
@@ -7343,7 +7346,11 @@ function aplicarWord(todos){
    hechos.push(()=>{ quitarPropioDato(l,g.k,g.bi); ponerRef(b,ref,nuevoCrudo); registrarCorr(l,{alcance:d.a,k:g.k,etiqueta:d.r.toLowerCase()+" (en la hoja)",antes:crudo,despues:nuevoCrudo,ref}); });
   } else hechos.push(()=>{ ponerPropioDato(l,g.k,g.bi,dice,full); registrarCorr(l,{alcance:"lote",k:"",etiqueta:d.r.toLowerCase()+" sólo en esta escritura (en la hoja)",antes:actual.trim(),despues:full.trim(),ref:null}); });
  }
- hechos.forEach(f=>f());
+ /* en «Corregido en esta revisión», lo de una vez es una sola línea (19/11/2026: borrar varios párrafos anotaba una por tramo) */
+ const regOrig=registrarCorr, notas=[]; registrarCorr=(ll,c)=>{ if(ll===l) notas.push(c); else regOrig(ll,c); };
+ try{ hechos.forEach(f=>f()); } finally{ registrarCorr=regOrig; }
+ if(notas.length){ const antes=notas.map(c=>c.antes).join(" … "), despues=notas.map(c=>c.despues).join(" … ");
+  registrarCorr(l,{alcance:todos?"base":"lote",k:notas.length===1?notas[0].k:"",etiqueta:notas.length===1?notas[0].etiqueta:"en la hoja, "+notas.length+" tramos"+(todos?" en todos los lotes":" sólo en esta escritura"),antes:antes.length>300?antes.slice(0,297)+"…":antes,despues:despues.length>300?despues.slice(0,297)+"…":despues,ref:null}); }
  WORD.orig=null; const p=$("#rPanel"); if(p) p.classList.remove("word-sucio");
  VISTA.ri=null; VISTA.rk=""; guardar(true); pintarHojaRev(true); pintarPanelRev();
  avisar(todos?"Cambiado en todos los lotes sin firmar.":"Cambiado sólo en esta escritura. Queda en violeta.");
