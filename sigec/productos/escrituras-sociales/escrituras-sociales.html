@@ -2741,7 +2741,7 @@ function podarLote(l,tambienFirmadas){
  if(!(est==="inscripta"||(tambienFirmadas===true&&est==="firmada"))) return false;
  if(!(l.firmada&&Array.isArray(l.firmada.runs)&&l.firmada.runs.length&&l.revisada&&l.revisada.v2)) return false;
  if(!l.revisada.texto&&l.revisada.fmt===undefined) return false;
- l.revisada.texto=""; delete l.revisada.fmt; l.revisada.podada=true; return true;
+ l.revisada.texto=""; delete l.revisada.fmt; delete l.revisada.cong; l.revisada.podada=true; return true;
 }
 function podarTodo(tambienFirmadas){ let n=0; DB.barrios.forEach(b=>(b.tandas||[]).forEach(t=>(t.lotes||[]).forEach(l=>{ if(podarLote(l,tambienFirmadas)) n++; }))); return n; }
 /* Cuánto de ese lugar ocupa esta herramienta, para que quien mantiene SIGEC sepa qué liberar
@@ -4704,11 +4704,7 @@ function cambioTrasRevision0(b,t,l){
     pone quien imprime: cargarlos no la hace caer. Cuenta el texto, no la versión de la base. */
  if(l.revisada.v2){ if(!b.base.runs.length) return null; const rc=runsComparar(b,t,l), tx=textoDe(rc), fm=firmaFormato(rc);
   if(tx===l.revisada.texto&&(!l.revisada.fmt||fm===l.revisada.fmt)) return null;
-  /* En una tanda con principal, las demás citan su número y su fecha («corren agregadas a la Escritura número …, Sección A,
-     del …»), y ésos también los pone quien imprime: ponérselos a la principal tumbaba la revisión de todas las demás y
-     las sacaba de «Listas para imprimir» (20/11/2026, Melo). Se comparan sin ese número ni esa fecha. */
-  if(t&&t.principal&&t.principal!==l.id){ const sinCita=x=>String(x||"").replace(/(corren agregadas a la Escritura número\s)[^,]+?(?=, Sección)/gi,"$1#").replace(/(corren agregadas a la Escritura número #, Sección [A-Z], del\s)[^]*?(?=\s+del presente protocolo)/gi,"$1#");
-   if(sinCita(tx)===sinCita(l.revisada.texto)&&(!l.revisada.fmt||fm.replace(/\d+/g,"")===l.revisada.fmt.replace(/\d+/g,""))) return null; }
+  if(mismoQueAprobado(t,l,tx,fm)) return null; /* el número y la fecha de la principal no cuentan (20/11/2026) */
   return l.revisada.ver<b.base.ver?"base":"texto"; }
  if(l.revisada.ver<b.base.ver) return "base";
  if(l.revisada.texto&&b.base.runs.length&&textoDe(armarRuns(b.base,ctxDe(b,t,l)).runs)!==l.revisada.texto) return "texto";
@@ -4728,7 +4724,7 @@ function estadoLote(b,t,l){
   return {et:"ok",txt:"Revisada"};
  }
  if(baseVacia) return {et:"ce",txt:"Datos cargados · sin base"};
- const {faltas,avisos}=armarRuns(b.base,ctxDe(b,t,l));
+ const {faltas,avisos}=armarLote(b,t,l);
  if(avisos.length) return {et:"no",txt:TITULO_AVISO[avisos[0].tipo]};
  const graves=faltas.filter(f=>!f.flojo&&f.alcance==="lote"), nf=graves.length?"Faltan "+graves.length+" dato"+(graves.length>1?"s":"")+" · ":"";
  if(faltas.some(f=>f.k==="HUECO")) return {et:"no",txt:nf?nf+"huecos en la base":"La base tiene huecos sin marcar"};
@@ -4929,7 +4925,7 @@ function letrasTanda(b,t){
  if(!cambian.length){ avisar("Las "+vivos.length+" descripciones de esta tanda ya están en letras y con el formato: no hay nada para cambiar."); return; }
  const rev=cambian.filter(x=>x.l.estado==="revisada"||x.l.estado==="impresa").length, sinU=cambian.filter(x=>x.r.sinUnidad);
  preguntar("<b>Pasar a letras las descripciones de la tanda</b><br>Cambian "+cambian.length+" de "+vivos.length+" lotes sin firmar"+(vivos.length<t.lotes.length?" (las firmadas no se tocan)":"")+". "
-  +(rev?"<br><br>"+rev+(rev===1?" ya estaba revisada o impresa: va a avisar":" ya estaban revisadas o impresas: van a avisar")+" «cambió después de la revisión», con lo cambiado marcado. ":"")
+  +(rev?"<br><br>"+rev+(rev===1?" ya está revisada: su escritura no cambia":" ya están revisadas: sus escrituras no cambian")+" (está"+(rev===1?"":"n")+" lista"+(rev===1?"":"s")+"); se les puede llevar el cambio desde la revisión. ":"")
   +"<br><br>En cada lote se puede volver a como estaba, con «Volver a como estaba» en su descripción.","Pasar a letras",()=>{
   cambian.forEach(({l,r})=>{ const crudo=l.descripcion; l.descripcion=r.texto; l.descripcionAntes=crudo; l.descripcionLetras=r.texto;
    if(r.sup!=null){ const m=Math.floor(r.sup+1e-9), dd=Math.round((r.sup-m)*100); l.superficie=String(m)+(dd?","+String(dd).padStart(2,"0"):""); } });
@@ -5791,6 +5787,7 @@ function pintarLoteSolo(){
  if(congelada&&!bloq) h+='<div class="alerta"><b>Modo administrador</b>Se pueden cambiar los datos de este lote, pero la escritura '+(l.estado==="inscripta"?"inscripta":"firmada")+' queda como salió: lo que cambies acá no la toca. Para cambiar el texto, primero hay que desmarcar la firma.</div>';
  if(congelada) h+='<div class="alerta calma"><b>'+(l.estado==="inscripta"?"Inscripta":"Firmada"+(l.firmada&&l.firmada.fecha?" el "+esc(l.firmada.fecha):""))+'</b>La escritura quedó como salió: los cambios de la base no la tocan. Los datos se ven, no se editan.</div>';
  else if(!hayBase) h+='<div class="alerta tibia"><b>Todavía no tiene minuta base</b>Los datos se cargan igual y quedan guardados. La minuta se arma sola el día que exista la base.</div>';
+ else if(congeladaRev(l)) h+='<div class="alerta calma"><b>Revisada'+(l.revisada.fecha?' el '+esc(l.revisada.fecha):'')+': está lista</b>Su escritura quedó como la aprobó la escribana. Lo que se cambie ahora, en los datos o en el texto, no entra en ella'+(atrasada(b,t,l)?' (ya hay cambios que no entraron)':'')+'. Para que entre, la escribana se lo lleva desde la revisión o la vuelve a corregir.</div>';
  else if(cambioTrasRevision(b,t,l)) h+='<div class="alerta tibia"><b>'+(cambioTrasRevision(b,t,l)==="base"?"La base":"El texto")+' cambió después de la revisión de la '+esc(CARGO_TXT[cargoDe(l)])+'</b>Vuelve a su lista mostrando sólo lo que cambió. En «Ver la escritura» está marcado en celeste.'+listaCambiosHtml(b,t,l)+'</div>';
  else if(l.estado==="revisada"&&!revisionCuenta(l)) h+='<div class="alerta"><b>La revisión de este lote no salió de la computadora de la '+esc(CARGO_TXT[cargoDe(l)])+'</b>No cuenta como su revisión: hay que hacerla con ella, en su computadora.</div>';
  const fpd=congelada?"":fechaPropiaDistinta(t,l);
@@ -6077,7 +6074,7 @@ function pintarComoVa(b,t,l,rehacer){
  const congelada=l.estado==="firmada"||l.estado==="inscripta";
  if(!b.base.runs.length){ pintarVivo(b,t,l,null); const fv=$("#faltasVivo"); if(fv) fv.innerHTML='<p class="hint" style="margin:0">Sin base todavía: lo que falta se ve cuando haya minuta base.</p>'; const vn=$("#vivoN"); if(vn) vn.textContent=""; }
  if(!b.base.runs.length){ caja.innerHTML='<p class="n"><b>Sin base todavía</b></p><p class="hint" style="margin:0 0 10px">Los datos quedan guardados. La minuta se arma el día que haya minuta base.</p>'+botonesEstado(b,t,l); atarEstado(b,t,l); return; }
- const arm=armarRuns(b.base,ctxDe(b,t,l)), {faltas,avisos}=arm;
+ const arm=armarLote(b,t,l), {faltas,avisos}=arm;
  pintarVivo(b,t,l,congelada?runsDelLote(b,t,l).runs:arm.runs);
  const delLote=faltas.filter(f=>f.alcance==="lote"&&!f.flojo), otras=faltas.filter(f=>f.alcance!=="lote"||f.flojo);
  const total=camposQuePide(b.base,"lote").length;
@@ -6542,12 +6539,69 @@ function pintarCaratula(){
 }
 
 /* ════════════ LA ESCRITURA ARMADA: A + B ════════════ */
+/* «Revisada» es lista (Baltasar, 20/11/2026: «cuando la escribana aprieta revisada, que eso no cambie nunca más»; «si está
+   revisada, está lista, por lo menos por esta tanda»). Al aprobarla, la minuta queda congelada como una firmada: se guarda
+   lo que la arma —la base, los datos del barrio, de las manzanas, de la tanda y del lote— y de ahí sale su texto, para la
+   hoja, el Word y «Listas para imprimir». Lo que se corrija después «en todos» llega sólo a las que no están revisadas; a
+   éstas se les lleva con «Llevarles los cambios», en la revisión. Lo que pone quien imprime sigue vivo: el número y la
+   fecha de la escritura, la fecha de firma de la tanda y cuál es la principal (con su número y su fecha). Para corregir
+   una revisada, «Volver a corregirla» la saca de revisada. Antes, cualquier cambio para todos le sacaba la aprobación
+   y su Word salía de «Listas para imprimir» (20/11/2026: las de otra auxiliar, en Melo). */
+const COPIA=x=>JSON.parse(JSON.stringify(x==null?null:x));
+function congelarRevision(b,t,l){
+ if(!l.revisada) return;
+ const {lotes,hist,mod,modc,...tt}=t, {revisada,hist:h2,mod:m2,modc:mc2,firmada,desfirmada,copiasR,carpetaR,listaR,impresa,...ll}=l;
+ l.revisada.cong={base:COPIA(b.base.runs),datos:COPIA(b.datos||{}),mzas:COPIA(b.manzanas||{}),tanda:COPIA(tt),lote:COPIA(ll)};
+}
+function fuenteRev(b,t,l){
+ const c=l&&l.estado==="revisada"&&l.revisada&&l.revisada.cong; if(!c||!b||!t) return null;
+ const b2=Object.assign({},b,{base:Object.assign({},b.base,{runs:c.base}),datos:c.datos,manzanas:c.mzas});
+ const t2=Object.assign({},c.tanda,{id:t.id,lotes:t.lotes,principal:t.principal,fechaFirma:t.fechaFirma});
+ const l2=Object.assign({},c.lote,{id:l.id,estado:l.estado,revisada:l.revisada,nroEscritura:l.nroEscritura,fechaActo:l.fechaActo,impresa:l.impresa});
+ return {b:b2,t:t2,l:l2};
+}
+const congeladaRev=l=>!!(l&&l.estado==="revisada"&&l.revisada&&l.revisada.cong);
+function armarLote(b,t,l){ const f=fuenteRev(b,t,l); return f?armarRuns(f.b.base,ctxDe(f.b,f.t,f.l)):armarRuns(b.base,ctxDe(b,t,l)); }
+/* lo que dice lo aprobado, comparado con un texto: el número y la fecha de la principal citados no cuentan */
+function mismoQueAprobado(t,l,tx,fm){
+ const r=l.revisada; if(!r) return false; if(tx===r.texto&&(!r.fmt||fm===r.fmt)) return true;
+ if(t&&t.principal&&t.principal!==l.id){ const sinCita=x=>String(x||"").replace(/(corren agregadas a la Escritura número\s)[^,]+?(?=, Sección)/gi,"$1#").replace(/(corren agregadas a la Escritura número #, Sección [A-Z], del\s)[^]*?(?=\s+del presente protocolo)/gi,"$1#");
+  return sinCita(tx)===sinCita(r.texto)&&(!r.fmt||fm.replace(/\d+/g,"")===r.fmt.replace(/\d+/g,"")); }
+ return false;
+}
+/* las aprobadas antes del 20/11/2026 se congelan solas, si su texto es todavía el aprobado (si no, ya volvieron) */
+function congelarRevisadas(){
+ let n=0; for(const b of DB.barrios||[]) for(const t of b.tandas||[]) for(const l of t.lotes||[]){
+  if(l.estado!=="revisada"||!l.revisada||!l.revisada.v2||l.revisada.cong||!b.base||!b.base.runs||!b.base.runs.length) continue;
+  const rc=runsComparar(b,t,l); if(!mismoQueAprobado(t,l,textoDe(rc),firmaFormato(rc))) continue;
+  congelarRevision(b,t,l); n++; }
+ if(n) guardar(true); return n;
+}
+setTimeout(()=>{ try{ congelarRevisadas(); }catch(e){} },2500);
+/* una revisada a la que, después de aprobada, le cambió algo para todos que no le llegó */
+function atrasada(b,t,l){ if(!congeladaRev(l)) return false; const rc=runsComparar(b,t,l,true); return !mismoQueAprobado(t,l,textoDe(rc),firmaFormato(rc)); }
+/* «antes» → «ahora», en pocas palabras: lo primero que es distinto entre dos textos */
+function difCorta(a,d){
+ a=String(a||""); d=String(d||""); let p=0; while(p<a.length&&p<d.length&&a[p]===d[p]) p++;
+ let q=0; while(q<a.length-p&&q<d.length-p&&a[a.length-1-q]===d[d.length-1-q]) q++;
+ while(p>0&&/\S/.test(a[p-1])) p--; while(q>0&&/\S/.test(a[a.length-q])) q--;
+ const cort=x=>{ x=x.trim(); return x.length>90?x.slice(0,87)+"…":x; };
+ const sa=cort(a.slice(p,a.length-q)), sd=cort(d.slice(p,d.length-q));
+ return sa&&sd?"«"+sa+"» → «"+sd+"»":sa?"se sacó «"+sa+"»":sd?"se agregó «"+sd+"»":"";
+}
+function llevarARevisadas(b,lista){
+ for(const {t,l} of lista){ congelarRevision(b,t,l); const rc=runsComparar(b,t,l);
+  l.revisada.texto=textoDe(rc); l.revisada.fmt=firmaFormato(rc); l.revisada.ver=b.base.ver;
+  l.revisada.llevado=(l.revisada.llevado||[]).concat({fecha:hoy(),quien:quienSoy()}).slice(-10); }
+ guardar(true); pedirSync();
+ for(const {t,l} of lista) guardarCopiaEnR(b,t,l,"aprobada").then(x=>avisoCopia(x,"Llevado a "+loteCorto(l)+"."));
+}
 function runsDelLote(b,t,l){
  if((l.estado==="firmada"||l.estado==="inscripta")&&l.firmada&&l.firmada.runs){
   /* el texto firmado va aparte (CONG): si no apareció en esta computadora, se dice y no sale otra cosa */
   if(esStubCong(l.firmada.runs)) return {runs:[{t:"[El texto firmado de esta minuta no está en esta computadora.]"}],faltas:[],avisos:[{tipo:"congelada",t:"Está guardado aparte y no apareció en esta computadora. Conectala al R: para traerlo: hasta entonces no se descarga ni se copia."}],congelada:true,noEsta:true};
   return {runs:l.firmada.runs,faltas:[],avisos:[],congelada:true}; }
- return armarRuns(b.base,ctxDe(b,t,l));
+ return armarLote(b,t,l);
 }
 function pintarTexto(){
  const b=bDe(VISTA.b); const u=b&&ubicar(b,VISTA.l); if(!u){ ir("tablero"); return; }
@@ -6824,14 +6878,15 @@ const IMPRIME_TXT="[lo pone quien imprime]";
 /* comparar=true: el texto que se aprueba y se compara, sin la fecha de firma de la tanda (de ella
    sale también «del corriente año» en la fecha del notarial, y la carga quien imprime).
    comparar=false: el que se ve, con esa fecha. Los dos van tramo a tramo. */
-function armadoRevision(b,t,l,comparar){
+function armadoRevision(b,t,l,comparar,vivo){
+ if(!vivo){ const f=fuenteRev(b,t,l); if(f){ b=f.b; t=f.t; l=f.l; } }
  const tt=comparar?Object.assign({},t,{fechaFirma:""}):t;
  const a=armarRuns(b.base,ctxDe(b,tt,Object.assign({},l,{nroEscritura:"",fechaActo:""}))), runs=[];
  a.runs.forEach(x=>{ if(x.k&&SIN_REVISAR_K.has(x.k)){ const u=runs[runs.length-1]; if(!(u&&u.imprime&&u.k===x.k)) runs.push({t:IMPRIME_TXT,b:false,u:false,k:x.k,imprime:true}); } else runs.push(x); });
  a.runs=runs; return a;
 }
 function runsRevision(b,t,l){ return armadoRevision(b,t,l,false).runs; }
-function runsComparar(b,t,l){ return armadoRevision(b,t,l,true).runs; }
+function runsComparar(b,t,l,vivo){ return armadoRevision(b,t,l,true,vivo).runs; }
 function textoRevision(b,t,l){ return textoDe(runsComparar(b,t,l)); }
 /* el formato también es de la escritura: la negrita y el subrayado, tramo por tramo */
 const firmaFormato=runs=>fundir(runs).map(x=>(x.b?"b":"")+(x.u?"u":"")+x.t.length).join("|");
@@ -6927,7 +6982,7 @@ function verificarAntesDeImprimir(b,t,l,accion,seguir){
 /* Lo impreso no entra en «Quién lo modificó»: ya queda en la carpeta del lote, en el R:. */
 Object.assign(NOMBRE_CAMBIO,{impresa:null,desfirmada:"vuelta atrás de la firma",desinscripta:"vuelta atrás de la inscripción"});
 function faltasAlImprimir(b,t,l){
- const a=armarRuns(b.base,ctxDe(b,t,l));
+ const a=armarLote(b,t,l);
  return {a,graves:a.faltas.filter(f=>!f.flojo&&!SIN_REVISAR_K.has(f.k)),nro:a.faltas.some(f=>f.k==="NRO_ESCRITURA"),fecha:a.faltas.some(f=>f.k==="FECHA_ACTO")};
 }
 const esInhibicion=f=>/no firma con la tanda/i.test(String(f&&f.que||"")); /* desde el 17/11/2026 la inhibición no frena: se escribe */
@@ -7036,13 +7091,13 @@ function pedirParaImprimir(b,t,l,accion,seguir){
    ciclos: impreso sin firmar, reimprimir). */
 function anotarImpresa(b,t,l){
  if(l.estado!=="revisada"||!b.base.runs.length) return;
- l.impresa={t:Date.now(),fecha:hoy(),quien:quienSoy(),runs:fundir(armarRuns(b.base,ctxDe(b,t,l)).runs),conRevision:revisionVale(b,t,l),nro:String(l.nroEscritura||""),fechaActo:String(l.fechaActo||t.fechaFirma||"")};
+ l.impresa={t:Date.now(),fecha:hoy(),quien:quienSoy(),runs:fundir(armarLote(b,t,l).runs),conRevision:revisionVale(b,t,l),nro:String(l.nroEscritura||""),fechaActo:String(l.fechaActo||t.fechaFirma||"")};
  guardar(true);
 }
 function impresaDistinta(b,t,l){ return memoTab("i",l,()=>impresaDistinta0(b,t,l)); }
 function impresaDistinta0(b,t,l){
  const imp=l.impresa; if(!imp||!Array.isArray(imp.runs)||!imp.runs.length||l.estado==="firmada"||l.estado==="inscripta"||!b.base.runs.length) return false;
- const r=fundir(armarRuns(b.base,ctxDe(b,t,l)).runs);
+ const r=fundir(armarLote(b,t,l).runs);
  return textoDe(r)!==textoDe(imp.runs)||firmaFormato(r)!==firmaFormato(imp.runs);
 }
 function reimprimirHtml(b,t,l){
@@ -7084,12 +7139,12 @@ function marcarFirmada(b,t,l){
    if(dup.length){ if(av) av.innerHTML='<b style="color:var(--bad)">La N° '+esc(nro)+' ya está tomada: '+esc(dup.join("; "))+'.</b> Dos escrituras no pueden llevar el mismo número.'; return false; }
    if(usarImp){ if(imp.nro) l.nroEscritura=imp.nro; if(imp.fechaActo&&imp.fechaActo!==(l.fechaActo||t.fechaFirma)) l.fechaActo=imp.fechaActo; }
    else{ if(v.nro) l.nroEscritura=v.nro; if(v.fecha) l.fechaActo=v.fecha; }
-   const runs=usarImp?imp.runs:fundir(armarRuns(b.base,ctxDe(b,t,l)).runs), vale=usarImp?imp.conRevision===true:revisionVale(b,t,l);
+   const runs=usarImp?imp.runs:fundir(armarLote(b,t,l).runs), vale=usarImp?imp.conRevision===true:revisionVale(b,t,l);
    /* lo congelado es lo impreso: no hace falta guardarlo dos veces (vuelve si se vuelve atrás) */
    const comoImp=!!imp&&(usarImp||!distinta);
    l.firmada={fecha:usarImp?(imp.fechaActo||fechaHoy):(l.fechaActo||t.fechaFirma||""),runs,conRevision:vale,quien:quienSoy(),nro:String(l.nroEscritura||""),antes:l.estado||"",deImpresa:comoImp?{t:imp.t,fecha:imp.fecha,quien:imp.quien}:null};
    if(comoImp) l.impresa={t:imp.t,fecha:imp.fecha,quien:imp.quien};
-   l.estado="firmada"; guardar(true); pintarLote();
+   l.estado="firmada"; if(l.revisada) delete l.revisada.cong; guardar(true); pintarLote();
    guardarCopiaEnR(b,t,l,"firmada").then(x=>avisoCopia(x,"Firmada."));
   },extra);
   setTimeout(()=>{ const x=$("#dlgNro")||$("#dlgFecha"); if(x) x.focus(); },50);
@@ -7286,7 +7341,7 @@ function textosHoja(){
   m.set(ri,(m.get(ri)||"")+n.textContent.replace(/\u00a0/g," ")); }
  return m;
 }
-const puedeWord=(b,t,l)=>esCompuDelCargo()&&cargoDe(l)===ROL()&&l.estado!=="firmada"&&l.estado!=="inscripta"&&!($("#rHoja")&&$("#rHoja").classList.contains("plegada"));
+const puedeWord=(b,t,l)=>esCompuDelCargo()&&cargoDe(l)===ROL()&&l.estado!=="firmada"&&l.estado!=="inscripta"&&!congeladaRev(l)&&!($("#rHoja")&&$("#rHoja").classList.contains("plegada"));
 function armarWord(b,t,l){
  const h=$("#rHoja"); if(!h) return;
  if(!puedeWord(b,t,l)){ h.contentEditable="false"; WORD.orig=null; return; }
@@ -7550,7 +7605,7 @@ function impacto(b,alcance,t,l,corr){
  if(alcance==="tanda") ls=t.lotes.map(x=>({t,l:x}));
  else if(alcance==="mza") b.tandas.forEach(tt=>tt.lotes.forEach(x=>{ if(String(x.mza).trim()===String(l.mza).trim()&&(!corr||corrCampo(x)===corrCampo(l))) ls.push({t:tt,l:x}); }));
  else b.tandas.forEach(tt=>tt.lotes.forEach(x=>ls.push({t:tt,l:x})));
- const firm=ls.filter(z=>z.l.estado==="firmada"||z.l.estado==="inscripta"), rev=ls.filter(z=>z.l.estado==="revisada"&&z.l!==l);
+ const firm=ls.filter(z=>z.l.estado==="firmada"||z.l.estado==="inscripta"), rev=ls.filter(z=>congeladaRev(z.l)&&z.l!==l);
  return {total:ls.length,firmados:firm.length,revisados:rev,sinRevisar:ls.length-firm.length-rev.length};
 }
 /* si la manzana tiene dos corresponde, cuántos lotes van con el otro: no los toca */
@@ -7561,10 +7616,11 @@ function otroCorrTxt(b,l){
 }
 function impactoTxt(imp,donde){
  return 'Toca los '+imp.total+' lotes '+donde+': '+[imp.sinRevisar?imp.sinRevisar+" sin revisar cambian solos":"",
-  imp.revisados.length?imp.revisados.length+" ya revisado"+(imp.revisados.length>1?"s":"")+" ("+imp.revisados.map(z=>loteCorto(z.l)+" · "+CARGO_TXT[cargoDe(z.l)]).join("; ")+") vuelve"+(imp.revisados.length>1?"n":"")+" a la lista de su escribana mostrando sólo este tramo":"",
+  imp.revisados.length?imp.revisados.length+" ya revisado"+(imp.revisados.length>1?"s":"")+" ("+imp.revisados.map(z=>loteCorto(z.l)).join("; ")+") no cambia"+(imp.revisados.length>1?"n":"")+": está"+(imp.revisados.length>1?"n":"")+" lista"+(imp.revisados.length>1?"s":"")+" (se le"+(imp.revisados.length>1?"s":"")+" puede llevar el cambio desde la revisión)":"",
   imp.firmados?imp.firmados+" firmado"+(imp.firmados>1?"s":"")+" no cambia"+(imp.firmados>1?"n":""):""].filter(Boolean).join(" · ")+".";
 }
 function cajaCorregir(b,t,l,run){
+ if(congeladaRev(l)) return {html:'<div class="card rev-box"><h3>Está revisada</h3><p class="hint" style="margin:0">Quedó lista: lo que se corrija para todos ya no la cambia.'+(esCompuDelCargo()&&cargoDe(l)===ROL()?' Para corregirla, tocá «Volver a corregirla».':'')+'</p></div>'};
  if(!run) return {html:'<div class="card rev-box"><h3>Corregir</h3><p class="hint" style="margin:0">Tocá en la minuta lo que está mal.</p></div>'};
  /* el número y la fecha, que pone quien imprime, también se cargan acá (18/11/2026): el número es del lote; la fecha, de la tanda */
  const k=run.k, d=k?CAT_K[k]:null, al0=alcanceRun(run), al=al0==="imprime"?(k==="NRO_ESCRITURA"?"lote":"tanda"):al0;
@@ -7821,6 +7877,7 @@ function pintarPanelRev(){
   +'<div class="rev-fin"><button type="button" class="link" id="rWord">Descargar el Word</button><button type="button" class="link" id="rTerminar">Terminar la revisión</button></div>'
   +historiaHtml(l);
  if(cc.atar) cc.atar();
+ revCongeladaHtml(b,t,l,p);
  document.querySelectorAll("#rPanel #rPropio,#rPanel #rPropioD,#rPanel #rAlt").forEach(x=>{ x.dataset.orig=x.value; });
  if(wordSucio()) pintarBarraWord(); else p.classList.remove("word-sucio");
  if($("#rHoja")&&$("#rHoja").isContentEditable) pintarCursorWord();
@@ -7854,6 +7911,25 @@ function pintarPanelRev(){
 const candado=()=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>';
 /* Con quién se revisó: quien trajo el lote a la sesión, o quien lo lleva. */
 function conDe(l){ return SESION&&SESION.con&&SESION.con!=="__cambios__"?SESION.con:String(l.responsable||"").trim(); }
+/* En la columna: con la revisada congelada, «Volver a corregirla»; y las revisadas del barrio a las que no les llegó un
+   cambio para todos, con «Llevarles los cambios» (Baltasar, 20/11/2026: «que me dé la opción después de corregir algo en
+   todos de cambiarlo en otra que pasó antes, y ahí sí variaría»). */
+function revCongeladaHtml(b,t,l,p){
+ if(!esCompuDelCargo()) return;
+ const dec=p.querySelector(".rev-decide");
+ if(congeladaRev(l)&&cargoDe(l)===ROL()&&dec){
+  dec.insertAdjacentHTML("beforeend",'<p class="n" style="margin:6px 0 0"><button type="button" class="link" id="rReabrir">Volver a corregirla</button> <span class="hint">sale de «Listas para imprimir» hasta que la apruebes otra vez</span></p>');
+  $("#rReabrir").onclick=()=>{ if(revFrena()) return; l.estado="enRevision"; if(l.revisada) delete l.revisada.cong; guardar(true); pedirSync();
+   avisar("Volvió a revisión: corregila y tocá «Revisada» otra vez."); pintarHojaRev(true); pintarPanelRev(); }; }
+ const at=[]; let otras=0;
+ for(const tt of b.tandas||[]) for(const x of tt.lotes||[]){ if(!atrasada(b,tt,x)) continue; if(cargoDe(x)===ROL()) at.push({t:tt,l:x}); else otras++; }
+ if(!at.length&&!otras) return;
+ const fila=z=>{ const rc=runsComparar(b,z.t,z.l,true), d=difCorta(z.l.revisada.texto,textoDe(rc)); return '<li><b>'+esc(loteCorto(z.l))+'</b> · '+esc(nombreLote(z.l))+(d?'<br><span class="hint">'+esc(d)+'</span>':"")+'</li>'; };
+ const h='<div class="card rev-box rev-atras"><h3>Revisadas que quedaron como se aprobaron</h3><p class="hint" style="margin:0 0 6px">Después cambió algo para todos y a éstas no les llegó'+(otras?' ('+otras+' más son de la otra escribana: se llevan desde su computadora)':'')+'.</p>'
+  +(at.length?'<ul style="margin:0 0 8px;padding-left:18px">'+at.map(fila).join("")+'</ul><div class="pbtn"><button type="button" class="p" id="rLlevar">Llevarles los cambios ('+at.length+')</button></div><p class="hint" style="margin:6px 0 0">Siguen revisadas, y su Word se reemplaza en «Listas para imprimir».</p>':"")+'</div>';
+ (dec||p.firstElementChild).insertAdjacentHTML("afterend",h);
+ const bl=$("#rLlevar"); if(bl) bl.onclick=()=>{ if(revFrena()) return; llevarARevisadas(b,at); avisar("Listo: "+at.length+(at.length===1?" revisada tiene":" revisadas tienen")+" los cambios, y su Word nuevo va a «Listas para imprimir»."); pintarHojaRev(true); pintarPanelRev(); };
+}
 function aprobar(b,t,l,enSesion){
  if(wordFrena()) return;
  if(!esCompuDelCargo()){ avisoCargo(); return false; }
@@ -7864,6 +7940,7 @@ function aprobar(b,t,l,enSesion){
  const rc=runsComparar(b,t,l);
  l.revisada={v2:true,ver:b.base.ver,texto:textoDe(rc),fmt:firmaFormato(rc),fecha:hoy(),hora,t:ahora,quien:quienSoy(),cargo:ROL(),compu:COMP.compu,con:conDe(l),
   corregido:((enSesion&&SESION&&SESION.corr[l.id])||[]).map(c=>({etiqueta:c.etiqueta,antes:c.antes,despues:c.despues,alcance:c.alcance}))};
+ congelarRevision(b,t,l);
  const r=cargoReg(ROL()); r.leida=r.leida||{}; r.leida[b.id]={ver:b.base.ver,h:huellaBase(b),lote:l.id,fecha:hoy()}; r.mod=Math.max(ahora,(r.mod||0)+1);
  guardar(true);
  guardarCopiaEnR(b,t,l,"aprobada").then(x=>avisoCopia(x,"Revisada."));
@@ -8180,7 +8257,7 @@ function estadoMitad(b,t,l){
  if(l.estado==="revisada"){ const u=cambiosDespuesDeAprobar(b,t,l).slice(-1)[0];
   return {g:"volvio",et:"wa",txt:"Volvió por un cambio",det:!revisionCuenta(l)?"la revisión no salió de la computadora del cargo":u?u.q+" "+u.frase:""}; }
  /* en confección o en revisión: qué le falta, del lote y de la manzana (lo del barrio y la tanda va arriba) */
- const f=b.base.runs.length?armarRuns(b.base,ctxDe(b,t,l)).faltas.filter(x=>!x.flojo&&(x.alcance==="lote"||x.alcance==="mza")):[];
+ const f=b.base.runs.length?armarLote(b,t,l).faltas.filter(x=>!x.flojo&&(x.alcance==="lote"||x.alcance==="mza")):[];
  const por={}; f.forEach(x=>(por[x.alcance]=por[x.alcance]||[]).push(x.que));
  const nt=notarialTarde(t,l);
  const det=Object.entries(por).map(([a,qs])=>"falta "+ALC_FALTA[a]+": "+qs.slice(0,4).join("; ")+(qs.length>4?" y "+(qs.length-4)+" más":"")).concat(nt?[nt]:[]).join(" · ");
