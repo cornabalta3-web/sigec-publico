@@ -83,6 +83,9 @@ button.ch.borrar{color:var(--bad);border-color:transparent}
 .top .acc button.borrar{color:var(--bad)}
 /* los lotes de quien usa esta computadora (12/11/2026): una raya del color de la herramienta y «tuyo» */
 tr.fila.mio{background:color-mix(in srgb,var(--acc) 6%,transparent)}
+tr.fila.arevisar{background:color-mix(in srgb,#F5B83D 12%,transparent)}
+tr.fila.arevisar td:first-child{box-shadow:inset 4px 0 0 #F5B83D}
+.revisar-bt{width:auto;margin:4px 0 0 6px;padding:5px 14px;font-size:13px}
 tr.fila.mio td:first-child{box-shadow:inset 4px 0 0 var(--acc)}
 tbody tr.fila.mio:hover{background:var(--acc-s)}
 .tuyo{display:inline-block;font-size:11px;font-weight:700;color:var(--acc);border:1px solid var(--acc);border-radius:999px;padding:0 7px;margin-left:6px;vertical-align:1px;line-height:16px}
@@ -108,6 +111,7 @@ button:disabled:hover{border-color:var(--line)}
 .alerta b{display:block;margin-bottom:3px}
 .alerta.calma{border-left-color:var(--ok);background:var(--ok-bg);color:var(--ok)}
 .alerta.tibia{border-left-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
+.alerta.aviso-revisar{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .alerta.cel{border-left-color:var(--cel);background:var(--cel-bg);color:var(--cel)}
 .avisobox{background:var(--warn-bg);color:var(--warn);border-radius:9px;padding:10px 13px;margin:12px 0 4px;font-size:12.5px;line-height:1.45}
 #aviso{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:80;max-width:min(560px,92vw);
@@ -1430,7 +1434,7 @@ const CIVILES=[
  ["viudo","viudo","viuda"]
 ];
 /* el estado civil nace vacío: es manifestación de la parte y la herramienta sólo lo copia (10/11/2026) */
-function personaNueva(){ return {nombre:"",apellido:"",sexo:"",sexoManual:false,nacionalidad:"",nacimiento:"",dni:"",cuit:"",civil:"",conyuge:"",acred:""}; }
+function personaNueva(){ return {nombre:"",apellido:"",sexo:"",sexoManual:false,nacionalidad:"",nacimiento:"",dni:"",cuit:"",civil:"",conyuge:"",nupcias:"",acred:""}; }
 function nombreDe(p){ const n=String(p.nombre||"").trim(), a=may(String(p.apellido||"").trim()); return (n+" "+a).trim(); }
 /* sin sexo decidido no hay C.U.I.L. que derivar: sale como hueco, no con 20 (10/11/2026) */
 function sexoDe(p){ return p.sexoManual&&p.sexo ? p.sexo : deducirSexo(p.nombre); }
@@ -1451,17 +1455,24 @@ function nacionalidadDe(p){
  const auto=sexoDe(p)==="F"?"argentina":"argentino";
  return (!v||/^argentin[oa]$/i.test(v))?auto:v;
 }
-function civilDe(p){
+/* «cuando ponemos una sentencia, una partida de defunción, siempre adjuntamos la copia certificada … cuya copia certificada
+   por mí agrego a la presente, conste» (Baltasar, 20/11/2026). Desde el motor 3; las aprobadas antes siguen como se aprobaron. */
+const conCopia=(ac,motor)=>{ if(!ac||(motor||MOTOR_ACTUAL)<3||/copia certificada/i.test(ac)) return ac; return ac.replace(/[\s,;.]+$/,"")+", cuya copia certificada por mí agrego a la presente, conste"; };
+function civilDe(p,motor){
  const c=CIVILES.find(x=>x[0]===p.civil); if(!c) return "";
  const base=sexoDe(p)==="F"?c[2]:c[1];
- const con=String(p.conyuge||"").trim(), ac=String(p.acred||"").trim();
+ const con=String(p.conyuge||"").trim(), ac=conCopia(String(p.acred||"").trim(),motor);
  if(/^casado/.test(p.civil)) return base+con;
  if(p.civil==="conviviente") return base+String(p.conviviente||"").trim();
- if(p.civil==="divorciado") return base+(con?" de su cónyuge en primeras nupcias "+con:"")+(ac?", conforme acredita con "+ac:"");
- if(p.civil==="viudo") return base+(con?" de "+con:"")+(ac?", conforme acredita con "+ac:"");
+ /* en qué nupcias (Baltasar, 20/11/2026: «cuando ponemos divorciada o viuda, tenemos que poner en qué nupcias») */
+ const nup=NUPCIAS.includes(p.nupcias)?p.nupcias:"primeras", m3=(motor||MOTOR_ACTUAL)>=3;
+ if(p.civil==="divorciado") return base+(con?" de su cónyuge en "+(m3?nup:"primeras")+" nupcias "+con:"")+(ac?", conforme acredita con "+ac:"");
+ if(p.civil==="viudo") return base+(con?(m3?" de su cónyuge en "+nup+" nupcias ":" de ")+con:"")+(ac?", conforme acredita con "+ac:"");
  return base;
 }
 const pideAcred=p=>p.civil==="divorciado"||p.civil==="viudo";
+const NUPCIAS=["primeras","segundas","terceras"];
+const nupciasSel=(p,attr,dis)=>'<div><label>En qué nupcias</label><select class="inp" '+attr+'="nupcias"'+(dis?" disabled":"")+'>'+NUPCIAS.map(n=>'<option value="'+n+'"'+((NUPCIAS.includes(p.nupcias)?p.nupcias:"primeras")===n?" selected":"")+'>'+n+' nupcias</option>').join("")+'</select></div>';
 /* el conviviente sin nombre es una falta, salvo que los dos adjudicatarios sean convivientes entre sí */
 const faltaConviviente=(l,p)=>p.civil==="conviviente"&&!(l.convivientes&&!l.conyuges&&(l.adj||[]).length===2)&&!String(p.conviviente||"").trim();
 function conc(l){
@@ -1660,6 +1671,34 @@ function copiasEnPrincipal(out,ctx){
  }
  return r;
 }
+/* La principal en las demás, también donde la base lo trae escrito a mano (Baltasar, 20/11/2026: «todas tienen que decir
+   que corren agregadas a la 130, donde dice que corren agregadas a la presente»). La base se pegó de una escritura que
+   decía «cuyas copias certificadas agrego a la presente» (o «corren agregadas a la presente»), sin marcar: en las demás de
+   una tanda con principal, esa frase pasa a citarla. Sólo las copias de los que firman por la comuna, de cómo acreditan el
+   cargo y del marco —antes de la resolución individual—; las de los adjudicatarios, la de la resolución individual
+   («agrego a la presente escritura») y la del notarial quedan. Se arma al mostrar y al bajar el Word, como el número de la
+   principal: no entra en lo que se compara con lo aprobado (ctx.sinCita), así que no tumba ninguna revisión. */
+const CITA_FRASE=/(?:corren\s+agregadas|agrego)\s+a\s+la\s+presente(?!\s+escritura)/gi;
+const CITA_ANTES=/cuyas\s+copias\s+certificadas\s+(?:por\s+m[ií]\s+)?$/i; /* en plural: la de la sentencia («cuya copia») no */
+function citaEnLasDemas(out,ctx){
+ const pr=principalCtx(ctx); if(!pr||pr.es||ctx.sinCita) return out;
+ /* el comparendo cambiado «sólo en esta escritura» viene con kp, no con k (20/11/2026) */
+ const iAdj=out.findIndex(x=>(x.k||x.kp)==="ADJUDICATARIOS"), iInt=out.findIndex(x=>!x.k&&!x.kp&&/INTERVENCIÓN:/.test(x.t));
+ let fin=out.findIndex(x=>x.k==="RESOLUCION"||(!x.k&&/DICEN:/.test(x.t))); if(fin<0) fin=out.length;
+ const nro=pr.nro?numeroEscritura(pr.nro):"*****", fe=fechaLarga(String(pr.l.fechaActo||(ctx.t&&ctx.t.fechaFirma)||""))||"*****";
+ const cita="corren agregadas a la Escritura número "+nro+", Sección A, del "+fe+" del presente protocolo de mi titularidad";
+ return out.map((x,i)=>{
+  if(x.k||x.kp||x.hueco||x.pend||i>fin) return x;
+  if(iAdj>=0&&i>iAdj&&(iInt<0||i<iInt)) return x;
+  const desde=i===iInt?x.t.indexOf("INTERVENCIÓN:"):0, hasta=i===fin?x.t.search(/DICEN:/):x.t.length;
+  let ant=""; for(let j=i-1;j>=0&&!out[j].k&&!out[j].kp&&!out[j].hueco&&ant.length<120;j--) ant=out[j].t+ant;
+  let hubo=false;
+  const t=x.t.replace(CITA_FRASE,(m,pos)=>{ if(pos<desde||pos>=hasta||!CITA_ANTES.test(ant+x.t.slice(0,pos))) return m; hubo=true; return cita; });
+  return hubo?Object.assign({},x,{t,cita:true}):x;
+ });
+}
+/* qué cita de la principal lleva la minuta de este lote: si cambia, el Word de «Listas para imprimir» se rehace */
+const citaPrincipalDe=(t,l)=>{ const pr=principalCtx({t,l}); return pr&&!pr.es?pr.l.id+"|"+pr.nro+"|"+String(pr.l.fechaActo||(t&&t.fechaFirma)||""):""; };
 function domicilioRuns(ctx,entrada){
  const r=[], l=ctx.l;
  /* «con domicilio en el Lote …» (Baltasar, 18/11/2026: «que diga con domicilio en el lote y no en lote») */
@@ -1678,9 +1717,16 @@ function domicilioRuns(ctx,entrada){
    adjudicatario, domiciliado en el Lote 1 Manzana 1 y domiciliado en el Lote 1 Manzana 1»). Es el del lote, el mismo
    para todos: con dos o más adjudicatarios va al final, «ambos (todos) con domicilio en …», sean cónyuges o no. Las
    revisadas antes de este cambio siguen como se aprobaron (MOTOR 1), hasta que se les lleven los cambios. */
+/* El motor: 1, el domicilio en cada adjudicatario; 2, una sola vez (20/11/2026); 3, la copia certificada de la sentencia
+   o la partida (20/11/2026). Una revisada se arma con el motor con que se aprobó (cong.motor). */
+const MOTOR_ACTUAL=3;
 let MOTOR_FORZADO=null;
+/* el número de escritura como salía antes del 20/11/2026 (minúscula, con el formato de la base): para comparar con lo ya impreso */
+let NRO_VIEJO=false;
+function conNroViejo(f){ const a=NRO_VIEJO; NRO_VIEJO=true; try{ return f(); } finally{ NRO_VIEJO=a; } }
+const igualImpresa=(r,imp)=>textoDe(r)===textoDe(imp.runs)&&firmaFormato(r)===firmaFormato(imp.runs);
 function adjudicatariosRuns(ctx){
- const l=ctx.l, c=ctx.c, r=[], unaVez=(MOTOR_FORZADO||l.__motor||2)>=2&&c.n>=2&&!c.conyuges&&!c.convivientes;
+ const l=ctx.l, c=ctx.c, r=[], motor=MOTOR_FORZADO||l.__motor||MOTOR_ACTUAL, unaVez=motor>=2&&c.n>=2&&!c.conyuges&&!c.convivientes;
  if(!l.adj||!l.adj.length) return null;
  r.push(T((c.conyuges?"los cónyuges en "+(l.nupcias||"primeras")+" nupcias":c.trato)+" "));
  l.adj.forEach((p,i)=>{
@@ -1702,7 +1748,7 @@ function adjudicatariosRuns(ctx){
   else if(cuitOtroSexo(p)) r.push(H("el sexo de "+nm+": el C.U.I.L. es el de "+(s==="F"?"un varón":"una mujer")+" y el nombre, de "+(s==="F"?"mujer":"varón")+"; tocá Varón o Mujer, como dice el DNI"));
   if(!c.conyuges&&!c.convivientes){
    /* el estado civil no viene puesto: sin elegir, o casado sin el cónyuge, es una falta (10/11/2026) */
-   const cv=civilDe(p);
+   const cv=civilDe(p,motor);
    r.push(T(", quien manifiesta ser de estado civil "+cv));
    if(!cv) r.push(H("el estado civil de "+(nm||"el adjudicatario")));
    else if(/^casado/.test(p.civil)&&!String(p.conyuge||"").trim()) r.push(H("el nombre del cónyuge de "+(nm||"el adjudicatario")));
@@ -1795,7 +1841,7 @@ const CAT=[
  {k:"CORRESPONDE",r:"El corresponde — es el estudio de título de la manzana",a:"mza",campo:"corresponde",tipo:"largo",render:correspondeRuns},
  {k:"CORRESPONDE_MAT",r:"Matrícula del corresponde",a:"mza",campo:"correspondeMat",tipo:"puntos",render:ctx=>o(mz(ctx,"correspondeMat"))},
  /* del lote */
- {k:"NRO_ESCRITURA",r:"Número de escritura",a:"lote",campo:"nroEscritura",flojo:true,render:ctx=>numeroEscritura(lot(ctx,"nroEscritura"))},
+ {k:"NRO_ESCRITURA",r:"Número de escritura",a:"lote",campo:"nroEscritura",flojo:true,render:ctx=>{ const v=numeroEscritura(lot(ctx,"nroEscritura")); return v==null?null:NRO_VIEJO?v:[{t:may(v),b:true}]; }},
  {k:"ESCRIBANA",r:"Escribana que autoriza",a:"lote",campo:"escribana",render:ctx=>lot(ctx,"escribana")||"General"},
  {k:"ADJUDICATARIOS",r:"Los adjudicatarios, completos",a:"lote",render:adjudicatariosRuns},
  {k:"NOMBRES",r:"Sólo los nombres de los adjudicatarios",a:"lote",render:ctx=>o(listaNombres(ctx.l.adj))},
@@ -1878,6 +1924,9 @@ function comerCorriente(runs,meter){
    datos y la comuna en mayúscula, negrita y subrayado, una vez; y la comuna en negrita en el
    resto del texto de la base. Sobre el texto plano: lo que ya tiene formato no se toca, así la
    base de ejemplo, que ya lo trae, sale igual. */
+/* sobre un tramo de un dato cambiado sólo en esta escritura (trozo), el formato que se pone al armar va también en
+   fb/fu, que es lo que cuenta para comparar con lo aprobado (20/11/2026) */
+const conFmt=(x,o)=>Object.assign({},x,o,x.trozo?{fb:"b" in o?o.b:x.fb,fu:"u" in o?o.u:x.fu}:{});
 function formatoComuna(runs,ctx){
  const firm=partirFirmantes(dato(ctx,"firmantes"));
  const ente=dato(ctx,"ente");
@@ -1896,7 +1945,7 @@ function formatoComuna(runs,ctx){
  /* comparendo: de «COMPARECEN:» a la primera escritura madre */
  const iC=out.findIndex(x=>/COMPARECEN:/.test(x.t));
  if(iC>=0&&firm.length){ const f=tramo(iC), nuevo=[];
-  out.forEach((x,i)=>{ if(i>iC&&i<f&&plano(x)) partir({...x,t:caso(x.t)},firm,(s,y)=>({...y,t:s,b:true}),false).forEach(z=>nuevo.push(z)); else nuevo.push(x); });
+  out.forEach((x,i)=>{ if(i>iC&&i<f&&plano(x)) partir({...x,t:caso(x.t)},firm,(s,y)=>conFmt(y,{t:s,b:true}),false).forEach(z=>nuevo.push(z)); else nuevo.push(x); });
   out=nuevo; }
  /* acreditación: de los firmantes de la intervención a la escritura madre siguiente */
  const iI=out.findIndex(x=>/INTERVENCIÓN:/.test(x.t));
@@ -1908,7 +1957,7 @@ function formatoComuna(runs,ctx){
    if(!(i>iF&&i<f&&plano(x))){ nuevo.push(x); return; }
    const y={...x,t:caso(x.t)};
    if(hecho||!ente){ nuevo.push(y); return; }
-   const ps=partir(y,[ente],(s,z)=>({...z,t:may(s),b:true,u:true}),true);
+   const ps=partir(y,[ente],(s,z)=>conFmt(z,{t:may(s),b:true,u:true}),true);
    if(ps.length>1||ps[0].b) hecho=true;
    ps.forEach(z=>nuevo.push(z));
   });
@@ -1916,7 +1965,7 @@ function formatoComuna(runs,ctx){
  /* el resto del texto no lleva formato: la comuna va una sola vez (13/10/2026) /*ES13*/
  /* y se apaga al armar, no sólo al abrir: una base pegada de un Word, o completada en la sesión,
     puede traer la comuna en negrita; la de la intervención, en negrita y subrayada, queda */
- if(ente) out=out.map(x=>x.b&&!x.u&&!x.hueco&&sinT(x.t)===sinT(ente)?{...x,b:false}:x);
+ if(ente) out=out.map(x=>x.b&&!x.u&&!x.hueco&&sinT(x.t)===sinT(ente)?conFmt(x,{b:false}):x);
  return out;
 }
 /* Devuelve {runs, faltas, avisos}. Las faltas son lo que la plantilla pide y no está: habla
@@ -1934,7 +1983,7 @@ function formatoEscribana(runs){
   const i=x.b?-1:t.indexOf(ADJ);
   if(i<0){ out.push({...x,t}); return; }
   if(i>0) out.push({...x,t:t.slice(0,i)});
-  out.push({...x,t:ADJ,b:true});
+  out.push(conFmt(x,{t:ADJ,b:true}));
   if(i+ADJ.length<t.length) out.push({...x,t:t.slice(i+ADJ.length)});
  });
  return out;
@@ -2097,6 +2146,35 @@ function htmlPropio(bt,t){
  tk.forEach((x,i)=>{ if(en[i]&&!ab){ h+='<span class="propio">'; ab=true; } else if(!en[i]&&ab){ h+='</span>'; ab=false; } h+=esc(x); });
  return h+(ab?'</span>':'');
 }
+/* Un dato de varios tramos cambiado sólo en esta escritura conserva su formato (20/11/2026: «el nombre lo veo sin
+   negrita cuando lo descargo»): el comparendo con los nombres en negrita y subrayado, el corresponde con la matrícula
+   en negrita. Antes salía entero con el formato del editable de la base, casi siempre sin nada. Lo que no cambió
+   sigue con el suyo; lo nuevo toma el de lo que reemplaza, o el de la palabra de antes. nv: lo cambiado, en violeta. */
+function piezasDato(def,ctx,run){
+ let r=null; try{ r=def.render(ctx,run); }catch(e){ r=null; }
+ if(r==null) return null;
+ if(typeof r==="string") return [{t:r,b:!!run.b,u:!!run.u}];
+ return r.filter(x=>!x.hueco).map(x=>({t:x.t,b:x.b!=null?!!x.b:!!run.b,u:x.u!=null?!!x.u:!!run.u}));
+}
+function trozosPropio(piezas,nuevo){
+ const nv=String(nuevo==null?"":nuevo); if(!nv.trim()||!piezas||!piezas.length) return null;
+ const fa=[]; piezas.forEach(p=>{ const f=(p.b?1:0)|(p.u?2:0); for(let i=0;i<p.t.length;i++) fa.push(f); }); if(!fa.length) return null;
+ const TK=/[\p{L}\p{N}]+|\s+|[^\p{L}\p{N}\s]/gu, A=piezas.map(p=>p.t).join("").match(TK)||[], B=nv.match(TK)||[], ia=[]; let k=0; A.forEach(t=>{ ia.push(k); k+=t.length; });
+ const ops=A.length+B.length<6000?difPalabras(A,B,600):null; if(!ops) return null;
+ const fb=[], cb=[]; let ult=fa[0], marcaSig=false;
+ for(let i=0;i<ops.length;){
+  const o=ops[i];
+  if(o.op==="="){ const t=B[o.b], m=marcaSig&&/\S/.test(t); for(let c=0;c<t.length;c++){ fb.push(fa[ia[o.a]+c]); cb.push(m); } if(m) marcaSig=false; ult=fb[fb.length-1]; i++; continue; }
+  let j=i, borr=null; const mas=[]; while(j<ops.length&&ops[j].op!=="="){ if(ops[j].op==="-"){ if(borr==null) borr=fa[ia[ops[j].a]]; } else mas.push(ops[j]); j++; }
+  const f=borr!=null?borr:ult;
+  mas.forEach(x=>{ const t=B[x.b]; for(let c=0;c<t.length;c++){ fb.push(f); cb.push(true); } });
+  if(!mas.length) marcaSig=true; /* sólo se sacó: se marca la palabra de después, como htmlPropio */
+  i=j;
+ }
+ if(marcaSig) for(let i=cb.length-1;i>=0&&/\S/.test(nv[i]);i--) cb[i]=true;
+ const out=[]; for(let i=0;i<fb.length;i++){ const u=out[out.length-1]; if(u&&u.f===fb[i]&&u.nv===cb[i]) u.t+=nv[i]; else out.push({t:nv[i],f:fb[i],nv:cb[i]}); }
+ return out.map(x=>({t:x.t,b:!!(x.f&1),u:!!(x.f&2),nv:x.nv}));
+}
 function armarRuns(base,ctx){
  const out=[], faltas=[], vistas=new Set();
  ctx.supAparte=(base.runs||[]).some(r=>r.k==="SUPERFICIE");
@@ -2110,7 +2188,9 @@ function armarRuns(base,ctx){
   /* un dato del lote también puede tener su texto cambiado en esta escritura: lo deja la hoja como Word (19/11/2026) */
   const dl=!datoPropiable(run.k)&&def.a==="lote"&&!SIN_REVISAR_K.has(run.k)&&Array.isArray(ctx.l&&ctx.l.textoPropio)&&ctx.l.textoPropio.some(x=>x&&x.k===run.k&&x.bi===run.bi);
   const dp=datoPropiable(run.k)||dl, dice=dp?textoDatoRun(def,ctx,run):null, od=dp?propioDatoDe(ctx.l,run.k,run.bi,dice):null;
-  if(od){ out.push({t:od.nuevo,b:!!run.b,u:!!run.u,bi:run.bi,wbi:run.bi,bt:dice,propio:true,kp:run.k}); return; }
+  if(od){ const tz=trozosPropio(piezasDato(def,ctx,run),od.nuevo);
+   if(tz){ tz.forEach(z=>out.push({t:z.t,b:z.b,u:z.u,nv:z.nv,trozo:true,fb:!!run.b,fu:!!run.u,bi:run.bi,wbi:run.bi,bt:dice,propio:true,kp:run.k})); return; }
+   out.push({t:od.nuevo,b:!!run.b,u:!!run.u,bi:run.bi,wbi:run.bi,bt:dice,propio:true,kp:run.k}); return; }
   const lugar=Object.assign(dp&&!dl?{bi:run.bi,bt:dice}:{},{wbi:run.bi});
   let r=null;
   try{ r=def.render(ctx,run); }catch(e){ r=null; }
@@ -2127,7 +2207,9 @@ function armarRuns(base,ctx){
    /* un cambio hecho en este lote que dejó algo con forma de hueco es del lote, no de la base (revisión del 12/11/2026) */
    if(hl.length) falta("el texto que se cambió en este lote tiene "+(hl.length===1?"un hueco":hl.length+" huecos")+" ("+ej(hl)+"): corregilo en la escritura del lote","lote","HUECO_LOTE"); }
  const cc=clavesDe(base).includes("CORRESPONDE")?partesCorresponde(mz(ctx,corrCampo(ctx.l)),ctx.l):null;
- return {runs:formatoComuna(formatoEscribana(sinTitularidad(copiasEnPrincipal(out,ctx),ctx)),ctx),faltas,avisos:(cc?avisosCorresponde(cc,ctx.l,ctx.datos||{}):[]).concat(clavesDe(base).includes("DESCRIPCION")?avisosDescripcion(ctx.l):[],avisosResolucion(base,ctx))};
+ const listos=formatoComuna(formatoEscribana(sinTitularidad(copiasEnPrincipal(citaEnLasDemas(out,ctx),ctx),ctx)),ctx);
+ { const pr=principalCtx(ctx); if(pr&&!pr.es&&!pr.nro&&listos.some(x=>x.cita)) falta("el número de la escritura principal ("+loteCorto(pr.l)+"), que todavía no tiene","barrio","ESC_MADRE",true); }
+ return {runs:listos,faltas,avisos:(cc?avisosCorresponde(cc,ctx.l,ctx.datos||{}):[]).concat(clavesDe(base).includes("DESCRIPCION")?avisosDescripcion(ctx.l):[],avisosResolucion(base,ctx))};
 }
 /* La descripción es la del inmueble que se transfiere: si la designación que trae es la de otro
    lote o de otra manzana —la del vecino, pegada de otra carpeta—, se dice, como con el
@@ -4713,7 +4795,7 @@ function cambioTrasRevision0(b,t,l){
  if(l.revisada.v2){ if(!b.base.runs.length) return null; const rc=runsComparar(b,t,l), tx=textoDe(rc), fm=firmaFormato(rc);
   if(tx===l.revisada.texto&&(!l.revisada.fmt||fm===l.revisada.fmt)) return null;
   if(mismoQueAprobado(t,l,tx,fm)) return null; /* el número y la fecha de la principal no cuentan (20/11/2026) */
-  if(!congeladaRev(l)&&conMotor1(()=>{ const r1=runsComparar(b,t,l); return mismoQueAprobado(t,l,textoDe(r1),firmaFormato(r1)); })) return null; /* aprobada con el domicilio de antes */
+  if(!congeladaRev(l)&&motorAnterior(()=>{ const r1=runsComparar(b,t,l); return mismoQueAprobado(t,l,textoDe(r1),firmaFormato(r1)); })) return null; /* aprobada con un motor anterior */
   return l.revisada.ver<b.base.ver?"base":"texto"; }
  if(l.revisada.ver<b.base.ver) return "base";
  if(l.revisada.texto&&b.base.runs.length&&textoDe(armarRuns(b.base,ctxDe(b,t,l)).runs)!==l.revisada.texto) return "texto";
@@ -4805,9 +4887,10 @@ function pintarTablero0(){
     lo suyo está arriba, en «Para revisar con vos» y «Tu mitad» (Baltasar, 14/11/2026: «a la Escribana General sacale
     eso del principio que aparecía para los auxiliares, que te hacía perder»). Se despliega con un toque, y
     queda como la dejó en esta computadora. */
- if(esEscribana()){ const ab=lsLeer("sigec_sociales_todos")==="1";
-  h+='<details class="todos-esc"'+(ab?" open":"")+'><summary class="st" style="cursor:pointer">Todos los barrios y lotes <span class="hint" style="font-weight:400">· lo de los auxiliares</span></summary>'+DB.barrios.map(bloqueBarrio).join("")+'</details>'; }
- else h+='<h3 class="st">Todos los barrios y localidades</h3>'+DB.barrios.map(bloqueBarrio).join("");
+ /* Desde el 20/11/2026 la escribana ve la misma lista que los auxiliares, entera, con «Revisar» en lo suyo (Baltasar:
+    «que entre a cada lote como está hoy, que sea fácilmente reconocible como tenemos nosotros, y que haya un botón que
+    diga revisar, porque hoy te re perdés»). «Para revisar con vos», «Empezar con …» y «Tu mitad» se sacaron. */
+ h+='<h3 class="st">Todos los barrios y localidades</h3>'+DB.barrios.map(bloqueBarrio).join("");
  v.innerHTML=h+protocoloHtml();
  const te=$("#v-tablero details.todos-esc"); if(te) te.addEventListener("toggle",()=>lsPoner("sigec_sociales_todos",te.open?"1":""));
  /* El último cambio en cada lote, no sólo en el barrio (Baltasar, 04/11/2026): en todas las
@@ -4905,11 +4988,11 @@ function bloqueTanda(b,t){
  const rep=lotesPorExpediente();
  return h+repartoHtml(t)+'<div class="tabla"><table><thead><tr><th>Adjudicatarios</th><th>Lote</th><th>Manzana</th><th>Responsable</th><th>Escribana</th><th>Estado</th></tr></thead><tbody>'
   +filasPorPersona(b,t,ordenLotes(t.lotes),l=>{ const e=estadoLote(b,t,l);
-   const nt=notarialTarde(t,l), dup=repetidoDe(l,rep), fp=fechaPropiaDistinta(t,l), mio=esMio(l);
-   return '<tr class="fila'+(mio?' mio':'')+'" data-acc="lote" data-b="'+b.id+'" data-l="'+l.id+'" tabindex="0" title="Abrir el lote"><td class="nom">'+esc(nombreLote(l))+(String(l.nroEscritura||"").trim()?' <span class="nro-et" title="Número de escritura">Esc. N° '+esc(String(l.nroEscritura).trim())+'</span>':'')+(t.principal===l.id?' <span class="principal-et">★ principal</span>':'')+'<div class="chica">Expte. '+esc(l.expediente||"sin número")+(ultimoCambio(l)?' · último cambio: '+ultimoCambio(l):"")+'</div>'+(e.det?'<div class="obsx">'+esc(e.det)+'</div>':"")+(nt?'<div class="obsx tarde">'+esc(nt)+'</div>':"")+(fp?'<div class="obsx tarde">'+esc(fp)+': si firma con la tanda, abrí el lote y tocá «Que firme con la tanda»</div>':"")+(dup?'<div class="obsx tarde">'+esc(dup)+'</div>':"")+'</td>'
+   const nt=notarialTarde(t,l), dup=repetidoDe(l,rep), fp=fechaPropiaDistinta(t,l), mio=esMio(l), pr=paraRevisar(b,t,l);
+   return '<tr class="fila'+(mio?' mio':'')+(pr?' arevisar':'')+'" data-acc="lote" data-b="'+b.id+'" data-l="'+l.id+'" tabindex="0" title="Abrir el lote"><td class="nom">'+esc(nombreLote(l))+(String(l.nroEscritura||"").trim()?' <span class="nro-et" title="Número de escritura">Esc. N° '+esc(String(l.nroEscritura).trim())+'</span>':'')+(t.principal===l.id?' <span class="principal-et">★ principal</span>':'')+'<div class="chica">Expte. '+esc(l.expediente||"sin número")+(ultimoCambio(l)?' · último cambio: '+ultimoCambio(l):"")+'</div>'+(e.det?'<div class="obsx">'+esc(e.det)+'</div>':"")+(nt?'<div class="obsx tarde">'+esc(nt)+'</div>':"")+(fp?'<div class="obsx tarde">'+esc(fp)+': si firma con la tanda, abrí el lote y tocá «Que firme con la tanda»</div>':"")+(dup?'<div class="obsx tarde">'+esc(dup)+'</div>':"")+'</td>'
     +'<td class="lm">'+esc(l.lote||"?")+'</td><td class="lm">'+esc(l.mza||"?")+'</td><td class="lm"><input class="mini resp" list="dlResp" data-b="'+b.id+'" data-l="'+l.id+'" value="'+esc(l.responsable||"")+'" placeholder="sin designar" aria-label="Responsable del lote '+esc(l.lote||"")+'"></td>'
     +'<td class="lm"><select class="mini esc" data-b="'+b.id+'" data-l="'+l.id+'" aria-label="Escribana que revisa el lote '+esc(l.lote||"")+'"'+((l.estado==="firmada"||l.estado==="inscripta")&&!ADMIN()?" disabled":"")+'>'+[["General","titular"],["Sustituta","sustituta"]].map(([k,n])=>'<option value="'+k+'"'+((l.escribana||"General")===k?" selected":"")+'>'+esc(nombresEscribanas()[n]||k)+'</option>').join("")+'</select></td>'
-    +'<td><span class="et '+e.et+'">'+esc(e.txt)+'</span></td>'
+    +'<td><span class="et '+e.et+'">'+esc(e.txt)+'</span>'+(pr?' <button type="button" class="p revisar-bt" data-acc="revisar" data-b="'+b.id+'" data-l="'+l.id+'">Revisar</button>':"")+'</td>'
     +'</tr>'; })
   +'</tbody></table></div></div>';
 }
@@ -4962,6 +5045,7 @@ function accionTablero(acc,bid,tid,lid,el){
  if(acc==="gruposTodos"){ const abre=el.dataset.modo==="abrir", caja=el.closest(".tanda"); if(caja) caja.querySelectorAll(".grupo-bt").forEach(bt=>{ if((bt.getAttribute("aria-expanded")==="true")!==abre) accionTablero("grupo",null,null,null,bt); }); return; }
  const b=bDe(bid);
  if(acc==="sesion"){ empezarRevision(el.dataset.con); return; }
+ if(acc==="revisar"){ const u=b&&ubicar(b,lid); if(u) revisarUno(b,u.l); return; }
  if(acc==="cargo"){ tomarCargo(ROL()); return; }
  if(acc==="raiz"){ elegirRaiz(); return; }
  if(acc==="base") ir("base",{b:bid});
@@ -5787,12 +5871,16 @@ function pintarLoteSolo(){
  const bW=$("#bWord"); if(bW) bW.onclick=()=>descargarWord(b,t,l);
  const bM=$("#bMas"); if(bM) bM.onclick=()=>{ const m=$("#masAcc"), abre=m.hidden; m.hidden=!abre; bM.setAttribute("aria-expanded",abre?"true":"false"); bM.textContent=abre?"Más ▴":"Más ▾"; };
  const bPC=$("#bARevision"); if(bPC) bPC.onclick=()=>pasarAControlar(b,t,l);
+ const bRB=$("#bRevisarBarra"); if(bRB) bRB.onclick=()=>revisarUno(b,l);
  const bBL=$("#bBorrarLote"); if(bBL) bBL.onclick=()=>borrarLote(b,t,l);
  const pide=new Set(camposQuePide(b.base,"lote"));
  const claves=new Set(clavesDe(b.base));
  /* hayBase ya está, de la barra */
  const congelada=l.estado==="firmada"||l.estado==="inscripta", bloq=congelada&&!ADMIN();
  let h='<h2 class="pt">Minuta de '+esc(nombreLote(l))+'</h2><p class="ps">'+esc(b.nombre)+' · <span id="psLote">'+esc(loteCorto(l))+'</span>'+(t.resolucion?' · Resolución '+esc(t.resolucion):"")+(partes(t.fechaFirma)?' · firma el '+esc(t.fechaFirma):"")+' · Expte. '+esc(l.expediente||"sin número")+(ultimoCambio(l)?' · último cambio: '+ultimoCambio(l):"")+'</p>';
+ if(paraRevisar(b,t,l)){ const p=l.propia, vuelve=l.estado!=="enRevision";
+  h+='<div class="alerta tibia aviso-revisar"><div style="flex:1 1 auto"><b>'+(vuelve?"Volvió por un cambio":"Lista para revisar con vos")+(String(l.responsable||"").trim()?' · la trae '+esc(l.responsable):"")+'</b>'
+   +(p&&p.fecha?'✓ '+esc(p.quien||"Quien la lleva")+' la revisó el '+esc(p.fecha):"")+'</div><button type="button" class="p" id="bRevisarAviso" style="width:auto">Revisar esta minuta</button></div>'; }
  if(congelada&&!bloq) h+='<div class="alerta"><b>Modo administrador</b>Se pueden cambiar los datos de este lote, pero la escritura '+(l.estado==="inscripta"?"inscripta":"firmada")+' queda como salió: lo que cambies acá no la toca. Para cambiar el texto, primero hay que desmarcar la firma.</div>';
  if(congelada) h+='<div class="alerta calma"><b>'+(l.estado==="inscripta"?"Inscripta":"Firmada"+(l.firmada&&l.firmada.fecha?" el "+esc(l.firmada.fecha):""))+'</b>La escritura quedó como salió: los cambios de la base no la tocan. Los datos se ven, no se editan.</div>';
  else if(!hayBase) h+='<div class="alerta tibia"><b>Todavía no tiene minuta base</b>Los datos se cargan igual y quedan guardados. La minuta se arma sola el día que exista la base.</div>';
@@ -5830,6 +5918,7 @@ function pintarLoteSolo(){
   +'<div class="pb" id="vivo"></div><div class="pb" id="faltasVivo" hidden></div></div>'
   +'<div class="apanel comova"><div class="ph">Cómo va</div><div class="pb" id="comova"></div></div></aside></div>';
  $("#v-lote").innerHTML=h;
+ const bRA=$("#bRevisarAviso"); if(bRA) bRA.onclick=()=>revisarUno(b,l);
  $$('.apanel.vivo [data-vista]').forEach(x=>x.onclick=()=>ponerVistaVivo(x.dataset.vista)); ponerVistaVivo(lsLeer("sigec_sociales_vista")||"esc");
  const bft=$("#bFechaTanda"); if(bft) bft.onclick=()=>{ l.fechaActo=""; guardar(true); pintarLote(); avisar("Firma con la tanda, el "+t.fechaFirma+"."+(impresaDistinta(b,t,l)?" Lo impreso decía otra fecha: hay que reimprimirla.":"")); };
  pintarAdjs(b,t,l,bloq);
@@ -5948,10 +6037,10 @@ function pintarAdjs(b,t,l,dis){
    +'<div class="g3"><div><label>Documento</label><input class="inp" data-p="dni" data-mask="dni" value="'+esc(p.dni)+'"'+(dis?" disabled":"")+'></div><div><label>C.U.I.T. / C.U.I.L.</label><input class="inp" data-p="cuit" data-mask="cuit" value="'+esc(p.cuit)+'" placeholder="'+esc(cuitDe(p.dni,s)||"sale del documento")+'"'+(dis?" disabled":"")+'><p class="eco'+(String(p.cuit||"").trim()&&!cuitValido(p.cuit)||cuitOtroSexo(p)?" mal":"")+'" data-ecocuit="'+i+'">'+esc(ecoCuit(p))+'</p></div><div><label>Nacionalidad</label><input class="inp" data-p="nacionalidad" value="'+esc(p.nacionalidad)+'" placeholder="'+(s==="F"?"argentina":"argentino")+'"'+(dis?" disabled":"")+'></div></div>'
    +'<div class="g3"><div><label>Estado civil</label><select class="inp'+(!dis&&!((l.conyuges||l.convivientes)&&l.adj.length===2)&&!CIVILES.some(c=>c[0]===p.civil)?" mal":"")+'" data-p="civil"'+(dis?" disabled":"")+'>'+(CIVILES.some(c=>c[0]===p.civil)?"":'<option value="" selected>— elegir —</option>')+CIVILES.map(c=>'<option value="'+c[0]+'"'+(p.civil===c[0]?" selected":"")+'>'+(s==="F"?c[2]:c[1]).replace(/ con $/,"").replace(/ y no encontrarse.*$/,"").replace(/ y encontrarse en /," en ")+'</option>').join("")+'</select></div>'
    +(p.civil==="conviviente"&&!(l.convivientes&&!l.conyuges&&l.adj.length===2)?'<div><label>Conviviente <i>nombre y apellido</i></label><input class="inp'+(!dis&&faltaConviviente(l,p)?" mal":"")+'" data-p="conviviente" value="'+esc(p.conviviente||"")+'"'+(dis?" disabled":"")+'><p class="eco" style="color:var(--warn)">Fórmula a confirmar con la escribana: «'+esc(s==="F"?"soltera":"soltero")+' y encontrarse en unión convivencial inscripta con …»</p></div>'
-   :'<div><label>Cónyuge <i>'+(p.civil==="divorciado"?"ex cónyuge":p.civil==="viudo"?"cónyuge fallecido":"si corresponde")+'</i></label><input class="inp'+(!dis&&/^casado/.test(p.civil)&&!l.conyuges&&!String(p.conyuge||"").trim()?" mal":"")+'" data-p="conyuge" value="'+esc(p.conyuge)+'"'+(dis?" disabled":"")+'></div>')
+   :'<div><label>'+(pideAcred(p)?"Ex cónyuge":"Cónyuge <i>si corresponde</i>")+'</label><input class="inp'+(!dis&&/^casado/.test(p.civil)&&!l.conyuges&&!String(p.conyuge||"").trim()?" mal":"")+'" data-p="conyuge" value="'+esc(p.conyuge)+'"'+(dis?" disabled":"")+'></div>'+(pideAcred(p)?nupciasSel(p,"data-p",dis):""))
    /* a lo ancho y crece mientras se escribe (Baltasar, 16/11/2026: «tiene que ser más grande o ampliarse a medida que
       se va escribiendo»): la sentencia de divorcio, con los autos y el juzgado, es un párrafo */
-   +'<div style="grid-column:1/-1"><label>Acredita con <i>'+(p.civil==="divorciado"?"— la sentencia":p.civil==="viudo"?"— la partida de defunción":"")+'</i></label><textarea class="inp crece'+(pideAcred(p)&&!String(p.acred||"").trim()?" mal":"")+'" data-p="acred" rows="2"'+(dis?" disabled":"")+'>'+esc(p.acred)+'</textarea></div></div></div>';
+   +'<div style="grid-column:1/-1"><label>Acredita con <i>'+(p.civil==="divorciado"?"— la sentencia":p.civil==="viudo"?"— la partida de defunción":"")+'</i></label><textarea class="inp crece'+(pideAcred(p)&&!String(p.acred||"").trim()?" mal":"")+'" data-p="acred" rows="2"'+(dis?" disabled":"")+'>'+esc(p.acred)+'</textarea><p class="eco">Sale «…, conforme acredita con <i>esto</i>, cuya copia certificada por mí agrego a la presente, conste».</p></div></div></div>';
  }).join("")
  +(dis?"":'<div class="pbtn"><button type="button" class="ch" id="bMasAdj">+ Otro adjudicatario</button>'
   +(l.adj.length===2?'<label style="margin:0;display:flex;gap:7px;align-items:center;text-transform:none;letter-spacing:0;font-size:13px"><input type="checkbox" id="conyuges"'+(l.conyuges?" checked":"")+'> son cónyuges entre sí</label>'
@@ -6007,7 +6096,7 @@ function ecoCampo(c,l,b,t){
    +(superficiesMal(v).length?"Dice «"+superficiesMal(v)[0]+"»: ¿es «superficie»? «Pasar los números a letras» lo corrige. ":"")
    +(traeSuperficie(v)?"":"No trae la superficie: en la matrícula viene al final («SUPERFICIE TOTAL …»). ")
    +(cif.length?"Tiene números en cifras ("+cif.slice(0,4).join(", ")+(cif.length>4?"…":"")+"): las medidas y la superficie van en letras (art. 54 L.O.N.).":""); }
- if(c==="nroEscritura"){ if(!v) return d.eco+" · "+libreTxt(b,t,l); const dup=mismoNroEn(b,t,l); return "sale «"+numeroEscritura(v)+"»"+(dup.length?" · Repetido: la N° "+v+" ya está tomada: "+dup.join("; ")+" · "+libreTxt(b,t,l):""); }
+ if(c==="nroEscritura"){ if(!v) return d.eco+" · "+libreTxt(b,t,l); const dup=mismoNroEn(b,t,l); return "sale «"+may(numeroEscritura(v))+"»"+(dup.length?" · Repetido: la N° "+v+" ya está tomada: "+dup.join("; ")+" · "+libreTxt(b,t,l):""); }
  if(c==="cuenta"&&v){ const n=soloDig(v).length; if(n!==12) return "tiene "+n+" números y la cuenta lleva doce: mirá el certificado"; }
  if(c==="expediente"&&v){ const n=soloDig(v).length, w=expedienteCompleto(v); if(n!==14) return "tiene "+n+" números y lleva catorce, con los ceros: "+(w?"al salir del campo se completa solo, "+w:"0435-001188/2025"); }
  if(c==="parc"&&!v&&l.lote&&/^\d+$/.test(l.lote)) return "del lote sale "+String(l.lote).padStart(3,"0")+": se completa al salir del campo";
@@ -6312,7 +6401,7 @@ function pintarVivo(b,t,l,runs){
  const vivas=clavesVivas(VIVO.c), alto=caja.scrollTop;
  caja.innerHTML='<p class="leyenda-vivo" aria-label="Qué es cada color"><span><i class="d"></i>dato de este lote</span><span><i class="p"></i>cambiado sólo en esta escritura</span><span><i class="v"></i>lo que estás escribiendo</span><span>sin marca: texto de la base</span></p><div class="escritura">'+runs.map(x=>{
   const al=x.k&&CAT_K[x.k]?CAT_K[x.k].a:"";
-  let h=x.hueco?'<span class="hueco" title="Falta: '+esc(x.hueco)+'">['+esc(x.hueco)+']</span>':x.propio&&!x.k?htmlPropio(x.bt,x.t):esc(x.t);
+  let h=x.hueco?'<span class="hueco" title="Falta: '+esc(x.hueco)+'">['+esc(x.hueco)+']</span>':x.propio&&!x.k?(x.trozo?(x.nv?'<span class="propio">'+esc(x.t)+'</span>':esc(x.t)):htmlPropio(x.bt,x.t)):esc(x.t);
   if(!x.hueco){ if(x.u) h="<u>"+h+"</u>"; if(x.b) h="<b>"+h+"</b>"; }
   const cls=x.k&&vivas.has(x.k)?"vv":(al==="lote"||al==="conc"||al==="mza")&&x.k!=="PENDIENTE"?"d":"";
   if(x.k&&x.bi!=null&&datoPropiable(x.k)) return '<span'+(cls?' class="'+cls+'"':"")+' data-kbi="'+x.bi+'" data-kk="'+esc(x.k)+'" title="'+esc(CAT_K[x.k].r)+': tocá para cambiarlo sólo en esta escritura">'+h+'</span>';
@@ -6424,6 +6513,7 @@ function principalLote(b,t,l){
  if(!b.base.runs.length) return "";
  const e=l.estado||"", cargo=CARGO_TXT[cargoDe(l)];
  if(!e||e==="observada") return '<button type="button" class="p" id="bARevision">'+(e==="observada"?"Lo resolví: pasar a controlar":"Pasar a controlar")+'</button>';
+ if(paraRevisar(b,t,l)) return '<button type="button" class="p" id="bRevisarBarra">Revisar esta minuta</button>';
  const txt=e==="enRevision"?"En control · "+cargo:e==="revisada"?"Revisada · "+cargo:e==="firmada"?"Firmada":e==="inscripta"?"Inscripta":"";
  return txt?'<span class="estado-lote">'+esc(txt)+'</span>':"";
 }
@@ -6593,7 +6683,7 @@ const COPIA=x=>JSON.parse(JSON.stringify(x==null?null:x));
 function congelarRevision(b,t,l){
  if(!l.revisada) return;
  const {lotes,hist,mod,modc,...tt}=t, {revisada,hist:h2,mod:m2,modc:mc2,firmada,desfirmada,copiasR,carpetaR,listaR,impresa,...ll}=l;
- l.revisada.cong={base:COPIA(b.base.runs),datos:COPIA(b.datos||{}),mzas:COPIA(b.manzanas||{}),tanda:COPIA(tt),lote:COPIA(ll),motor:2};
+ l.revisada.cong={base:COPIA(b.base.runs),datos:COPIA(b.datos||{}),mzas:COPIA(b.manzanas||{}),tanda:COPIA(tt),lote:COPIA(ll),motor:MOTOR_ACTUAL};
 }
 function fuenteRev(b,t,l){
  const c=l&&l.estado==="revisada"&&l.revisada&&l.revisada.cong; if(!c||!b||!t) return null;
@@ -6615,17 +6705,19 @@ function mismoQueAprobado(t,l,tx,fm){
 function congelarRevisadas(){
  let n=0; for(const b of DB.barrios||[]) for(const t of b.tandas||[]) for(const l of t.lotes||[]){
   if(l.estado!=="revisada"||!l.revisada||!l.revisada.v2||l.revisada.cong||!b.base||!b.base.runs||!b.base.runs.length) continue;
-  const rc=runsComparar(b,t,l); let motor=2;
-  if(!mismoQueAprobado(t,l,textoDe(rc),firmaFormato(rc))){ if(!conMotor1(()=>{ const r1=runsComparar(b,t,l); return mismoQueAprobado(t,l,textoDe(r1),firmaFormato(r1)); })) continue; motor=1; }
+  const rc=runsComparar(b,t,l); let motor=MOTOR_ACTUAL;
+  if(!mismoQueAprobado(t,l,textoDe(rc),firmaFormato(rc))){ motor=motorAnterior(()=>{ const r1=runsComparar(b,t,l); return mismoQueAprobado(t,l,textoDe(r1),firmaFormato(r1)); }); if(!motor) continue; }
   congelarRevision(b,t,l); l.revisada.cong.motor=motor; n++; }
  if(n) guardar(true); return n;
 }
 setTimeout(()=>{ try{ congelarRevisadas(); }catch(e){} },2500);
 /* una revisada a la que, después de aprobada, le cambió algo para todos que no le llegó */
-function conMotor1(f){ const a=MOTOR_FORZADO; MOTOR_FORZADO=1; try{ return f(); } finally{ MOTOR_FORZADO=a; } }
+function conMotor(n,f){ const a=MOTOR_FORZADO; MOTOR_FORZADO=n; try{ return f(); } finally{ MOTOR_FORZADO=a; } }
+/* el motor anterior con que esto da igual a lo aprobado (0 si ninguno) */
+function motorAnterior(f){ for(let n=MOTOR_ACTUAL-1;n>=1;n--) if(conMotor(n,f)) return n; return 0; }
 function atrasada(b,t,l){ if(!congeladaRev(l)) return false; const rc=runsComparar(b,t,l,true); if(mismoQueAprobado(t,l,textoDe(rc),firmaFormato(rc))) return false;
  /* si lo único distinto es cómo se escribe el domicilio (MOTOR 2), no quedó atrás */
- return !conMotor1(()=>{ const r1=runsComparar(b,t,l,true); return mismoQueAprobado(t,l,textoDe(r1),firmaFormato(r1)); }); }
+ return !motorAnterior(()=>{ const r1=runsComparar(b,t,l,true); return mismoQueAprobado(t,l,textoDe(r1),firmaFormato(r1)); }); }
 /* «antes» → «ahora», en pocas palabras: lo primero que es distinto entre dos textos */
 function difCorta(a,d){
  a=String(a||""); d=String(d||""); let p=0; while(p<a.length&&p<d.length&&a[p]===d[p]) p++;
@@ -6934,7 +7026,8 @@ const IMPRIME_TXT="[lo pone quien imprime]";
 function armadoRevision(b,t,l,comparar,vivo){
  if(!vivo){ const f=fuenteRev(b,t,l); if(f){ b=f.b; t=f.t; l=f.l; } }
  const tt=comparar?Object.assign({},t,{fechaFirma:""}):t;
- const a=armarRuns(b.base,ctxDe(b,tt,Object.assign({},l,{nroEscritura:"",fechaActo:""}))), runs=[];
+ const cx=ctxDe(b,tt,Object.assign({},l,{nroEscritura:"",fechaActo:""})); if(comparar) cx.sinCita=true;
+ const a=armarRuns(b.base,cx), runs=[];
  a.runs.forEach(x=>{ if(x.k&&SIN_REVISAR_K.has(x.k)){ const u=runs[runs.length-1]; if(!(u&&u.imprime&&u.k===x.k)) runs.push({t:IMPRIME_TXT,b:false,u:false,k:x.k,imprime:true}); } else runs.push(x); });
  a.runs=runs; return a;
 }
@@ -6942,7 +7035,7 @@ function runsRevision(b,t,l){ return armadoRevision(b,t,l,false).runs; }
 function runsComparar(b,t,l,vivo){ return armadoRevision(b,t,l,true,vivo).runs; }
 function textoRevision(b,t,l){ return textoDe(runsComparar(b,t,l)); }
 /* el formato también es de la escritura: la negrita y el subrayado, tramo por tramo */
-const firmaFormato=runs=>fundir(runs).map(x=>(x.b?"b":"")+(x.u?"u":"")+x.t.length).join("|");
+const firmaFormato=runs=>fundir(runs.map(x=>x.trozo?{t:x.t,b:x.fb,u:x.fu}:x)).map(x=>(x.b?"b":"")+(x.u?"u":"")+x.t.length).join("|");
 function faltasRevision(b,t,l){ return armadoRevision(b,t,l,false).faltas.filter(f=>!f.flojo&&!SIN_REVISAR_K.has(f.k)); }
 /* Los lugares que cambiaron, calculados sobre el texto que se compara, pasados al que se ve: van
    tramo a tramo; un tramo que se ve distinto (la fecha del notarial) se marca entero. */
@@ -7150,8 +7243,8 @@ function anotarImpresa(b,t,l){
 function impresaDistinta(b,t,l){ return memoTab("i",l,()=>impresaDistinta0(b,t,l)); }
 function impresaDistinta0(b,t,l){
  const imp=l.impresa; if(!imp||!Array.isArray(imp.runs)||!imp.runs.length||l.estado==="firmada"||l.estado==="inscripta"||!b.base.runs.length) return false;
- const r=fundir(armarLote(b,t,l).runs);
- return textoDe(r)!==textoDe(imp.runs)||firmaFormato(r)!==firmaFormato(imp.runs);
+ /* sin fundir antes: los tramos de un dato propio cuentan con el formato de antes (firmaFormato) */
+ return !igualImpresa(armarLote(b,t,l).runs,imp)&&!conNroViejo(()=>igualImpresa(armarLote(b,t,l).runs,imp));
 }
 function reimprimirHtml(b,t,l){
  let h="";
@@ -7170,7 +7263,7 @@ function datosFirmaHtml(l){
    que dice la minuta (si se firmó otro día, se corrige y se reimprime). Con datos que faltan, no. */
 function marcarFirmada(b,t,l){
  const fl=faltasAlImprimir(b,t,l), hoyR=fundir(fl.a.runs), imp=l.impresa&&Array.isArray(l.impresa.runs)&&l.impresa.runs.length?l.impresa:null;
- const distinta=!!imp&&(textoDe(hoyR)!==textoDe(imp.runs)||firmaFormato(hoyR)!==firmaFormato(imp.runs));
+ const distinta=!!imp&&!igualImpresa(fl.a.runs,imp)&&!conNroViejo(()=>igualImpresa(faltasAlImprimir(b,t,l).a.runs,imp));
  const abrir=()=>{
   const fechaHoy=l.fechaActo||t.fechaFirma||"";
   let dupVisto=null;
@@ -7242,7 +7335,7 @@ function lotesParaRevisar(con){
  const rol=ROL(), out=[];
  DB.barrios.forEach(b=>b.tandas.forEach(t=>t.lotes.forEach(l=>{
   if(cargoDe(l)!==rol) return;
-  const ok=con==="__cambios__"?necesitaVolver(b,t,l):(l.estado==="enRevision"&&mismoNombre(l.responsable,con));
+  const ok=con==="__cambios__"?necesitaVolver(b,t,l):con==="__todas__"?(l.estado==="enRevision"||necesitaVolver(b,t,l)):(l.estado==="enRevision"&&mismoNombre(l.responsable,con));
   if(ok) out.push({b,l});
  })));
  /* el mismo orden que la bandeja de donde se empieza: así la primera minuta es la de arriba de la pila */
@@ -7251,29 +7344,50 @@ function lotesParaRevisar(con){
 function empezarRevision(con){
  if(!ROL()||!CARGO_TXT[ROL()]){ avisoCargo(); return; }
  const ids=lotesParaRevisar(con);
- if(!ids.length){ avisar("No hay minutas para revisar"+(con==="__cambios__"?"":" con "+con)+"."); return; }
+ if(!ids.length){ avisar("No hay minutas para revisar"+(/^__/.test(con)?"":" con "+con)+"."); return; }
  SESION={con,ids,corr:{},hecho:{}}; irSesion(0);
 }
 /* Desde el lote, en la computadora del cargo: una revisión de un solo lote. */
+/* lo que la escribana de este cargo tiene para revisar desde esta computadora: lo que le pasaron a control y lo que
+   volvió por un cambio */
+const paraRevisar=(b,t,l)=>puedeRevisar()&&cargoDe(l)===ROL()&&(l.estado==="enRevision"||necesitaVolver(b,t,l));
 function revisarUno(b,l){ /* desde otra computadora también, para corregir: aprobar sigue siendo de la del cargo (20/11/2026) */ if(!ROL()||!CARGO_TXT[ROL()]){ avisoCargo(); return; } if(cargoDe(l)!==ROL()){ avisar("Este lote lo revisa la "+CARGO_TXT[cargoDe(l)]+".",true); return; }
  /* si el lote ya está en la revisión en curso, se vuelve a ella: no se pierde lo corregido */
  if(SESION){ const k=SESION.ids.findIndex(x=>x.b===b.id&&x.l===l.id); if(k>=0){ irSesion(k); return; } }
- SESION={con:(l.responsable||"").trim()||"__cambios__",ids:[{b:b.id,l:l.id}],corr:{},hecho:{},uno:true}; irSesion(0); }
+ /* primero las del mismo auxiliar, desde ésta; después las de los demás (grill del 20/11/2026: «la que sigue del mismo
+    auxiliar», porque se revisa con la persona sentada al lado) */
+ const ids=lotesParaRevisar("__todas__"), mismo=x=>{ const bb=bDe(x.b), u=bb&&ubicar(bb,x.l); return !!u&&mismoNombre(u.l.responsable||"",l.responsable||""); };
+ const suyas=ids.filter(mismo), otras=ids.filter(x=>!mismo(x)), k=suyas.findIndex(x=>x.l===l.id);
+ const orden=(k<0?[{b:b.id,l:l.id}].concat(suyas):suyas.slice(k).concat(suyas.slice(0,k))).concat(otras);
+ SESION={con:"__todas__",ids:orden,corr:{},hecho:{},desde:{b:b.id,l:l.id}}; irSesion(0); }
 /* «Ver la minuta entera» queda fijo (17/11/2026): se abre siempre entera, y si se elige «sólo lo que cambia»,
    eso queda guardado en esta computadora hasta que se vuelva a elegir la entera */
 /* desde el 18/11/2026 (Baltasar: «que siempre esté la minuta entera, como predeterminado») cada lote abre entero;
    «Ver sólo lo que cambia» vale para ese lote y no se recuerda */
 function enteraFija(){ return true; }
 function irSesion(i){ if(wordFrena()) return; const x=SESION.ids[i]; ir("revision",{b:x.b,l:x.l,i,ri:null,rk:null,entera:enteraFija()}); }
-function siguienteEnSesion(){ const i=VISTA.i||0; if(i<SESION.ids.length-1) irSesion(i+1); else terminarRevision(); }
+function siguienteEnSesion(){ const i=VISTA.i||0, n=SESION.ids.length;
+ const ubi=y=>{ const bb=bDe(y.b); return bb&&ubicar(bb,y.l); };
+ const falta=y=>{ const bb=bDe(y.b), u=bb&&ubicar(bb,y.l); return !!u&&!SESION.hecho[y.l]&&(u.l.estado==="enRevision"||necesitaVolver(bb,u.t,u.l)); };
+ for(let d=1;d<n;d++){ const k=(i+d)%n; if(!falta(SESION.ids[k])) continue;
+  /* terminadas las de un auxiliar, se pregunta antes de pasar a las de otro */
+  const ua=ubi(SESION.ids[i]), uk=ubi(SESION.ids[k]), ra=ua?String(ua.l.responsable||"").trim():"", rk=uk?String(uk.l.responsable||"").trim():"";
+  if(SESION.con==="__todas__"&&ra&&!mismoNombre(ra,rk)){
+   const quedan=SESION.ids.filter(falta).length;
+   preguntar("<b>Terminaste las de "+esc(ra)+".</b><br>"+(quedan===1?"Queda una":"Quedan "+quedan)+" para revisar"+(rk?", la próxima con "+esc(rk):"")+".",rk?"Seguir con "+rk:"Seguir",()=>{ setTimeout(()=>irSesion(k),0); },
+    '<p style="margin:10px 0 0"><button type="button" class="link" id="dlgALaLista">No, volver a la lista</button></p>');
+   const vl=$("#dlgALaLista"); if(vl) vl.onclick=()=>{ $("#dialogo").classList.remove("on"); setTimeout(terminarRevision,0); };
+   return; }
+  irSesion(k); return; }
+ terminarRevision(); }
 function terminarRevision(){
  if(wordFrena()) return;
  if(SESION){
   const hs=Object.values(SESION.hecho), rev=hs.filter(x=>x==="revisada").length, pen=hs.filter(x=>x==="pendiente").length;
   const cs=[].concat(...Object.values(SESION.corr)), porA={}; cs.forEach(c=>porA[c.alcance]=(porA[c.alcance]||0)+1);
-  if(!SESION.uno&&(rev||pen||cs.length)) avisar((SESION.con==="__cambios__"?"Cambios":"Con "+SESION.con)+": "+rev+" revisada"+(rev===1?"":"s")+" · "+pen+" pendiente"+(pen===1?"":"s")+" · "+cs.length+" correcci"+(cs.length===1?"ón":"ones")+" en el momento"+(cs.length?" ("+Object.entries(porA).map(([a,n])=>n+" "+ALC_TXT[a]).join(", ")+")":"")+".");
+  if(rev||pen||cs.length) avisar((SESION.con==="__cambios__"?"Cambios":SESION.con==="__todas__"?"Revisión":"Con "+SESION.con)+": "+rev+" revisada"+(rev===1?"":"s")+" · "+pen+" pendiente"+(pen===1?"":"s")+" · "+cs.length+" correcci"+(cs.length===1?"ón":"ones")+" en el momento"+(cs.length?" ("+Object.entries(porA).map(([a,n])=>n+" "+ALC_TXT[a]).join(", ")+")":"")+".");
  }
- const volver=SESION&&SESION.uno?SESION.ids[0]:null;
+ const volver=SESION&&SESION.ids.length===1&&SESION.desde;
  if(tGuardar) guardar(true);
  SESION=null; if(volver&&bDe(volver.b)) ir("lote",{b:volver.b,l:volver.l}); else ir("tablero");
 }
@@ -7296,10 +7410,10 @@ function hojaRevisionHtml(runs,o){
  let pos=0; const ps=runs.map((x,ri)=>{ const a=pos; pos+=x.t.length; return {x,ri,a,z:pos,al:alcanceRun(x)}; });
  const pieza=p=>{ const x=p.x; let h=esc(x.t);
   if(o.cambios&&o.cambios.length) h=cambiosEn(x.t,p.a,o.cambios);
-  else if(x.propio&&!x.k) h=htmlPropio(x.bt,x.t);
+  else if(x.propio&&!x.k) h=x.trozo?(x.nv?'<span class="propio">'+esc(x.t)+'</span>':esc(x.t)):htmlPropio(x.bt,x.t);
   /* lo sacado de varios tramos seguidos se marca una sola vez (19/11/2026: al borrar varios párrafos salía la marca
      en cada tramo) */
-  if(x.propio&&!x.k&&!x.t.trim()){ let j=p.ri-1; while(j>=0&&!runs[j].t.trim()&&!(runs[j].propio&&!runs[j].k)) j--; if(j>=0&&runs[j].propio&&!runs[j].k&&!runs[j].t.trim()) h=""; }
+  if(x.propio&&!x.k&&!x.trozo&&!x.t.trim()){ let j=p.ri-1; while(j>=0&&!runs[j].t.trim()&&!(runs[j].propio&&!runs[j].k)) j--; if(j>=0&&runs[j].propio&&!runs[j].k&&!runs[j].t.trim()) h=""; }
   if(x.u) h="<u>"+h+"</u>"; if(x.b) h="<b>"+h+"</b>";
   if(p.al==="imprime") return '<span class="imprime" data-ri="'+p.ri+'" tabindex="0" role="button" aria-label="Corregir: '+esc((CAT_K[x.k]||{}).r||"número y fecha")+'" title="Lo pone quien imprime; se puede cargar acá">lo pone quien imprime</span>';
   if(x.k==="PENDIENTE") return '<span class="hueco" title="'+esc(x.hueco||"")+'">'+h+'</span>';
@@ -7333,7 +7447,7 @@ function pintarRevision(){
  /* acá se llega por la sincronización (o por «ver entera»): si el texto no es el que tenía en
     pantalla, llegó de otra computadora mientras lo leía */
  notarAfuera(b,t,l,true);
- const titSes=SESION.uno?"Revisión de este lote"+(conDe(l)?", con "+conDe(l):""):cambios?"Volvieron por un cambio":"Revisión con "+SESION.con;
+ const titSes=SESION.con==="__todas__"?"Para revisar"+(conDe(l)?", con "+conDe(l):""):cambios?"Volvieron por un cambio":"Revisión con "+SESION.con;
  VISTA.b=b.id; VISTA.l=l.id; VISTA.i=i;
  camino([{t:"Barrios y localidades",f:terminarRevision},{t:titSes,f:null}],"",{sinVolver:true});
  const cuenta=l.estado==="revisada"&&revisionCuenta(l), cm=cuenta&&l.revisada.v2?cambioTrasRevision(b,t,l):null, fmt=!!cm&&soloFormato(b,t,l);
@@ -7700,7 +7814,10 @@ function abrirEnHoja(x,y){
 /* El tramo tocado, buscado por su clave: si un dato que faltaba se completa, los tramos se
    corren y el índice solo apuntaría a otro. Si la clave sale varias veces, el más cercano. */
 function riVigente(runs){
- if(VISTA.ri==null) return null; const k=VISTA.rk||"", r=runs[VISTA.ri]; if(r&&(r.k||"")===k) return VISTA.ri;
+ if(VISTA.ri==null) return null; const k=VISTA.rk||"", r=runs[VISTA.ri], id=VISTA.rid;
+ /* un dato cambiado sólo en esta escritura va en varios tramos, y al guardar pueden ser menos: se vuelve a su primer tramo (20/11/2026) */
+ if(id&&id.ri===VISTA.ri&&!(r&&r.kp===id.kp&&r.wbi===id.wbi)){ const j=runs.findIndex(x=>x.kp===id.kp&&x.wbi===id.wbi); if(j>=0){ VISTA.ri=j; VISTA.rid={kp:id.kp,wbi:id.wbi,ri:j}; return j; } }
+ if(r&&(r.k||"")===k){ VISTA.rid=r.kp?{kp:r.kp,wbi:r.wbi,ri:VISTA.ri}:null; return VISTA.ri; }
  let m=-1; runs.forEach((x,i)=>{ if((x.k||"")===k&&(m<0||Math.abs(i-VISTA.ri)<Math.abs(m-VISTA.ri))) m=i; });
  VISTA.ri=m<0?null:m; return VISTA.ri;
 }
@@ -7834,7 +7951,8 @@ function cajaCorregir(b,t,l,run){
      return '<div class="g2"><div><label>C.U.I.T. / C.U.I.L.</label><input class="inp" data-pa="cuit" data-mask="cuit" value="'+esc(p.cuit)+'" placeholder="'+esc(cuitDe(p.dni,s)||"sale del documento")+'"></div><div><label>Nacionalidad</label><input class="inp" data-pa="nacionalidad" value="'+esc(p.nacionalidad)+'" placeholder="'+(s==="F"?"argentina":"argentino")+'"></div></div>'
       +'<div class="g2"><div><label>Estado civil</label><select class="inp" data-pa="civil">'+(CIVILES.some(c=>c[0]===p.civil)?"":'<option value="" selected>— elegir —</option>')+CIVILES.map(c=>'<option value="'+c[0]+'"'+(p.civil===c[0]?" selected":"")+'>'+(s==="F"?c[2]:c[1]).replace(/ con $/,"").replace(/ y no encontrarse.*$/,"").replace(/ y encontrarse en /," en ")+'</option>').join("")+'</select></div>'
       +(p.civil==="conviviente"?'<div><label>Conviviente</label><input class="inp" data-pa="conviviente" value="'+esc(p.conviviente||"")+'"></div>'
-       :'<div><label>Cónyuge <i>'+(p.civil==="divorciado"?"ex cónyuge":p.civil==="viudo"?"fallecido":"si corresponde")+'</i></label><input class="inp" data-pa="conyuge" value="'+esc(p.conyuge)+'"></div>')+'</div>'
+       :'<div><label>'+(pideAcred(p)?"Ex cónyuge":"Cónyuge <i>si corresponde</i>")+'</label><input class="inp" data-pa="conyuge" value="'+esc(p.conyuge)+'"></div>')+'</div>'
+      +(pideAcred(p)?'<div class="g2">'+nupciasSel(p,"data-pa",false)+'</div>':"")
       +'<label>Acredita con</label><textarea class="inp crece" data-pa="acred" rows="2">'+esc(p.acred)+'</textarea>'; })()
     +'</div>').join("")
    +(esAdj(run.kp)?'<p class="hint" style="color:var(--warn)">En esta escritura el comparendo quedó escrito a mano (en violeta), y lo que cambies acá no se ve. <button type="button" class="link" id="rVolverDatos">Volver a los datos</button></p>':"")
@@ -8023,7 +8141,7 @@ function pintarPanelRev(){
  p.innerHTML='<div class="card rev-box rev-lote">'
    +(SESION.ids.length>1?'<div class="rev-nav"><button type="button" id="rAnt" aria-label="Lote anterior"'+(iS?"":" disabled")+'>‹ Anterior</button><b>'+esc(loteCorto(l))+' · '+(iS+1)+' de '+SESION.ids.length+'</b><button type="button" id="rSig" aria-label="Lote siguiente"'+(iS<SESION.ids.length-1?"":" disabled")+'>Siguiente ›</button></div>'
      +'<label class="rev-buscar">Buscar<input class="inp" id="rBuscar" inputmode="numeric" placeholder="los últimos números del expediente" autocomplete="off"></label>'
-    :'<div class="rev-nav">'+(SESION.uno&&lotesParaRevisar(SESION.con).some(x=>x.l!==l.id)?'<button type="button" id="rAntUno" title="El lote anterior para revisar">‹ Anterior</button>':"")+'<b>'+esc(loteCorto(l))+'</b>'+(SESION.uno&&lotesParaRevisar(SESION.con).some(x=>x.l!==l.id)?'<button type="button" id="rSigUno" title="El siguiente lote para revisar">Siguiente ›</button>':"")+'</div>')
+    :'<div class="rev-nav"><b>'+esc(loteCorto(l))+'</b></div>')
    +(ult?'<p class="rev-ult'+(ult.pend?" pend":"")+'">'+esc(ult.txt)+'</p>':"")
    +(REV_UNDO.pila.length||REV_UNDO.abierto?'<p class="rev-undo"><button type="button" class="link" id="rDeshacer" title="También con Ctrl+Z">↶ Deshacer el último cambio</button> <span class="hint">o Ctrl+Z</span></p>':"")
   +'</div>'
@@ -8038,7 +8156,7 @@ function pintarPanelRev(){
   +principalRevHtml(b,t,l)
   +(run?cc.html:'<p class="hint rev-tocar">Tocá un tramo de la minuta para corregirlo.</p>')
   +'<div class="card rev-box" id="rLista"'+(((SESION.corr[l.id])||[]).length?"":" hidden")+'>'+listaCorrHtml(l)+'</div>'
-  +(SESION.ids.length<2?"":'<div class="card rev-box rev-tanda"><h3>'+(SESION.con==="__cambios__"?"Los que volvieron":"Lo que trajo "+esc(SESION.con))+'</h3>'+SESION.ids.map((y,k)=>{ const bb=bDe(y.b), uu=bb&&ubicar(bb,y.l); if(!uu) return ""; const h=SESION.hecho[y.l], ahora=k===iS;
+  +(SESION.ids.length<2?"":'<div class="card rev-box rev-tanda"><h3>'+(SESION.con==="__cambios__"?"Los que volvieron":SESION.con==="__todas__"?"Para revisar":"Lo que trajo "+esc(SESION.con))+'</h3>'+SESION.ids.map((y,k)=>{ const bb=bDe(y.b), uu=bb&&ubicar(bb,y.l); if(!uu) return ""; const h=SESION.hecho[y.l], ahora=k===iS;
     const est=ahora?"ahora":h==="revisada"?"revisada":h==="pendiente"?"pendiente":"para ver", ic=ahora?"●":h==="revisada"?"✓":h==="pendiente"?"‖":"○";
     return '<button type="button" class="rev-fila '+(ahora?"ahora":h||"")+'" data-ir-ses="'+k+'"><span class="ic" aria-hidden="true">'+ic+'</span><span class="nm">'+esc(loteCorto(uu.l))+' · '+esc(nombreLote(uu.l))+'</span><span class="es">'+est+'</span></button>'; }).join("")+'</div>')
   +'<div class="rev-fin"><button type="button" class="link" id="rWord">Descargar el Word</button><button type="button" class="link" id="rTerminar">Terminar la revisión</button></div>'
@@ -8067,11 +8185,6 @@ function pintarPanelRev(){
   if(hits.length===1) irSesion(hits[0].k); else avisar(hits.length?"Hay "+hits.length+" expedientes que terminan así: escribí más números.":"Ese expediente no está en esta revisión.",!hits.length); };
  const ra=$("#rAnt"); if(ra) ra.onclick=()=>{ if(iS>0) irSesion(iS-1); };
  const rs=$("#rSig"); if(rs) rs.onclick=()=>{ if(iS<SESION.ids.length-1) irSesion(iS+1); };
- /* el anterior: el de antes en la lista de lo que hay para revisar con esa persona (si éste no está, el último) */
- const rau=$("#rAntUno"); if(rau) rau.onclick=()=>{ if(revFrena()) return; const todos=lotesParaRevisar(SESION.con), i=todos.findIndex(x=>x.l===l.id);
-  const ids=i>=0?todos:todos.concat([{b:b.id,l:l.id}]), k=i>=0?i:ids.length-1; if(ids.length<2) return;
-  SESION={con:SESION.con,ids,corr:SESION.corr,hecho:SESION.hecho}; irSesion(k>0?k-1:ids.length-1); };
- const ru=$("#rSigUno"); if(ru) ru.onclick=()=>{ if(revFrena()) return; const ids=lotesParaRevisar(SESION.con).filter(x=>x.l!==l.id); if(!ids.length) return; SESION={con:SESION.con,ids:[{b:b.id,l:l.id}].concat(ids),corr:SESION.corr,hecho:SESION.hecho}; irSesion(1); };
  /* El segundo clic de un doble clic cae en el botón de la siguiente, que todavía no se vio: se
     ignora (10/11/2026). Y no se aprueba un texto distinto del que está en pantalla. */
  const ap=$("#rAprobar"); if(ap) ap.onclick=e=>{
@@ -8087,7 +8200,7 @@ function pintarPanelRev(){
 }
 const candado=()=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>';
 /* Con quién se revisó: quien trajo el lote a la sesión, o quien lo lleva. */
-function conDe(l){ return SESION&&SESION.con&&SESION.con!=="__cambios__"?SESION.con:String(l.responsable||"").trim(); }
+function conDe(l){ return SESION&&SESION.con&&!/^__/.test(SESION.con)?SESION.con:String(l.responsable||"").trim(); }
 /* En la columna: con la revisada congelada, «Volver a corregirla»; y las revisadas del barrio a las que no les llegó un
    cambio para todos, con «Llevarles los cambios» (Baltasar, 20/11/2026: «que me dé la opción después de corregir algo en
    todos de cambiarlo en otra que pasó antes, y ahí sí variaría»). */
@@ -8170,6 +8283,7 @@ function bandejasHtml(){
   const r=cargoTomado(rol);
   if(!puedeRevisar()&&desdeCasa()) h+='<p class="hint" style="margin:0 0 14px">Desde acá mirás y editás todo; revisar y aprobar se hace en la computadora del cargo, en la oficina.</p>';
   else if(!puedeRevisar()) h+='<div class="alerta"><b>Desde esta computadora no se revisa</b>'+(r?'El cargo '+esc(CARGO_TXT[rol])+' está en la computadora de '+esc(r.quien||"otra persona")+'. ':'Todavía ninguna computadora tiene el cargo. ')+'<button type="button" class="link" data-acc="cargo">'+(r?"Ver qué hacer":"Esta es la computadora de la "+esc(CARGO_TXT[rol]))+'</button></div>';
+  return h; /* lo demás de la escribana está en la lista del barrio (20/11/2026) */
   const grupos={}, cambios=[];
   DB.barrios.forEach(b=>b.tandas.forEach(t=>t.lotes.forEach(l=>{
    if(cargoDe(l)!==rol) return;
@@ -8178,7 +8292,8 @@ function bandejasHtml(){
   })));
   const gs=Object.values(grupos); gs.forEach(g=>{ g.xs=ordenXs(g.xs); }); cambios.splice(0,cambios.length,...ordenXs(cambios));
   if(gs.length||cambios.length){
-   h+='<h3 class="st">Para revisar con vos</h3>';
+   const nTodas=lotesParaRevisar("__todas__").length;
+   h+='<h3 class="st">Para revisar con vos'+(puedeRevisar()&&nTodas>1&&(gs.length>1||cambios.length)?' <button type="button" class="p" data-acc="sesion" data-con="__todas__">Revisar las '+nTodas+', una tras otra</button>':"")+'</h3>';
    gs.forEach(g=>{ h+='<div class="card bandeja"><div class="bj-h"><b>Con '+esc(g.con)+' · '+g.xs.length+'</b>'+(puedeRevisar()&&g.con!=="sin responsable"?'<button type="button" class="p" data-acc="sesion" data-con="'+esc(g.con)+'">Empezar con '+esc(g.con)+'</button>':"")+'</div>'
     +g.xs.map(({b,l})=>'<div class="fb" data-acc="lote" data-b="'+b.id+'" data-l="'+l.id+'" tabindex="0"><b>Expte. '+esc(l.expediente||"sin número")+'</b><span>'+esc(b.nombre)+' · '+esc(loteCorto(l))+' · '+esc(nombreLote(l))+'</span>'+(!yaLeida(b,rol)?'<span class="et ce">primera de la base: se lee entera</span>':"")+'</div>').join("")+'</div>'; });
    if(cambios.length) h+='<div class="card bandeja cambiado"><div class="bj-h"><b>Volvieron por un cambio · '+cambios.length+'</b><span class="hint">ves sólo el tramo que cambió</span>'+(puedeRevisar()?'<button type="button" data-acc="sesion" data-con="__cambios__">Ver los cambios</button>':"")+'</div>'
@@ -8332,7 +8447,7 @@ async function guardarCopiaEnR(b,t,l,tipo){
   /* «Listas para imprimir», en la carpeta del barrio (Baltasar, 14/11/2026): la aprobada va también ahí, con el
      número de escritura en el nombre si ya lo tiene; si no, por lote y manzana. Al imprimirla o firmarla, sale. */
   let lista=null;
-  if(tipo==="aprobada") try{ lista=await ponerEnListas(bd,l,runs); }catch(e){}
+  if(tipo==="aprobada") try{ lista=await ponerEnListas(bd,l,runs); if(lista&&l.revisada) l.revisada.citaR=citaPrincipalDe(t,l); }catch(e){}
   else if(tipo==="impresa"||tipo==="firmada") try{ await sacarDeListas(bd,l); }catch(e){}
   l.carpetaR=cl.nombre; l.copiasR=(l.copiasR||[]).concat({tipo,donde,t:Date.now(),quien:quienSoy()}).slice(-20); guardar(true);
   return {ok:true,donde,lista};
@@ -8354,8 +8469,14 @@ function vigilarListas(){
   const raiz=raizCopias(); if(!raiz) return;
   try{ if((await raiz.queryPermission({mode:"readwrite"}))!=="granted") return; }catch(e){ return; }
   for(const b of DB.barrios) if(!ES_EJEMPLO(b)) for(const t of b.tandas||[]) for(const l of t.lotes||[]){
-   if(!(congeladaRev(l)&&l.revisada.copiaPend)) continue;
-   try{ const x=await guardarCopiaEnR(b,t,l,"aprobada"); if(x&&x.ok){ delete l.revisada.copiaPend; guardar(true); } }catch(e){} }
+   /* también si la cita de la principal cambió después de dejar el Word (20/11/2026) */
+   if(!congeladaRev(l)) continue;
+   if(l.revisada.copiaPend){ try{ const x=await guardarCopiaEnR(b,t,l,"aprobada"); if(x&&x.ok){ delete l.revisada.copiaPend; guardar(true); } }catch(e){} continue; }
+   const cp=citaPrincipalDe(t,l); if(!l.listaR||(l.revisada.citaR||"")===cp) continue;
+   try{ const runs=runsDelLote(b,t,l).runs;
+    /* sólo si la minuta cita a la principal: si no, se anota y no se toca el R: */
+    if(runs.some(x=>x.cita||x.k==="ESC_MADRE")){ const bd=await carpetaBarrio(b,raiz); await ponerEnListas(bd,l,runs); }
+    l.revisada.citaR=cp; guardar(true); }catch(e){} }
   const salen=[];
   for(const b of DB.barrios) if(!ES_EJEMPLO(b)) for(const t of b.tandas||[]) for(const l of t.lotes||[]){
    if(!l.listaR) continue;
