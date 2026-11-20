@@ -6361,7 +6361,7 @@ function botonesEstado(b,t,l){
  if(l.estado==="inscripta") return '<p class="hint" style="margin-top:12px">Inscripta'+(partes(l.inscripta)?' el '+esc(l.inscripta):"")+': no se toca más.</p>'+datosFirmaHtml(l)+'<p class="hint" style="margin:4px 0 0"><button type="button" class="link" id="bNoInscripta" style="width:auto;margin:0">No se inscribió: volver a firmada</button> · si se marcó por error</p>'+copiasHtml(l);
  if(l.estado==="firmada") return (l.firmada&&l.firmada.conRevision===false?'<p class="hint" style="margin-top:12px;color:var(--warn)">Se marcó firmada sin la revisión de la '+esc(CARGO_TXT[cargoDe(l)])+' para ese texto.</p>':"")+datosFirmaHtml(l)+'<button type="button" id="bInscripta" style="margin-top:14px">Marcar inscripta</button><p class="hint" style="margin:4px 0 0"><button type="button" class="link" id="bNoFirmada" style="width:auto;margin:0">No se firmó: volver atrás</button> · si se marcó el lote equivocado</p>'+copiasHtml(l);
  const hay=b.base.runs.length>0, cargo=CARGO_TXT[cargoDe(l)], nom=nombreEscribana(l), aQuien=nom?nom+" ("+cargo+")":"la "+cargo;
- const delCargo=esCompuDelCargo()&&cargoDe(l)===ROL();
+ const delCargo=puedeRevisar()&&cargoDe(l)===ROL();
  let h='<div class="revision"><h3 class="st">Revisión</h3>';
  if(!hay) return h+'<p class="hint">Sin minuta base todavía no hay nada que revisar.</p>'+responsableHtml(l)+'</div>';
  if(l.estado==="observada"&&l.obs) h+='<div class="alerta tibia"><b>Pendiente: '+esc(l.obs.texto)+'</b>Lo dejó '+esc(l.obs.quien)+' el '+esc(l.obs.fecha)+'. Cuando lo resuelvas, pasala de nuevo.</div>';
@@ -6595,7 +6595,7 @@ function llevarARevisadas(b,lista){
   l.revisada.texto=textoDe(rc); l.revisada.fmt=firmaFormato(rc); l.revisada.ver=b.base.ver;
   l.revisada.llevado=(l.revisada.llevado||[]).concat({fecha:hoy(),quien:quienSoy()}).slice(-10); }
  guardar(true); pedirSync();
- for(const {t,l} of lista) guardarCopiaEnR(b,t,l,"aprobada").then(x=>avisoCopia(x,"Llevado a "+loteCorto(l)+"."));
+ for(const {t,l} of lista) guardarCopiaEnR(b,t,l,"aprobada").then(x=>{ if(!x||!x.ok){ l.revisada.copiaPend=true; guardar(true); } else avisoCopia(x,"Llevado a "+loteCorto(l)+"."); });
 }
 function runsDelLote(b,t,l){
  if((l.estado==="firmada"||l.estado==="inscripta")&&l.firmada&&l.firmada.runs){
@@ -6721,6 +6721,12 @@ const normN=s=>String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toUpperCase
 const mismoNombre=(a,b)=>normN(a)!==""&&normN(a)===normN(b);
 const quienNombre=()=>String(COMP.quien||lsLeer("sigec_sociales_quien")||"").trim();
 function cargoReg(c){ return (DB.cargos&&DB.cargos[c])||null; }
+/* Desde el 20/11/2026 se revisa y se aprueba desde cualquier computadora, también desde casa, con el cargo elegido en
+   «Quién sos» (Baltasar: «dejame corregir y revisar desde casa»; «sí, habilitalo»). Antes, la aprobación quedaba atada
+   a la computadora del cargo (03/11/2026). Ahora queda anotado desde qué computadora se aprobó, y si fue desde una que no
+   es la del cargo (revisada.fuera). La copia en el R: y «Listas para imprimir», si en ese momento no hay R:, las deja la
+   primera computadora de la oficina que se conecte (revisada.copiaPend). */
+function puedeRevisar(){ const c=ROL(); return c==="General"||c==="Sustituta"; }
 function esCompuDelCargo(){ const c=ROL(); if(c!=="General"&&c!=="Sustituta") return false; if(desdeCasa()) return false; const r=cargoReg(c); return !!r&&!r.libre&&r.compu===COMP.compu; }
 /* el cargo con computadora; uno liberado cuenta como sin computadora */
 const cargoTomado=c=>{ const r=cargoReg(c); return r&&!r.libre?r:null; };
@@ -6859,6 +6865,7 @@ function reiniciarCompu(mios){
 const revDeOtra=l=>!!(l&&l.revisada&&l.revisada.cargo&&l.revisada.cargo!==cargoDe(l));
 function revisionCuenta(l){
  const r=l&&l.revisada; if(!r||!r.compu||!r.cargo||r.cargo!==cargoDe(l)) return false;
+ if(r.fuera) return true; /* aprobada desde otra computadora, con el cargo elegido (20/11/2026) */
  const c=cargoReg(r.cargo); if(!c) return false;
  if(c.compu===r.compu&&(r.t||0)>=(c.t0||0)) return true;
  return (c.antes||[]).some(a=>a.compu===r.compu&&(r.t||0)>=(a.t0||0)&&(r.t||0)<=(a.hasta||0));
@@ -7679,7 +7686,7 @@ function impactoTxt(imp,donde){
   imp.firmados?imp.firmados+" firmado"+(imp.firmados>1?"s":"")+" no cambia"+(imp.firmados>1?"n":""):""].filter(Boolean).join(" · ")+".";
 }
 function cajaCorregir(b,t,l,run){
- if(congeladaRev(l)) return {html:'<div class="card rev-box"><h3>Está revisada</h3><p class="hint" style="margin:0">Quedó lista: lo que se corrija para todos ya no la cambia.'+(esCompuDelCargo()&&cargoDe(l)===ROL()?' Para corregirla, tocá «Volver a corregirla».':'')+'</p></div>'};
+ if(congeladaRev(l)) return {html:'<div class="card rev-box"><h3>Está revisada</h3><p class="hint" style="margin:0">Quedó lista: lo que se corrija para todos ya no la cambia.'+(puedeRevisar()&&cargoDe(l)===ROL()?' Para corregirla, tocá «Volver a corregirla».':'')+'</p></div>'};
  if(!run) return {html:'<div class="card rev-box"><h3>Corregir</h3><p class="hint" style="margin:0">Tocá en la minuta lo que está mal.</p></div>'};
  /* el número y la fecha, que pone quien imprime, también se cargan acá (18/11/2026): el número es del lote; la fecha, de la tanda */
  const k=run.k, d=k?CAT_K[k]:null, al0=alcanceRun(run), al=al0==="imprime"?(k==="NRO_ESCRITURA"?"lote":"tanda"):al0;
@@ -7847,7 +7854,7 @@ function atarDeshacer(){
    también se elige en la lista de la tanda, como antes. */
 function principalRevHtml(b,t,l){
  if(!t||(t.lotes||[]).length<2||l.estado==="firmada"||l.estado==="inscripta") return "";
- const pl=t.principal&&t.lotes.find(x=>x.id===t.principal), puede=esCompuDelCargo();
+ const pl=t.principal&&t.lotes.find(x=>x.id===t.principal), puede=puedeRevisar();
  if(pl&&pl.id===l.id) return '<div class="card rev-box rev-principal es"><p class="n" style="margin:0"><span class="principal-et">★ principal</span> <b>Es la escritura principal de la tanda.</b> Las copias van agregadas a ésta («agrego a la presente»); las demás citan su número.</p>'
   +(puede?'<p class="n" style="margin:6px 0 0"><button type="button" class="link" data-principal="">Que no sea la principal</button></p>':"")+'</div>';
  if(pl) return '<p class="hint rev-principal">La principal de la tanda es la del '+esc(loteCorto(pl))+' ('+esc(nombreLote(pl))+')'+(puede?' · <button type="button" class="link" data-principal="'+esc(l.id)+'" style="width:auto;margin:0">que sea ésta</button>':"")+'</p>';
@@ -7923,10 +7930,10 @@ function pintarPanelRev(){
   +'</div>'
   +'<div class="card rev-box rev-decide"><div class="rev-quien"><span>'+pr+'</span>'+(falt.length?'<details class="rev-faltan"><summary>Faltan '+falt.length+' dato'+(falt.length>1?"s":"")+'</summary><p>'+esc(falt.map(f=>f.que).join("; "))+'.</p></details>':"")+'</div>'
   +(l.estado==="firmada"||l.estado==="inscripta"?'<p class="n"><b>'+(l.estado==="inscripta"?"Inscripta":"Firmada"+(l.firmada&&l.firmada.fecha?" el "+esc(l.firmada.fecha):""))+':</b> no se revisa más.</p>'
-   :esCompuDelCargo()&&cargoDe(l)===ROL()?'<button type="button" class="p grande" id="rAprobar"'+(revOk?" disabled":"")+'>'+(revOk?"Ya está revisada":"Revisada")+'</button>'
+   :puedeRevisar()&&cargoDe(l)===ROL()?'<button type="button" class="p grande" id="rAprobar"'+(revOk?" disabled":"")+'>'+(revOk?"Ya está revisada":"Revisada")+'</button>'
     +(l.estado==="enRevision"?'<p class="n" style="margin:0"><button type="button" class="link" id="rPendiente">Queda pendiente…</button> <span class="hint">si falta un papel</span></p>'
      :l.estado==="revisada"?'<p class="n" style="margin:0"><button type="button" class="link" id="rPendiente">Sacarle la aprobación…</button> <span class="hint">vuelve a quien la lleva</span></p>':"")
-   :esCompuDelCargo()?'<p class="n">'+candado()+' Este lote lo revisa la '+esc(CARGO_TXT[cargoDe(l)])+': está en su mitad de la tanda.</p>'
+   :puedeRevisar()?'<p class="n">'+candado()+' Este lote lo revisa la '+esc(CARGO_TXT[cargoDe(l)])+': está en su mitad de la tanda.</p>'
    :'<p class="n">'+candado()+' Desde esta computadora no se revisa. <button type="button" class="link" id="rPorQue">¿Por qué?</button></p>')
   +'</div>'
   +principalRevHtml(b,t,l)
@@ -7978,7 +7985,7 @@ function conDe(l){ return SESION&&SESION.con&&SESION.con!=="__cambios__"?SESION.
    cambio para todos, con «Llevarles los cambios» (Baltasar, 20/11/2026: «que me dé la opción después de corregir algo en
    todos de cambiarlo en otra que pasó antes, y ahí sí variaría»). */
 function revCongeladaHtml(b,t,l,p){
- if(!esCompuDelCargo()) return;
+ if(!puedeRevisar()) return;
  const dec=p.querySelector(".rev-decide");
  if(congeladaRev(l)&&cargoDe(l)===ROL()&&dec){
   dec.insertAdjacentHTML("beforeend",'<p class="n" style="margin:6px 0 0"><button type="button" class="link" id="rReabrir">Volver a corregirla</button> <span class="hint">sale de «Listas para imprimir» hasta que la apruebes otra vez</span></p>');
@@ -7995,7 +8002,7 @@ function revCongeladaHtml(b,t,l,p){
 }
 function aprobar(b,t,l,enSesion){
  if(wordFrena()) return;
- if(!esCompuDelCargo()){ avisoCargo(); return false; }
+ if(!puedeRevisar()){ avisoCargo(); return false; }
  if(cargoDe(l)!==ROL()){ avisar("Este lote lo revisa la "+CARGO_TXT[cargoDe(l)]+".",true); return false; }
  if(l.estado==="firmada"||l.estado==="inscripta"){ avisar("Este lote ya está firmado: no se revisa más.",true); return false; }
  const ahora=Date.now(), hora=horaComp(ahora);
@@ -8003,10 +8010,10 @@ function aprobar(b,t,l,enSesion){
  const rc=runsComparar(b,t,l);
  l.revisada={v2:true,ver:b.base.ver,texto:textoDe(rc),fmt:firmaFormato(rc),fecha:hoy(),hora,t:ahora,quien:quienSoy(),cargo:ROL(),compu:COMP.compu,con:conDe(l),
   corregido:((enSesion&&SESION&&SESION.corr[l.id])||[]).map(c=>({etiqueta:c.etiqueta,antes:c.antes,despues:c.despues,alcance:c.alcance}))};
- congelarRevision(b,t,l);
- const r=cargoReg(ROL()); r.leida=r.leida||{}; r.leida[b.id]={ver:b.base.ver,h:huellaBase(b),lote:l.id,fecha:hoy()}; r.mod=Math.max(ahora,(r.mod||0)+1);
+ congelarRevision(b,t,l); if(!esCompuDelCargo()) l.revisada.fuera=true;
+ const r=cargoReg(ROL())||(DB.cargos=DB.cargos||{},DB.cargos[ROL()]=DB.cargos[ROL()]||{quien:quienSoy(),desde:hoy()}); r.leida=r.leida||{}; r.leida[b.id]={ver:b.base.ver,h:huellaBase(b),lote:l.id,fecha:hoy()}; r.mod=Math.max(ahora,(r.mod||0)+1);
  guardar(true);
- guardarCopiaEnR(b,t,l,"aprobada").then(x=>avisoCopia(x,"Revisada."));
+ guardarCopiaEnR(b,t,l,"aprobada").then(x=>{ if(!x||!x.ok){ l.revisada.copiaPend=true; guardar(true); avisar("Revisada. La copia y «Listas para imprimir» se dejan en el R: cuando se conecte una computadora de la oficina."); } else avisoCopia(x,"Revisada."); });
  return true;
 }
 /* ¿Lo que se va a aprobar es lo que ella tiene en pantalla, y ya vio lo que llegó de afuera? */
@@ -8054,8 +8061,8 @@ function bandejasHtml(){
  let h=avisosCargoHtml();
  if(escb){
   const r=cargoTomado(rol);
-  if(!esCompuDelCargo()&&desdeCasa()) h+='<p class="hint" style="margin:0 0 14px">Desde acá mirás y editás todo; revisar y aprobar se hace en la computadora del cargo, en la oficina.</p>';
-  else if(!esCompuDelCargo()) h+='<div class="alerta"><b>Desde esta computadora no se revisa</b>'+(r?'El cargo '+esc(CARGO_TXT[rol])+' está en la computadora de '+esc(r.quien||"otra persona")+'. ':'Todavía ninguna computadora tiene el cargo. ')+'<button type="button" class="link" data-acc="cargo">'+(r?"Ver qué hacer":"Esta es la computadora de la "+esc(CARGO_TXT[rol]))+'</button></div>';
+  if(!puedeRevisar()&&desdeCasa()) h+='<p class="hint" style="margin:0 0 14px">Desde acá mirás y editás todo; revisar y aprobar se hace en la computadora del cargo, en la oficina.</p>';
+  else if(!puedeRevisar()) h+='<div class="alerta"><b>Desde esta computadora no se revisa</b>'+(r?'El cargo '+esc(CARGO_TXT[rol])+' está en la computadora de '+esc(r.quien||"otra persona")+'. ':'Todavía ninguna computadora tiene el cargo. ')+'<button type="button" class="link" data-acc="cargo">'+(r?"Ver qué hacer":"Esta es la computadora de la "+esc(CARGO_TXT[rol]))+'</button></div>';
   const grupos={}, cambios=[];
   DB.barrios.forEach(b=>b.tandas.forEach(t=>t.lotes.forEach(l=>{
    if(cargoDe(l)!==rol) return;
@@ -8065,9 +8072,9 @@ function bandejasHtml(){
   const gs=Object.values(grupos); gs.forEach(g=>{ g.xs=ordenXs(g.xs); }); cambios.splice(0,cambios.length,...ordenXs(cambios));
   if(gs.length||cambios.length){
    h+='<h3 class="st">Para revisar con vos</h3>';
-   gs.forEach(g=>{ h+='<div class="card bandeja"><div class="bj-h"><b>Con '+esc(g.con)+' · '+g.xs.length+'</b>'+(esCompuDelCargo()&&g.con!=="sin responsable"?'<button type="button" class="p" data-acc="sesion" data-con="'+esc(g.con)+'">Empezar con '+esc(g.con)+'</button>':"")+'</div>'
+   gs.forEach(g=>{ h+='<div class="card bandeja"><div class="bj-h"><b>Con '+esc(g.con)+' · '+g.xs.length+'</b>'+(puedeRevisar()&&g.con!=="sin responsable"?'<button type="button" class="p" data-acc="sesion" data-con="'+esc(g.con)+'">Empezar con '+esc(g.con)+'</button>':"")+'</div>'
     +g.xs.map(({b,l})=>'<div class="fb" data-acc="lote" data-b="'+b.id+'" data-l="'+l.id+'" tabindex="0"><b>Expte. '+esc(l.expediente||"sin número")+'</b><span>'+esc(b.nombre)+' · '+esc(loteCorto(l))+' · '+esc(nombreLote(l))+'</span>'+(!yaLeida(b,rol)?'<span class="et ce">primera de la base: se lee entera</span>':"")+'</div>').join("")+'</div>'; });
-   if(cambios.length) h+='<div class="card bandeja cambiado"><div class="bj-h"><b>Volvieron por un cambio · '+cambios.length+'</b><span class="hint">ves sólo el tramo que cambió</span>'+(esCompuDelCargo()?'<button type="button" data-acc="sesion" data-con="__cambios__">Ver los cambios</button>':"")+'</div>'
+   if(cambios.length) h+='<div class="card bandeja cambiado"><div class="bj-h"><b>Volvieron por un cambio · '+cambios.length+'</b><span class="hint">ves sólo el tramo que cambió</span>'+(puedeRevisar()?'<button type="button" data-acc="sesion" data-con="__cambios__">Ver los cambios</button>':"")+'</div>'
     +cambios.map(({b,t,l})=>{ const xs=cambiosDespuesDeAprobar(b,t,l), u=xs[xs.length-1], vale=revisionCuenta(l); return '<div class="fb" data-acc="lote" data-b="'+b.id+'" data-l="'+l.id+'" tabindex="0"><b>'+esc(b.nombre)+' · '+esc(loteCorto(l))+' · '+esc(nombreLote(l))+'</b><span>'+(!vale?"la revisión que tiene no salió de esta computadora":u?esc(u.q)+" "+esc(u.frase)+" ("+esc(cuandoTxt(u.t))+")":"cambió después de tu revisión")+'</span></div>'; }).join("")+'</div>';
   }
   h+=tuMitadHtml(rol);
@@ -8239,6 +8246,9 @@ function vigilarListas(){
  LISTAS_T=setTimeout(async()=>{
   const raiz=raizCopias(); if(!raiz) return;
   try{ if((await raiz.queryPermission({mode:"readwrite"}))!=="granted") return; }catch(e){ return; }
+  for(const b of DB.barrios) if(!ES_EJEMPLO(b)) for(const t of b.tandas||[]) for(const l of t.lotes||[]){
+   if(!(congeladaRev(l)&&l.revisada.copiaPend)) continue;
+   try{ const x=await guardarCopiaEnR(b,t,l,"aprobada"); if(x&&x.ok){ delete l.revisada.copiaPend; guardar(true); } }catch(e){} }
   const salen=[];
   for(const b of DB.barrios) if(!ES_EJEMPLO(b)) for(const t of b.tandas||[]) for(const l of t.lotes||[]){
    if(!l.listaR) continue;
@@ -8282,7 +8292,7 @@ function pintarRol(){
  document.documentElement.classList.toggle("modo-escribana",escb);
  /* tocarlo abre «Esta computadora»: quién sos, el rol, dónde está cada cargo y reiniciar (05/11/2026) */
  if(!escb){ const q=quienNombre(); e.innerHTML=q?'<button type="button" class="rol aux" title="Quién sos, el rol o reiniciar esta computadora">'+esc(q)+' · auxiliar</button>':""; }
- else{ const n=nombresEscribanas()[r==="General"?"titular":"sustituta"], cuenta=esCompuDelCargo();
+ else{ const n=nombresEscribanas()[r==="General"?"titular":"sustituta"], cuenta=puedeRevisar();
   e.innerHTML='<button type="button" class="rol esc'+(cuenta?"":" fuera")+'" title="'+(cuenta?"Esta es la computadora del cargo: desde acá se revisa":"Desde esta computadora no se revisa: tocá para ver qué hacer")+'">'+candado()+esc((n?n+" · ":"")+CARGO_TXT[r])+(cuenta?"":" · desde acá no se revisa")+'</button>'; }
  if(e.firstChild) e.firstChild.onclick=dialogoCompu;
  if(ADMIN()){ e.insertAdjacentHTML("beforeend",'<button type="button" class="rol admin" title="Modo administrador: en esta computadora se puede borrar y cambiar todo. Tocá para apagarlo">Administrador</button>'); e.lastChild.onclick=cambiarAdmin; }
@@ -8290,7 +8300,7 @@ function pintarRol(){
 function encabezadoTablero(){
  if(!esEscribana()) return '<h2 class="pt">Barrios y localidades</h2>';
  const r=ROL(), n=nombresEscribanas()[r==="General"?"titular":"sustituta"];
- return '<h2 class="pt">'+esc(n||CARGO_TXT[r])+'</h2>'+(esCompuDelCargo()?'':'<p class="ps">'+esc(CARGO_TXT[r])+' · desde esta computadora no se revisa</p>');
+ return '<h2 class="pt">'+esc(n||CARGO_TXT[r])+'</h2>'+(puedeRevisar()?'':'<p class="ps">'+esc(CARGO_TXT[r])+' · desde esta computadora no se revisa</p>');
 }
 
 /* «Tu mitad» (Baltasar, 04/11/2026: «tiene que ver cuál está lista y cuál no, y qué es lo que
