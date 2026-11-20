@@ -1694,14 +1694,24 @@ function citaEnLasDemas(out,ctx){
  if(fin<0) fin=out.length;
  const nro=pr.nro?numeroEscritura(pr.nro):"*****", fe=fechaLarga(String(pr.l.fechaActo||(ctx.t&&ctx.t.fechaFirma)||""))||"*****";
  const resto=" a la Escritura número "+nro+", Sección A, del "+fe+" del presente protocolo de mi titularidad";
+ /* lo de la escritura particular queda «a la presente» (Baltasar: «la 5 es de la particular, tiene que quedar a la
+    presente»): una frase que viene después de un dato del lote (la resolución individual, el lote, la manzana, el
+    expediente) o de «en relación al Lote…», desde la frase anterior, no cita a la principal */
+ const DEL_LOTE=new Set(["RESOLUCION","RESOLUCION_FECHA","LOTE","MANZANA","EXPEDIENTE"]), PARTIC=/en\s+relaci[oó]n\s+al?\s+lote|resoluci[oó]n\s+individual|pretensi[oó]n\s+articulada/i;
+ let particular=false;
  return out.map((x,i)=>{
-  if(i<iInt||i>fin||x.k||x.kp||x.hueco||x.pend) return x;
+  if(i<iInt||i>fin||x.hueco||x.pend) return x;
+  if(x.k||x.kp){ if(DEL_LOTE.has(x.k||x.kp)) particular=true; return x; }
   const desde=i===iInt?x.t.indexOf("INTERVENCIÓN:"):0, d=i===fin?x.t.slice(desde).search(/DICEN:/):-1, hasta=d>=0?desde+d:x.t.length;
   let ant=""; for(let j=i-1;j>=0&&!out[j].k&&!out[j].kp&&!out[j].hueco&&ant.length<120;j--) ant=out[j].t+ant;
-  let hubo=false;
-  const t=x.t.replace(CITA_FRASE,(m,verbo,pos)=>{ if(pos<desde||pos>=hasta) return m; hubo=true;
+  let hubo=false, ult=desde;
+  const t=x.t.replace(CITA_FRASE,(m,verbo,pos)=>{ if(pos<desde||pos>=hasta) return m;
+   if(PARTIC.test(x.t.slice(ult,pos))) particular=true;
+   ult=pos+m.length; if(particular){ particular=false; return m; }
+   hubo=true;
    const v=/^agrego/i.test(verbo)?(/cuya\s+copia\s+certificada\s+(?:por\s+m[ií]\s+)?$/i.test(ant+x.t.slice(0,pos))?"corre agregada":"corren agregadas"):verbo;
    return v+resto; });
+  if(PARTIC.test(x.t.slice(ult,hasta))) particular=true;
   return hubo?Object.assign({},x,{t,cita:true}):x;
  });
 }
