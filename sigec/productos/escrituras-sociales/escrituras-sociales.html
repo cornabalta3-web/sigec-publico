@@ -2788,12 +2788,13 @@ const conectadaR=()=>typeof COMP!=="undefined"&&!!COMP.dir&&COMP.estado==="ok";
 let SALIR_YA=false; /* una salida a propósito (reiniciar la computadora), que ya mandó lo suyo: no pregunta */
 function mandarYa(){ if(porGuardar) guardar(true); if(conectadaR()){ clearTimeout(COMP.tSync); if(enNube()) COMP.nubeYa=true; sincronizar(); } }
 window.addEventListener("pagehide",()=>{ if(porGuardar) guardar(true); });
-document.addEventListener("visibilitychange",()=>{ if(document.hidden) mandarYa(); });
+document.addEventListener("visibilitychange",()=>{ if(document.hidden){ try{ if(typeof guardarWordSolo==="function"&&VISTA.v==="revision") guardarWordSolo(); }catch(x){} mandarYa(); } });
 window.addEventListener("beforeunload",e=>{
  if(porGuardar) guardar(true);
  if(SALIR_YA) return;
  const falta=conectadaR()?(ultimoGuardado>COMP.ultima||(enNube()&&(COMP.pendienteNube||SYNC_PROPIO))):avisadoGuardar; /* antes de mandar: al empezar, sincronizar guarda */
  /* lo escrito en la revisión y todavía sin guardar vive sólo en la pantalla: cerrar pregunta (20/11/2026) */
+ try{ if(typeof guardarWordSolo==="function"&&VISTA.v==="revision") guardarWordSolo(); }catch(x){}
  const sinGuardar=typeof revSinGuardar==="function"&&revSinGuardar();
  mandarYa();
  if(falta||sinGuardar){ e.preventDefault(); e.returnValue=""; }
@@ -7196,13 +7197,13 @@ function lotesParaRevisar(con){
  return ordenXs(out).map(x=>({b:x.b.id,l:x.l.id}));
 }
 function empezarRevision(con){
- if(!esCompuDelCargo()){ avisoCargo(); return; }
+ if(!ROL()||!CARGO_TXT[ROL()]){ avisoCargo(); return; }
  const ids=lotesParaRevisar(con);
  if(!ids.length){ avisar("No hay minutas para revisar"+(con==="__cambios__"?"":" con "+con)+"."); return; }
  SESION={con,ids,corr:{},hecho:{}}; irSesion(0);
 }
 /* Desde el lote, en la computadora del cargo: una revisión de un solo lote. */
-function revisarUno(b,l){ if(!esCompuDelCargo()){ avisoCargo(); return; } if(cargoDe(l)!==ROL()){ avisar("Este lote lo revisa la "+CARGO_TXT[cargoDe(l)]+".",true); return; }
+function revisarUno(b,l){ /* desde otra computadora también, para corregir: aprobar sigue siendo de la del cargo (20/11/2026) */ if(!ROL()||!CARGO_TXT[ROL()]){ avisoCargo(); return; } if(cargoDe(l)!==ROL()){ avisar("Este lote lo revisa la "+CARGO_TXT[cargoDe(l)]+".",true); return; }
  /* si el lote ya está en la revisión en curso, se vuelve a ella: no se pierde lo corregido */
  if(SESION){ const k=SESION.ids.findIndex(x=>x.b===b.id&&x.l===l.id); if(k>=0){ irSesion(k); return; } }
  SESION={con:(l.responsable||"").trim()||"__cambios__",ids:[{b:b.id,l:l.id}],corr:{},hecho:{},uno:true}; irSesion(0); }
@@ -7300,7 +7301,8 @@ function pintarRevision(){
  if(typeof COMP!=="undefined") COMP.repintar=false;
  const en=$("#rEntera"); if(en) en.onclick=()=>{ if(revFrena()) return; VISTA.entera=!VISTA.entera; pintarRevision(); };
  const hj=$("#rHoja");
- hj.addEventListener("input",()=>{ const z=loteDeVista(); if(!z) return; pintarBarraWord(); });
+ hj.addEventListener("input",e=>{ if(e&&e.isComposing) return; if(hj.isContentEditable) programarGuardadoWord(); });
+ hj.addEventListener("focusout",()=>{ if(hj.isContentEditable&&wordSucio()) programarGuardadoWord(0); });
  hj.addEventListener("keydown",e=>{ if(hj.isContentEditable&&e.key==="Enter"){ e.preventDefault(); } }); /* un solo párrafo */
  hj.addEventListener("paste",e=>{ if(!hj.isContentEditable) return; e.preventDefault(); const tx=(e.clipboardData&&e.clipboardData.getData("text/plain")||"").replace(/\s*\n\s*/g," "); document.execCommand("insertText",false,tx); });
  hj.addEventListener("drop",e=>{ if(hj.isContentEditable) e.preventDefault(); });
@@ -7341,13 +7343,16 @@ function textosHoja(){
   m.set(ri,(m.get(ri)||"")+n.textContent.replace(/\u00a0/g," ")); }
  return m;
 }
-const puedeWord=(b,t,l)=>esCompuDelCargo()&&cargoDe(l)===ROL()&&l.estado!=="firmada"&&l.estado!=="inscripta"&&!congeladaRev(l)&&!($("#rHoja")&&$("#rHoja").classList.contains("plegada"));
+/* también desde casa o desde otra computadora (Baltasar, 20/11/2026: «dame la opción de que la escribana corrija de casa, y que
+   eso después pase al R: cuando se conecte»): se escribe y se guarda solo, sólo en esta escritura; «Revisada», en cambio,
+   sigue siendo sólo de la computadora del cargo */
+const puedeWord=(b,t,l)=>cargoDe(l)===ROL()&&l.estado!=="firmada"&&l.estado!=="inscripta"&&!congeladaRev(l)&&!($("#rHoja")&&$("#rHoja").classList.contains("plegada"));
 function armarWord(b,t,l){
  const h=$("#rHoja"); if(!h) return;
  if(!puedeWord(b,t,l)){ h.contentEditable="false"; WORD.orig=null; return; }
  WORD.runs=runsRevision(b,t,l); WORD.lid=l.id;
  h.querySelectorAll(".imprime,.pliegue,.hueco,.vacio").forEach(x=>x.contentEditable="false");
- h.contentEditable="true"; h.spellcheck=false; WORD.orig=textosHoja();
+ h.contentEditable="true"; h.spellcheck=false; WORD.orig=textosHoja(); WORD.base0=WORD.orig; /* lo que tenía al dibujarse: si se escribió algo, Ctrl+Z es el de Chrome */
 }
 /* lo que cambió, por tramo de origen: {k, bi, antes, despues, runs} */
 function cambiosWord(){
@@ -7394,6 +7399,7 @@ function muestraG(g){ const a=g.antes, d=g.despues; let p=0; while(p<a.length&&p
  const recorta=x=>{ x=x.trim(); return x.length>60?x.slice(0,57)+"…":x; }, sa=recorta(a.slice(p,a.length-q)), sd=recorta(d.slice(p,d.length-q));
  return sa&&sd?"«"+sa+"» → «"+sd+"»":sa?"se sacó «"+sa+"»":"se agregó «"+sd+"»"; }
 function barraWordHtml(b,t,l){
+ if(true) return ""; /* desde el 20/11/2026 se guarda solo: no hay nada que elegir ni «Guardar» */
  const cs=cambiosWord(); if(!cs.length) return "";
  WORD.elec=WORD.elec||{};
  return '<div class="card rev-box rev-word"><h3>Cambiaste la minuta en la hoja</h3><p class="hint" style="margin:0 0 8px">Elegí, para cada cosa, dónde va.</p>'
@@ -7412,28 +7418,28 @@ function pintarBarraWord(){
  $("#wGuardar").onclick=()=>aplicarWord(null);
  $("#wNo").onclick=()=>{ WORD.orig=null; WORD.elec={}; p.classList.remove("word-sucio"); pintarHojaRev(true); pintarPanelRev(); avisar("Descartado: la minuta quedó como estaba."); };
 }
-function aplicarWord(todosTodo){
- const z=loteDeVista(); if(!z) return; const {b,t,l}=z, ctx=ctxDe(b,t,l), cs=cambiosWord(); if(!cs.length) return;
+function aplicarWord(todosTodo,op){
+ const z=loteDeVista(); if(!z) return; const {b,t,l}=z, ctx=ctxDe(b,t,l), cs=cambiosWord(); if(!cs.length) return true;
  const hechos=[], elec=WORD.elec||{}; let nTodos=0, nLote=0;
  for(const g of cs){
   const todos=todosTodo==null?(puedeTodosG(g)&&elec[g.key]==="todos"):!!todosTodo; if(todos) nTodos++; else nLote++;
   if(g.k&&SIN_REVISAR_K.has(g.k)) continue;
-  if(g.bi==null||!b.base.runs[g.bi]){ avisar("No pude ubicar un cambio en la minuta: deshacelo con Ctrl+Z y hacelo de a un tramo.",true); return; }
+  if(g.bi==null||!b.base.runs[g.bi]){ avisar("No pude ubicar un cambio en la minuta: deshacelo con Ctrl+Z y hacelo de a un tramo.",true); return false; }
   const rb=b.base.runs[g.bi];
   if(!g.k){ /* texto de la base */
    const ov=propioDe(l,b.base,g.bi), actual=ov?ov.nuevo:rb.t, full=pasarEdicion(g.antes,g.despues,actual)??pasarEdicion(g.antes.trim(),g.despues.trim(),actual);
-   if(full==null){ avisar("No pude ubicar un cambio en el texto de la base: deshacelo con Ctrl+Z y hacelo de a un tramo.",true); return; }
+   if(full==null){ avisar("No pude ubicar un cambio en el texto de la base: deshacelo con Ctrl+Z y hacelo de a un tramo.",true); return false; }
    hechos.push(()=>{ if(todos){ quitarPropio(b,l,g.bi); rb.t=full; b.base.ver++; b.base.guardada=hoy(); if(SESION) SESION.baseVer=b.base.ver; registrarCorr(l,{alcance:"base",k:"BASE",etiqueta:"la minuta base (en la hoja)",antes:actual.trim(),despues:full.trim(),ref:null}); }
     else { ponerPropio(b,l,g.bi,rb.t,rb.t,full); registrarCorr(l,{alcance:"lote",k:"",etiqueta:"texto sólo en esta escritura (en la hoja)",antes:actual.trim(),despues:full.trim(),ref:null}); } });
    continue; }
   const d=CAT_K[g.k]; if(!d){ continue; }
   const dice=textoDatoRun(d,ctx,Object.assign({},rb,{bi:g.bi})), ov=propioDatoDe(l,g.k,g.bi,dice), actual=ov?ov.nuevo:dice;
   const full=pasarEdicion(g.antes,g.despues,actual)??pasarEdicion(g.antes.trim(),g.despues.trim(),actual);
-  if(full==null){ avisar("No pude ubicar un cambio en «"+d.r+"»: deshacelo con Ctrl+Z y corregilo en el cuadro.",true); return; }
+  if(full==null){ avisar("No pude ubicar un cambio en «"+d.r+"»: deshacelo con Ctrl+Z y corregilo en el cuadro.",true); return false; }
   if(todos&&(d.a==="barrio"||d.a==="tanda"||d.a==="mza")&&d.campo){
    const ref=d.a==="mza"?{tipo:"mza",mza:String(l.mza||"").trim(),campo:d.campo==="corresponde"?corrCampo(l):d.campo}:d.a==="tanda"?{tipo:"tanda",t:t.id,campo:d.campo}:{tipo:"barrio",campo:d.campo};
    const crudo=String(valorRef(b,ref)||""), nuevoCrudo=pasarEdicion(dice,full,crudo);
-   if(nuevoCrudo==null){ avisar("No pude llevar a todos el cambio en «"+d.r+"»: hacelo sólo en este lote, o en el cuadro.",true); return; }
+   if(nuevoCrudo==null){ avisar("No pude llevar a todos el cambio en «"+d.r+"»: hacelo sólo en este lote, o en el cuadro.",true); return false; }
    hechos.push(()=>{ quitarPropioDato(l,g.k,g.bi); ponerRef(b,ref,nuevoCrudo); registrarCorr(l,{alcance:d.a,k:g.k,etiqueta:d.r.toLowerCase()+" (en la hoja)",antes:crudo,despues:nuevoCrudo,ref}); });
   } else hechos.push(()=>{ ponerPropioDato(l,g.k,g.bi,dice,full); registrarCorr(l,{alcance:"lote",k:"",etiqueta:d.r.toLowerCase()+" sólo en esta escritura (en la hoja)",antes:actual.trim(),despues:full.trim(),ref:null}); });
  }
@@ -7445,15 +7451,42 @@ function aplicarWord(todosTodo){
  if(notas.length){ const antes=notas.map(c=>c.antes).join(" … "), despues=notas.map(c=>c.despues).join(" … ");
   registrarCorr(l,{alcance:todos?"base":"lote",k:notas.length===1?notas[0].k:"",etiqueta:notas.length===1?notas[0].etiqueta:"en la hoja, "+notas.length+" tramos"+(todos?" en todos los lotes":nTodos?" ("+nTodos+" en todos, "+nLote+" sólo en esta escritura)":" sólo en esta escritura"),antes:antes.length>300?antes.slice(0,297)+"…":antes,despues:despues.length>300?despues.slice(0,297)+"…":despues,ref:null}); }
  if(alDia) vioPoner(b,t,l);
+ if(op&&op.solo){ WORD.orig=textosHoja(); WORD.elec={}; guardar(true); pedirSync(); pintarCursorWord(); return true; }
  WORD.orig=null; WORD.elec={}; const p=$("#rPanel"); if(p) p.classList.remove("word-sucio");
  VISTA.ri=null; VISTA.rk=""; guardar(true); pintarHojaRev(true); pintarPanelRev();
  avisar(todos?"Cambiado en todos los lotes sin firmar.":nTodos?"Guardado: "+nTodos+(nTodos===1?" cambio":" cambios")+" en todos los lotes sin firmar, y "+nLote+" sólo en esta escritura (en violeta).":"Cambiado sólo en esta escritura. Queda en violeta.");
 }
 /* el cursor en un texto: en la columna, el cuadro de ese tramo, para quien lo prefiera */
+function propioParaTodos(b,t,l,x){
+ if(!x||x.wbi==null||!b.base.runs[x.wbi]) return null; const k=x.kp||x.k||"";
+ if(!k){ const rb=b.base.runs[x.wbi]; if(rb.k) return null; const ov=propioDe(l,b.base,x.wbi); if(!ov) return null;
+  return {k:"",bi:x.wbi,nuevo:ov.nuevo,antes:rb.t,nombre:"este texto de la minuta",imp:impacto(b,"barrio",t,l)}; }
+ const d=CAT_K[k]; if(!d||!d.campo||!(d.a==="barrio"||d.a==="tanda"||d.a==="mza")) return null;
+ const ctx=ctxDe(b,t,l), dice=textoDatoRun(d,ctx,Object.assign({},b.base.runs[x.wbi],{bi:x.wbi})), ov=propioDatoDe(l,k,x.wbi,dice); if(!ov) return null;
+ return {k,bi:x.wbi,nuevo:ov.nuevo,antes:dice,dice,d,nombre:d.r.split(" — ")[0].toLowerCase(),imp:impacto(b,d.a,t,l,k==="CORRESPONDE")};
+}
+function pasarATodos(b,t,l,pt){
+ if(!pt.nuevo.trim()){ avisar("Vacío borraría ese texto de todas las minutas: si es eso, hacelo en la minuta base entera.",true); return; }
+ if(!pt.k){ const rb=b.base.runs[pt.bi]; if(!rb||rb.k||rb.t!==pt.antes){ avisar("La base cambió mientras tanto: volvé a poner el cursor en el texto.",true); return; }
+  quitarPropio(b,l,pt.bi); rb.t=pt.nuevo; b.base.ver++; b.base.guardada=hoy(); if(SESION) SESION.baseVer=b.base.ver;
+  registrarCorr(l,{alcance:"base",k:"BASE",etiqueta:"la minuta base: «"+(pt.antes.trim().length>40?pt.antes.trim().slice(0,38)+"…":pt.antes.trim())+"»",antes:pt.antes.trim(),despues:pt.nuevo.trim(),ref:null}); }
+ else { const d=pt.d, ref=d.a==="mza"?{tipo:"mza",mza:String(l.mza||"").trim(),campo:d.campo==="corresponde"?corrCampo(l):d.campo}:d.a==="tanda"?{tipo:"tanda",t:t.id,campo:d.campo}:{tipo:"barrio",campo:d.campo};
+  const crudo=String(valorRef(b,ref)||""), nuevoCrudo=pasarEdicion(pt.dice,pt.nuevo,crudo);
+  if(nuevoCrudo==null){ avisar("No pude llevar a todos el cambio en «"+d.r+"»: hacelo en el cuadro.",true); return; }
+  quitarPropioDato(l,pt.k,pt.bi); ponerRef(b,ref,nuevoCrudo); registrarCorr(l,{alcance:d.a,k:pt.k,etiqueta:d.r.toLowerCase(),antes:crudo,despues:nuevoCrudo,ref}); }
+ guardar(true); pedirSync(); pintarHojaRev(true); pintarPanelRev();
+ const n=pt.imp.sinRevisar, r=pt.imp.revisados.length;
+ avisar("Pasado a todos: cambia en "+(n===1?"el lote sin revisar":"los "+n+" lotes sin revisar")+(r?". "+r+(r===1?" revisada no cambia (está lista): se le puede llevar desde la tarjeta de la columna.":" revisadas no cambian (están listas): se les puede llevar desde la tarjeta de la columna."):"."));
+}
 function pintarCursorWord(){
  const p=$("#rPanel"), t=$("#rPanel .rev-tocar"); if(!p||!t) return;
  const ri=WORD.cursor, x=ri!=null?(WORD.runs||[])[ri]:null;
- t.innerHTML=x?'Escribí en la hoja como en un Word. <button type="button" class="link" id="wCuadro" style="width:auto;margin:0">Corregir este tramo en el cuadro</button>':"Escribí en la hoja como en un Word, o tocá un nombre, una fecha o un número para corregirlo en el cuadro.";
+ const z=loteDeVista(), pt=z&&x?propioParaTodos(z.b,z.t,z.l,x):null;
+ const vieja=$("#rPanel .rev-pasar"); if(vieja) vieja.remove();
+ if(pt){ const dec=$("#rPanel .rev-decide"); const h='<div class="card rev-box rev-pasar"><h3>Quedó sólo en esta escritura</h3><p class="hint" style="margin:0 0 8px">'+esc(difCorta(pt.antes,pt.nuevo)||"Lo cambiaste acá")+'</p><div class="pbtn"><button type="button" class="p" id="wPasar">Pasar a todos los lotes ('+pt.imp.sinRevisar+')</button></div>'+(pt.imp.revisados.length?'<p class="hint" style="margin:6px 0 0">Las '+pt.imp.revisados.length+' revisadas no cambian: están listas.</p>':"")+'</div>';
+  if(dec) dec.insertAdjacentHTML("afterend",h); else p.insertAdjacentHTML("afterbegin",h);
+  const bp=$("#wPasar"); bp.addEventListener("mousedown",e=>e.preventDefault()); bp.onclick=()=>{ if(!guardarWordSolo()){ revFrena(); return; } const pt2=propioParaTodos(z.b,z.t,z.l,x); if(pt2) pasarATodos(z.b,z.t,z.l,pt2); }; }
+ t.innerHTML=x?'Escribí en la hoja como en un Word: se guarda solo, sólo en esta escritura. <button type="button" class="link" id="wCuadro" style="width:auto;margin:0">Corregir este tramo en el cuadro</button>':"Escribí en la hoja como en un Word: se guarda solo, sólo en esta escritura. O tocá un nombre, una fecha o un número para corregirlo en el cuadro.";
  const wc=$("#wCuadro"); if(wc) wc.onclick=()=>{ if(wordFrena()) return; VISTA.ri=ri; VISTA.rk=x.k||""; pintarPanelRev(); const f=$("#rCorr textarea,#rCorr input"); if(f) f.focus(); };
 }
 /* Lo escrito en la revisión que todavía no se guardó (Baltasar, 20/11/2026: «URGENTE, ¿cómo que no se guarda?»): en la
@@ -7466,8 +7499,7 @@ function cuadroSucio(){ return [...document.querySelectorAll("#rPanel [data-orig
 function revSinGuardar(){ return VISTA.v==="revision"&&(wordSucio()||!!(EN_HOJA&&EN_HOJA.sucio())||!!cuadroSucio()); }
 function revFrena(){
  if(VISTA.v!=="revision") return false;
- if(wordSucio()){ avisar("Cambiaste la minuta en la hoja y todavía no está guardado: tocá «Guardar» en la columna (o «Descartar»).",true); pintarBarraWord();
-  const g=$("#wGuardar"); if(g&&g.scrollIntoView) g.scrollIntoView({block:"center"}); return true; }
+ if(wordSucio()&&!guardarWordSolo()){ avisar("No pude guardar lo último que escribiste en la hoja: deshacelo con Ctrl+Z y escribilo de nuevo, de a un párrafo.",true); return true; }
  if(EN_HOJA&&EN_HOJA.sucio()){ avisar("Escribiste en la hoja y todavía no está guardado: elegí abajo del tramo «Sólo en este lote», «En todos» o «Cancelar».",true); try{ EN_HOJA.span.focus(); }catch(e){} return true; }
  const c=cuadroSucio(); if(c){ avisar("Escribiste en el cuadro de la columna y todavía no está guardado: tocá uno de sus botones, o dejalo como estaba.",true);
   try{ c.focus(); if(c.scrollIntoView) c.scrollIntoView({block:"center"}); }catch(e){} return true; }
@@ -7475,6 +7507,20 @@ function revFrena(){
 }
 /* el nombre de antes, para los que ya lo llamaban */
 function wordFrena(){ return revFrena(); }
+/* Lo escrito en la hoja se guarda solo (Baltasar, 20/11/2026: «la idea es que se guarde automáticamente el texto de
+   escritura; no tengas que poner guardar; no lo hagas tan complicado»). Al dejar de escribir un momento, al salir de la
+   hoja y antes de cualquier cosa que se vaya o redibuje, lo cambiado queda «sólo en esta escritura», en violeta, como en
+   el Word de siempre. Lo que puede ir a todos (el texto de la base, el corresponde, un dato de la tanda o del barrio) se
+   pasa con «Pasar a todos los lotes», que aparece al costado con el cursor en eso. Ctrl+Z, adentro de la hoja, es el de
+   Chrome: deshace lo escrito, y lo deshecho también se guarda solo. */
+let WORD_T=null;
+function programarGuardadoWord(ms){ clearTimeout(WORD_T); WORD_T=setTimeout(()=>{ WORD_T=null; guardarWordSolo(); },ms==null?800:ms); }
+function guardarWordSolo(){
+ clearTimeout(WORD_T); WORD_T=null;
+ if(!wordSucio()) return true;
+ try{ aplicarWord(false,{solo:true}); }catch(e){ return false; }
+ return !wordSucio();
+}
 /* Lo que corrige ella no es de afuera (NOTAS 10/11/2026). Si antes de corregir la minuta era la que tenía en pantalla,
    lo que queda después también lo es, aunque mientras escribía haya llegado algo de otro lote o de otro barrio; si llegó
    algo de esta minuta, eso sí se marca (20/11/2026: después de cada «Guardar» salía «Llegó un cambio de otra
@@ -7837,6 +7883,8 @@ document.addEventListener("keydown",e=>{
  const tg=e.target; if(tg&&tg.closest("input,textarea,select")) return; /* ahí, el de Chrome */
  /* en el tramo abierto en la hoja, el de Chrome mientras se escribe; si todavía no se escribió nada, el de la revisión */
  if(tg&&tg.isContentEditable&&EN_HOJA&&EN_HOJA.sucio()) return;
+ /* adentro de la hoja, el de Chrome mientras tenga algo escrito para deshacer (lo deshecho se guarda solo); si no, el de la revisión */
+ if(tg&&tg.closest&&tg.closest("#rHoja")&&$("#rHoja").isContentEditable){ const ah=textosHoja(); if(WORD.base0&&ah&&!igualesMapas(WORD.base0,ah)) return; }
  if($("#dialogo")&&$("#dialogo").classList.contains("on")) return;
  e.preventDefault(); revDeshacer();
 });
