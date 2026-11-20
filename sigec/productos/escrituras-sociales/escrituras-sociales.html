@@ -1678,22 +1678,30 @@ function copiasEnPrincipal(out,ctx){
    cargo y del marco —antes de la resolución individual—; las de los adjudicatarios, la de la resolución individual
    («agrego a la presente escritura») y la del notarial quedan. Se arma al mostrar y al bajar el Word, como el número de la
    principal: no entra en lo que se compara con lo aprobado (ctx.sinCita), así que no tumba ninguna revisión. */
-const CITA_FRASE=/(?:corren\s+agregadas|agrego)\s+a\s+la\s+presente(?!\s+escritura)/gi;
-const CITA_ANTES=/cuyas\s+copias\s+certificadas\s+(?:por\s+m[ií]\s+)?$/i; /* en plural: la de la sentencia («cuya copia») no */
+/* Con el texto de Melo (Baltasar, mismo día): lo que corre agregado a la principal es todo lo que acredita la
+   intervención de los de la municipalidad y lo que autoriza la escrituración social, que va de «INTERVENCIÓN:» a «DICEN:»;
+   ahí, cada «corre(n) agregada(s) a la presente (escritura)» o «agrego a la presente» pasa a citar la principal, como
+   la fórmula de la 61: «corren agregadas a la Escritura número …, Sección A, del … del presente protocolo de mi
+   titularidad». Lo de las personas —sus documentos, después del comparendo—, la constancia de ARCA, la sentencia o el
+   acta de defunción queda «a la presente»: está antes de la intervención o después de «DICEN:». */
+const CITA_FRASE=/(corren?\s+agregad[ao]s?|agrego)\s+a\s+la\s+presente(?:\s+escritura)?/gi;
 function citaEnLasDemas(out,ctx){
  const pr=principalCtx(ctx); if(!pr||pr.es||ctx.sinCita) return out;
- /* el comparendo cambiado «sólo en esta escritura» viene con kp, no con k (20/11/2026) */
- const iAdj=out.findIndex(x=>(x.k||x.kp)==="ADJUDICATARIOS"), iInt=out.findIndex(x=>!x.k&&!x.kp&&/INTERVENCIÓN:/.test(x.t));
- let fin=out.findIndex(x=>x.k==="RESOLUCION"||(!x.k&&/DICEN:/.test(x.t))); if(fin<0) fin=out.length;
+ const iInt=out.findIndex(x=>!x.k&&!x.kp&&!x.hueco&&/INTERVENCIÓN:/.test(x.t)); if(iInt<0) return out;
+ let fin=out.findIndex((x,i)=>i>=iInt&&!x.k&&!x.kp&&!x.hueco&&/DICEN:/.test(x.t.slice(i===iInt?x.t.indexOf("INTERVENCIÓN:"):0)));
+ /* si los adjudicatarios vinieran después de la intervención, sus copias no entran (el comparendo propio viene con kp) */
+ const iAdj=out.findIndex((x,i)=>i>iInt&&(x.k||x.kp)==="ADJUDICATARIOS"); if(iAdj>=0&&(fin<0||iAdj<fin)) fin=iAdj;
+ if(fin<0) fin=out.length;
  const nro=pr.nro?numeroEscritura(pr.nro):"*****", fe=fechaLarga(String(pr.l.fechaActo||(ctx.t&&ctx.t.fechaFirma)||""))||"*****";
- const cita="corren agregadas a la Escritura número "+nro+", Sección A, del "+fe+" del presente protocolo de mi titularidad";
+ const resto=" a la Escritura número "+nro+", Sección A, del "+fe+" del presente protocolo de mi titularidad";
  return out.map((x,i)=>{
-  if(x.k||x.kp||x.hueco||x.pend||i>fin) return x;
-  if(iAdj>=0&&i>iAdj&&(iInt<0||i<iInt)) return x;
-  const desde=i===iInt?x.t.indexOf("INTERVENCIÓN:"):0, hasta=i===fin?x.t.search(/DICEN:/):x.t.length;
+  if(i<iInt||i>fin||x.k||x.kp||x.hueco||x.pend) return x;
+  const desde=i===iInt?x.t.indexOf("INTERVENCIÓN:"):0, d=i===fin?x.t.slice(desde).search(/DICEN:/):-1, hasta=d>=0?desde+d:x.t.length;
   let ant=""; for(let j=i-1;j>=0&&!out[j].k&&!out[j].kp&&!out[j].hueco&&ant.length<120;j--) ant=out[j].t+ant;
   let hubo=false;
-  const t=x.t.replace(CITA_FRASE,(m,pos)=>{ if(pos<desde||pos>=hasta||!CITA_ANTES.test(ant+x.t.slice(0,pos))) return m; hubo=true; return cita; });
+  const t=x.t.replace(CITA_FRASE,(m,verbo,pos)=>{ if(pos<desde||pos>=hasta) return m; hubo=true;
+   const v=/^agrego/i.test(verbo)?(/cuya\s+copia\s+certificada\s+(?:por\s+m[ií]\s+)?$/i.test(ant+x.t.slice(0,pos))?"corre agregada":"corren agregadas"):verbo;
+   return v+resto; });
   return hubo?Object.assign({},x,{t,cita:true}):x;
  });
 }
