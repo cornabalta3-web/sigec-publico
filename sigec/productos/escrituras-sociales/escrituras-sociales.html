@@ -7500,6 +7500,26 @@ function propioParaTodos(b,t,l,x){
  const ctx=ctxDe(b,t,l), dice=textoDatoRun(d,ctx,Object.assign({},b.base.runs[x.wbi],{bi:x.wbi})), ov=propioDatoDe(l,k,x.wbi,dice); if(!ov) return null;
  return {k,bi:x.wbi,nuevo:ov.nuevo,antes:dice,dice,d,nombre:d.r.split(" — ")[0].toLowerCase(),imp:impacto(b,d.a,t,l,k==="CORRESPONDE")};
 }
+/* Lo de esta escritura (en violeta) que puede ir a todos: la base, el corresponde, un dato de la tanda o del barrio
+   (Baltasar, 20/11/2026: «revisé uno y le cambié el corresponde, pero no se cambió en los demás lotes de la manzana»: el
+   botón aparecía sólo con el cursor ahí, y aprobada ya no estaba). Sirve también con la minuta ya revisada. */
+function propiosParaTodos(b,t,l){
+ const out=[]; for(const x of l.textoPropio||[]){
+  if(!x||x.fuera||x.bi==null||!b.base.runs[x.bi]||!propioVale(x,b,l)) continue;
+  if(!x.k){ const rb=b.base.runs[x.bi]; if(rb.k||rb.t!==x.orig) continue;
+   out.push({k:"",bi:x.bi,nuevo:x.nuevo,antes:x.orig,nombre:"Texto de la minuta",imp:impacto(b,"barrio",t,l)}); continue; }
+  const d=CAT_K[x.k]; if(!d||!d.campo||!(d.a==="barrio"||d.a==="tanda"||d.a==="mza")) continue;
+  out.push({k:x.k,bi:x.bi,nuevo:x.nuevo,antes:x.orig,dice:x.orig,d,nombre:d.r.split(" — ")[0],imp:impacto(b,d.a,t,l,x.k==="CORRESPONDE")}); }
+ return out.filter(pt=>String(pt.nuevo).trim()&&pt.nuevo!==pt.antes);
+}
+function propiosTodosHtml(b,t,l,p){
+ if(!puedeRevisar()||cargoDe(l)!==ROL()||l.estado==="firmada"||l.estado==="inscripta") return;
+ const ps=propiosParaTodos(b,t,l); if(!ps.length) return;
+ const h='<div class="card rev-box rev-propios"><h3>Sólo en esta escritura</h3><p class="hint" style="margin:0 0 6px">Esto lo cambiaste acá y puede ir a los demás lotes:</p>'
+  +ps.map((pt,i)=>'<div style="padding:6px 0;border-top:1px solid var(--line)"><b style="font-size:13.5px">'+esc(pt.nombre)+'</b><div class="hint" style="margin:2px 0 6px">'+esc(difCorta(pt.antes,pt.nuevo))+'</div><button type="button" class="p" data-pasar="'+i+'" style="width:auto">Pasar a todos los lotes ('+pt.imp.sinRevisar+')</button></div>').join("")+'</div>';
+ const dec=p.querySelector(".rev-decide"); (dec||p.firstElementChild).insertAdjacentHTML("afterend",h);
+ p.querySelectorAll("[data-pasar]").forEach(bt=>bt.onclick=()=>{ if(revFrena()) return; const pt=propiosParaTodos(b,t,l)[+bt.dataset.pasar]; if(pt) pasarATodos(b,t,l,pt); });
+}
 function pasarATodos(b,t,l,pt){
  if(!pt.nuevo.trim()){ avisar("Vacío borraría ese texto de todas las minutas: si es eso, hacelo en la minuta base entera.",true); return; }
  if(!pt.k){ const rb=b.base.runs[pt.bi]; if(!rb||rb.k||rb.t!==pt.antes){ avisar("La base cambió mientras tanto: volvé a poner el cursor en el texto.",true); return; }
@@ -7971,6 +7991,7 @@ function pintarPanelRev(){
   +'<div class="rev-fin"><button type="button" class="link" id="rWord">Descargar el Word</button><button type="button" class="link" id="rTerminar">Terminar la revisión</button></div>'
   +historiaHtml(l);
  if(cc.atar) cc.atar();
+ propiosTodosHtml(b,t,l,p);
  document.querySelectorAll("#rPanel #rCorr button,#rPanel #rCorrP button").forEach(bt=>{ const f=bt.onclick; if(typeof f!=="function") return;
   bt.onclick=function(ev){ const z=loteDeVista(); VISTA.propio=!!(z&&vioAlDia(z.b,z.t,z.l)); try{ return f.call(this,ev); } finally{ VISTA.propio=false; } }; });
  revCongeladaHtml(b,t,l,p);
@@ -8001,7 +8022,11 @@ function pintarPanelRev(){
   if(e&&e.detail>1) return;
   if(revFrena()) return; /* antes que nada: lo de abajo redibuja, y lo escrito sin guardar se perdía (20/11/2026) */
   const hacer=()=>{ if(!aprobarLoQueVio(b,t,l)) return; if(!aprobar(b,t,l,true)){ pintarPanelRev(); return; } SESION.hecho[l.id]="revisada"; SESION.ultimo={l:l.id,txt:"✓ "+loteCorto(l)+" quedó revisada"}; siguienteEnSesion(); };
-  const f=faltasRevision(b,t,l); if(f.length) preguntar("A esta minuta le faltan <b>"+f.length+" dato"+(f.length>1?"s":"")+"</b>: "+esc(f.map(x=>x.que).join("; "))+". ¿Aprobarla igual?","Aprobar igual",()=>{ setTimeout(hacer,0); }); else hacer(); };
+  const conPropios=()=>{ const ps=propiosParaTodos(b,t,l); if(!ps.length) return hacer();
+   preguntar("<b>Cambiaste "+(ps.length===1?"esto":"estas cosas")+" sólo en esta escritura:</b><ul style=\"margin:6px 0 0;padding-left:18px\">"+ps.map(pt=>"<li><b>"+esc(pt.nombre)+"</b>: "+esc(difCorta(pt.antes,pt.nuevo))+"</li>").join("")+"</ul>¿Lo pasás también a los demás lotes?","Pasar a todos y aprobar",()=>{ for(const pt of ps){ const p2=propiosParaTodos(b,t,l).find(x=>x.k===pt.k&&x.bi===pt.bi); if(p2) pasarATodos(b,t,l,p2); } setTimeout(hacer,0); },
+    '<p style="margin:10px 0 0"><button type="button" class="link" id="dlgSoloEsta">No, sólo en ésta: aprobar así</button></p>');
+   const so=$("#dlgSoloEsta"); if(so) so.onclick=()=>{ $("#dialogo").classList.remove("on"); setTimeout(hacer,0); }; };
+  const f=faltasRevision(b,t,l); if(f.length) preguntar("A esta minuta le faltan <b>"+f.length+" dato"+(f.length>1?"s":"")+"</b>: "+esc(f.map(x=>x.que).join("; "))+". ¿Aprobarla igual?","Aprobar igual",()=>{ setTimeout(conPropios,0); }); else conPropios(); };
  const pe=$("#rPendiente"); if(pe) pe.onclick=()=>{ if(revFrena()) return; dejarPendiente(b,t,l,()=>{ SESION.hecho[l.id]="pendiente"; SESION.ultimo={l:l.id,txt:loteCorto(l)+" quedó pendiente",pend:true}; siguienteEnSesion(); }); };
 }
 const candado=()=>'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="vertical-align:-2px"><rect x="5" y="11" width="14" height="10" rx="2"></rect><path d="M8 11V7a4 4 0 0 1 8 0v4"></path></svg>';
