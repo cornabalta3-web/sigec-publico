@@ -6197,7 +6197,33 @@ function pasarEdicion(antes,nuevo,dice){
   const i=dice.indexOf(busca); if(i<0||dice.indexOf(busca,i+1)>=0) continue;
   return dice.slice(0,i)+izq+nuevo.slice(p,nuevo.length-q)+der+dice.slice(i+busca.length);
  }
- return null;
+ return pasarPorPartes(antes,nuevo,dice);
+}
+/* Si lo de arriba no lo ubica (20/11/2026, en la revisión: «No pude llevar a todos el cambio en El corresponde»): cada
+   cambio por separado, palabra por palabra, buscado con una o más palabras de cada lado y sin fijarse en los espacios ni
+   en los saltos. Así no lo traba lo que entre dos cambios es distinto en el otro texto (la matrícula de este lote) ni un
+   espacio de más del texto pegado. Cada cambio tiene que aparecer una sola vez; si alguno no, no se lleva nada. */
+function pasarPorPartes(antes,nuevo,dice){
+ const toks=x=>[...String(x).matchAll(/[\p{L}\p{N}]+|[^\p{L}\p{N}\s]/gu)].map(m=>({t:m[0],i:m.index,j:m.index+m[0].length}));
+ const A=toks(antes), N=toks(nuevo); if(!A.length||A.length+N.length>8000) return null;
+ const ops=difPalabras(A.map(x=>x.t),N.map(x=>x.t),800); if(!ops) return null;
+ const hs=[]; let cur=null, ia=0, ib=0;
+ for(const o of ops){ if(o.op==="="){ if(cur){ hs.push(cur); cur=null; } ia=o.a+1; ib=o.b+1; continue; }
+  if(!cur) cur={a0:ia,a1:ia,b0:ib,b1:ib}; if(o.op==="-"){ cur.a1=o.a+1; ia=o.a+1; } else { cur.b1=o.b+1; ib=o.b+1; } }
+ if(cur) hs.push(cur); if(!hs.length) return dice;
+ const esR=x=>x.replace(/[.*+?^${}()|[\]\\]/g,"\\$&"), une=xs=>xs.map(x=>esR(x.t)).join("\\s*");
+ let out=dice;
+ for(let h=hs.length-1;h>=0;h--){ const k=hs[h]; let hecho=false;
+  for(const [nl,nr] of [[5,5],[4,4],[3,3],[2,2],[0,4],[4,0],[0,3],[3,0],[1,1],[0,2],[2,0]]){
+   const L=A.slice(Math.max(0,k.a0-nl),k.a0), M=A.slice(k.a0,k.a1), R=A.slice(k.a1,k.a1+nr); if(!L.length&&!R.length) continue;
+   const re=new RegExp((L.length?"("+une(L)+")":"()")+"(\\s*"+une(M)+"\\s*)"+(R.length?"("+une(R)+")":"()"),"g");
+   const ms=[...out.matchAll(re)]; if(ms.length!==1) continue;
+   const m=ms[0], ini=k.b0-1>=0&&L.length?N[k.b0-1].j:(L.length?0:(k.b0<N.length?N[k.b0].i:nuevo.length)), fin=R.length&&k.b1<N.length?N[k.b1].i:(R.length?nuevo.length:(k.b1-1>=0?N[k.b1-1].j:0));
+   let medio=nuevo.slice(Math.min(ini,fin),Math.max(ini,fin)); if(!L.length) medio=medio.replace(/^\s+/,""); if(!R.length) medio=medio.replace(/\s+$/,"");
+   const a0=m.index+m[1].length, a1=a0+m[2].length;
+   out=out.slice(0,a0)+(L.length&&R.length?medio:(L.length?medio.replace(/^(?!\s)/," "):medio.replace(/(?<!\s)$/," ")))+out.slice(a1); hecho=true; break; }
+  if(!hecho) return null; }
+ return out;
 }
 function ponerPropioDato(l,k,bi,dice,nuevo){
  quitarPropioDato(l,k,bi); if(nuevo===dice) return false;
@@ -7481,7 +7507,7 @@ function pasarATodos(b,t,l,pt){
   registrarCorr(l,{alcance:"base",k:"BASE",etiqueta:"la minuta base: «"+(pt.antes.trim().length>40?pt.antes.trim().slice(0,38)+"…":pt.antes.trim())+"»",antes:pt.antes.trim(),despues:pt.nuevo.trim(),ref:null}); }
  else { const d=pt.d, ref=d.a==="mza"?{tipo:"mza",mza:String(l.mza||"").trim(),campo:d.campo==="corresponde"?corrCampo(l):d.campo}:d.a==="tanda"?{tipo:"tanda",t:t.id,campo:d.campo}:{tipo:"barrio",campo:d.campo};
   const crudo=String(valorRef(b,ref)||""), nuevoCrudo=pasarEdicion(pt.dice,pt.nuevo,crudo);
-  if(nuevoCrudo==null){ avisar("No pude llevar a todos el cambio en «"+d.r+"»: hacelo en el cuadro.",true); return; }
+  if(nuevoCrudo==null){ avisar("No pude llevar a todos el cambio en «"+d.r.split(" — ")[0]+"»: toca algo que es de este lote (la matrícula) o que la herramienta escribe sola. Quedó sólo en esta escritura; para todos, corregilo en el cuadro del corresponde («En todos los lotes»).",true); return; }
   quitarPropioDato(l,pt.k,pt.bi); ponerRef(b,ref,nuevoCrudo); registrarCorr(l,{alcance:d.a,k:pt.k,etiqueta:d.r.toLowerCase(),antes:crudo,despues:nuevoCrudo,ref}); }
  guardar(true); pedirSync(); pintarHojaRev(true); pintarPanelRev();
  const n=pt.imp.sinRevisar, r=pt.imp.revisados.length;
