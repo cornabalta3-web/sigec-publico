@@ -641,6 +641,7 @@ html[data-theme="dark"] .nro-et{color:#E6EAF2;background:#262F42;border-color:#3
 p.rev-principal{margin:0 0 10px}
 .rev-undo{margin:8px 0 0;font-size:13.5px}
 .rev-word .wg{padding:8px 0;border-top:1px solid var(--line)}
+#rHoja .adj-datos{cursor:pointer}
 .rev-word .wg-t{display:flex;flex-direction:column;gap:2px;font-size:13.5px;margin-bottom:6px}
 .rev-word .wg-t .hint{font-size:12.5px;overflow-wrap:anywhere}
 .rev-word .wg-op{display:flex;flex-wrap:wrap;align-items:center;gap:0;}
@@ -1673,8 +1674,13 @@ function domicilioRuns(ctx,entrada){
                  : H("la localidad y el departamento, en los datos comunes de la base"));
  return r;
 }
+/* El domicilio, una sola vez (Baltasar, 20/11/2026: «en algunos casos pusiste ambos domiciliados, y en otros, en cada
+   adjudicatario, domiciliado en el Lote 1 Manzana 1 y domiciliado en el Lote 1 Manzana 1»). Es el del lote, el mismo
+   para todos: con dos o más adjudicatarios va al final, «ambos (todos) con domicilio en …», sean cónyuges o no. Las
+   revisadas antes de este cambio siguen como se aprobaron (MOTOR 1), hasta que se les lleven los cambios. */
+let MOTOR_FORZADO=null;
 function adjudicatariosRuns(ctx){
- const l=ctx.l, c=ctx.c, r=[];
+ const l=ctx.l, c=ctx.c, r=[], unaVez=(MOTOR_FORZADO||l.__motor||2)>=2&&c.n>=2&&!c.conyuges&&!c.convivientes;
  if(!l.adj||!l.adj.length) return null;
  r.push(T((c.conyuges?"los cónyuges en "+(l.nupcias||"primeras")+" nupcias":c.trato)+" "));
  l.adj.forEach((p,i)=>{
@@ -1703,13 +1709,14 @@ function adjudicatariosRuns(ctx){
    else if(p.civil==="conviviente"&&!String(p.conviviente||"").trim()) r.push(H("el nombre del conviviente de "+(nm||"el adjudicatario")));
    if(pideAcred(p)&&!String(p.acred||"").trim())
     r.push(H("con qué acredita "+(nm||"el adjudicatario")+" ser "+(p.civil==="viudo"?(s==="F"?"viuda":"viudo"):(s==="F"?"divorciada":"divorciado"))));
-   r.push(...domicilioRuns(ctx,", domiciliad"+(s==="F"?"a":"o")+" en "));
+   if(!unaVez) r.push(...domicilioRuns(ctx,", domiciliad"+(s==="F"?"a":"o")+" en "));
   }
  });
  if(c.conyuges) r.push(...domicilioRuns(ctx,", ambos con domicilio en "));
  /* convivientes entre sí: el estado civil de los dos, una vez, y el domicilio común. A confirmar con la escribana. */
  else if(c.convivientes){ r.push(T(", quienes manifiestan ser de estado civil "+(c.fem?"solteras":"solteros")+" y encontrarse en unión convivencial inscripta entre sí"));
   r.push(...domicilioRuns(ctx,", "+(c.fem?"ambas":"ambos")+" con domicilio en ")); }
+ else if(unaVez) r.push(...domicilioRuns(ctx,", "+(c.fem?(c.n===2?"ambas":"todas"):(c.n===2?"ambos":"todos"))+" con domicilio en "));
  return r;
 }
 function numeroEscritura(v){
@@ -4706,6 +4713,7 @@ function cambioTrasRevision0(b,t,l){
  if(l.revisada.v2){ if(!b.base.runs.length) return null; const rc=runsComparar(b,t,l), tx=textoDe(rc), fm=firmaFormato(rc);
   if(tx===l.revisada.texto&&(!l.revisada.fmt||fm===l.revisada.fmt)) return null;
   if(mismoQueAprobado(t,l,tx,fm)) return null; /* el número y la fecha de la principal no cuentan (20/11/2026) */
+  if(!congeladaRev(l)&&conMotor1(()=>{ const r1=runsComparar(b,t,l); return mismoQueAprobado(t,l,textoDe(r1),firmaFormato(r1)); })) return null; /* aprobada con el domicilio de antes */
   return l.revisada.ver<b.base.ver?"base":"texto"; }
  if(l.revisada.ver<b.base.ver) return "base";
  if(l.revisada.texto&&b.base.runs.length&&textoDe(armarRuns(b.base,ctxDe(b,t,l)).runs)!==l.revisada.texto) return "texto";
@@ -6036,7 +6044,12 @@ function atarCampos(b,t,l){
   const ot=v.querySelector("#corrOtro"); if(ot) ot.onclick=()=>{ l.corr2=true; guardar(); pintarCorr(); pintarComoVa(b,t,l); const ta=v.querySelector('[data-mz="corresponde2"]'); if(ta) ta.focus(); }; };
  const pintarCorr=()=>{ const pc=$("#parteCorr"), P=PARTES.find(x=>x.mza); if(!pc||!P) return; pc.innerHTML=corrHtml(b,l,P,l.estado==="firmada"||l.estado==="inscripta"); atarCorr(); };
  atarCorr();
- const bl=$("#bLetras"); if(bl) bl.onclick=()=>{
+ /* El formato de Melo es el que vale (Baltasar, 20/11/2026: «el último criterio es el que vale»): la descripción que se
+    pega o se escribe sale ya así al salir del campo, sin apretar el botón. Lo de antes queda para «Volver a como estaba». */
+ const tad=v.querySelector('[data-campo="descripcion"]');
+ if(tad&&!tad.disabled){ let alEntrar=tad.value; tad.addEventListener("focus",()=>{ alEntrar=tad.value; });
+  tad.addEventListener("blur",()=>{ if(tad.value===alEntrar||!tad.value.trim()) return; alEntrar=tad.value; if(convertirDescripcion(tad.value).texto!==tad.value) aLetras(true); }); }
+ const aLetras=(solo)=>{
   const ta=v.querySelector('[data-campo="descripcion"]'); const crudo=ta.value;
   if(!crudo.trim()){ avisar("Primero pegá la descripción de la matrícula.",true); return; }
   /* lo pegado queda guardado hasta que se toque el texto: si la conversión salió mal, se vuelve
@@ -6045,8 +6058,10 @@ function atarCampos(b,t,l){
   if(crudo!==r.texto){ l.descripcionAntes=crudo; l.descripcionLetras=r.texto; }
   if(r.sup!=null){ const m=Math.floor(r.sup+1e-9), dd=Math.round((r.sup-m)*100); l.superficie=String(m)+(dd?","+String(dd).padStart(2,"0"):""); const si=v.querySelector('[data-campo="superficie"]'); if(si) si.value=l.superficie; }
   guardar(); pintarLote();
+  if(solo){ avisar("La descripción quedó con el formato de siempre (números en letras): leela entera. Si algo salió mal, «Volver a como estaba»."+(r.sinUnidad?" Ojo: "+r.sinUnidad+" número(s) con decimales sin unidad no se tocaron: miralos.":"")); return; }
   avisar((crudo!==r.texto?"Números pasados a letras: leelo entero. Si algo salió mal, «Volver a como estaba».":"No había ningún número para pasar.")+(r.sinUnidad?" Ojo: "+r.sinUnidad+" número(s) con decimales sin unidad no se tocaron: miralos.":""));
  };
+ const bl=$("#bLetras"); if(bl) bl.onclick=()=>aLetras(false);
  const ba=$("#bLetrasAtras"); if(ba) ba.onclick=()=>{
   if(l.descripcionAntes==null||l.descripcion!==l.descripcionLetras){ ba.remove(); avisar("Ya cambiaste la descripción después de pasarla a letras: lo pegado no se repone, para no perder lo que escribiste.",true); return; }
   l.descripcion=l.descripcionAntes; delete l.descripcionAntes; delete l.descripcionLetras;
@@ -6578,13 +6593,13 @@ const COPIA=x=>JSON.parse(JSON.stringify(x==null?null:x));
 function congelarRevision(b,t,l){
  if(!l.revisada) return;
  const {lotes,hist,mod,modc,...tt}=t, {revisada,hist:h2,mod:m2,modc:mc2,firmada,desfirmada,copiasR,carpetaR,listaR,impresa,...ll}=l;
- l.revisada.cong={base:COPIA(b.base.runs),datos:COPIA(b.datos||{}),mzas:COPIA(b.manzanas||{}),tanda:COPIA(tt),lote:COPIA(ll)};
+ l.revisada.cong={base:COPIA(b.base.runs),datos:COPIA(b.datos||{}),mzas:COPIA(b.manzanas||{}),tanda:COPIA(tt),lote:COPIA(ll),motor:2};
 }
 function fuenteRev(b,t,l){
  const c=l&&l.estado==="revisada"&&l.revisada&&l.revisada.cong; if(!c||!b||!t) return null;
  const b2=Object.assign({},b,{base:Object.assign({},b.base,{runs:c.base}),datos:c.datos,manzanas:c.mzas});
  const t2=Object.assign({},c.tanda,{id:t.id,lotes:t.lotes,principal:t.principal,fechaFirma:t.fechaFirma});
- const l2=Object.assign({},c.lote,{id:l.id,estado:l.estado,revisada:l.revisada,nroEscritura:l.nroEscritura,fechaActo:l.fechaActo,impresa:l.impresa});
+ const l2=Object.assign({},c.lote,{id:l.id,estado:l.estado,revisada:l.revisada,nroEscritura:l.nroEscritura,fechaActo:l.fechaActo,impresa:l.impresa,__motor:c.motor||1});
  return {b:b2,t:t2,l:l2};
 }
 const congeladaRev=l=>!!(l&&l.estado==="revisada"&&l.revisada&&l.revisada.cong);
@@ -6600,13 +6615,17 @@ function mismoQueAprobado(t,l,tx,fm){
 function congelarRevisadas(){
  let n=0; for(const b of DB.barrios||[]) for(const t of b.tandas||[]) for(const l of t.lotes||[]){
   if(l.estado!=="revisada"||!l.revisada||!l.revisada.v2||l.revisada.cong||!b.base||!b.base.runs||!b.base.runs.length) continue;
-  const rc=runsComparar(b,t,l); if(!mismoQueAprobado(t,l,textoDe(rc),firmaFormato(rc))) continue;
-  congelarRevision(b,t,l); n++; }
+  const rc=runsComparar(b,t,l); let motor=2;
+  if(!mismoQueAprobado(t,l,textoDe(rc),firmaFormato(rc))){ if(!conMotor1(()=>{ const r1=runsComparar(b,t,l); return mismoQueAprobado(t,l,textoDe(r1),firmaFormato(r1)); })) continue; motor=1; }
+  congelarRevision(b,t,l); l.revisada.cong.motor=motor; n++; }
  if(n) guardar(true); return n;
 }
 setTimeout(()=>{ try{ congelarRevisadas(); }catch(e){} },2500);
 /* una revisada a la que, después de aprobada, le cambió algo para todos que no le llegó */
-function atrasada(b,t,l){ if(!congeladaRev(l)) return false; const rc=runsComparar(b,t,l,true); return !mismoQueAprobado(t,l,textoDe(rc),firmaFormato(rc)); }
+function conMotor1(f){ const a=MOTOR_FORZADO; MOTOR_FORZADO=1; try{ return f(); } finally{ MOTOR_FORZADO=a; } }
+function atrasada(b,t,l){ if(!congeladaRev(l)) return false; const rc=runsComparar(b,t,l,true); if(mismoQueAprobado(t,l,textoDe(rc),firmaFormato(rc))) return false;
+ /* si lo único distinto es cómo se escribe el domicilio (MOTOR 2), no quedó atrás */
+ return !conMotor1(()=>{ const r1=runsComparar(b,t,l,true); return mismoQueAprobado(t,l,textoDe(r1),firmaFormato(r1)); }); }
 /* «antes» → «ahora», en pocas palabras: lo primero que es distinto entre dos textos */
 function difCorta(a,d){
  a=String(a||""); d=String(d||""); let p=0; while(p<a.length&&p<d.length&&a[p]===d[p]) p++;
@@ -7349,7 +7368,9 @@ function pintarRevision(){
   WORD.cursor=run&&!enCuadro&&ri!=null&&!SIN_REVISAR_K.has(run.k||"")?ri:null;
   const nri=enCuadro?ri:null; if(nri===VISTA.ri){ pintarCursorWord(); return; } if(cuadroSucio()) return; VISTA.ri=nri; VISTA.rk=run&&enCuadro?run.k:""; pintarPanelRev(); },160); }); }
  $("#rHoja").onclick=e=>{
-  if($("#rHoja").isContentEditable) return; /* como Word: el clic pone el cursor */
+  if($("#rHoja").isContentEditable){ /* como Word: el clic pone el cursor; en el comparendo, abre sus datos */
+   const sa=e.target.closest(".adj-datos"); if(sa){ if(revFrena()) return; VISTA.ri=+sa.dataset.ri; const xa=(WORD.runs||[])[VISTA.ri]; VISTA.rk=(xa&&xa.k)||""; pintarPanelRev(); const fa=$("#rCorr [data-pa]"); if(fa){ fa.focus(); if(fa.scrollIntoView) fa.scrollIntoView({block:"center"}); } }
+   return; }
   if(EN_HOJA&&e.target.closest(".ed-hoja,.hoja-bar")) return;
   if(revFrena()) return; /* lo escrito en el tramo abierto o en el cuadro se guarda antes de tocar otro (20/11/2026) */
   const s=e.target.closest("[data-ri]"); if(!s) return; VISTA.ri=+s.dataset.ri; VISTA.rk=(runsRevision(b,t,l)[VISTA.ri]||{}).k||""; pintarHojaRev(); pintarPanelRev();
@@ -7387,7 +7408,10 @@ function armarWord(b,t,l){
  if(!puedeWord(b,t,l)){ h.contentEditable="false"; WORD.orig=null; return; }
  WORD.runs=runsRevision(b,t,l); WORD.lid=l.id;
  h.querySelectorAll(".imprime,.pliegue,.hueco,.vacio").forEach(x=>x.contentEditable="false");
- h.contentEditable="true"; h.spellcheck=false; WORD.orig=textosHoja(); WORD.base0=WORD.orig; /* lo que tenía al dibujarse: si se escribió algo, Ctrl+Z es el de Chrome */
+ h.contentEditable="true"; h.spellcheck=false;
+ /* el comparendo (los adjudicatarios) no se escribe a mano: un clic abre sus datos, y el nombre sale bien en todos lados (20/11/2026) */
+ h.querySelectorAll("[data-ri]").forEach(sp=>{ const x=WORD.runs[+sp.dataset.ri], kk=x&&(x.kp||x.k); if(kk==="ADJUDICATARIOS"||kk==="NOMBRES"){ sp.contentEditable="false"; sp.classList.add("adj-datos"); sp.title="Tocá para corregir en los datos de los adjudicatarios"; } });
+ WORD.orig=textosHoja(); WORD.base0=WORD.orig; /* lo que tenía al dibujarse: si se escribió algo, Ctrl+Z es el de Chrome */
 }
 /* lo que cambió, por tramo de origen: {k, bi, antes, despues, runs} */
 function cambiosWord(){
@@ -7516,9 +7540,35 @@ function propiosTodosHtml(b,t,l,p){
  if(!puedeRevisar()||cargoDe(l)!==ROL()||l.estado==="firmada"||l.estado==="inscripta") return;
  const ps=propiosParaTodos(b,t,l); if(!ps.length) return;
  const h='<div class="card rev-box rev-propios"><h3>Sólo en esta escritura</h3><p class="hint" style="margin:0 0 6px">Esto lo cambiaste acá y puede ir a los demás lotes:</p>'
-  +ps.map((pt,i)=>'<div style="padding:6px 0;border-top:1px solid var(--line)"><b style="font-size:13.5px">'+esc(pt.nombre)+'</b><div class="hint" style="margin:2px 0 6px">'+esc(difCorta(pt.antes,pt.nuevo))+'</div><button type="button" class="p" data-pasar="'+i+'" style="width:auto">Pasar a todos los lotes ('+pt.imp.sinRevisar+')</button></div>').join("")+'</div>';
+  +ps.map((pt,i)=>'<div style="padding:6px 0;border-top:1px solid var(--line)"><b style="font-size:13.5px">'+esc(pt.nombre)+'</b><div class="hint" style="margin:2px 0 6px">'+esc(difCorta(pt.antes,pt.nuevo))+'</div><div class="pbtn" style="margin:0"><button type="button" class="p" data-pasar="'+i+'" style="width:auto">Pasar a todos los lotes ('+pt.imp.sinRevisar+')</button>'+(pt.k==="CORRESPONDE"?'<button type="button" data-unificar="'+i+'" style="width:auto">Unificar en toda la Manzana '+esc(String(l.mza||""))+' ('+lotesDeManzana(b,l).filter(z=>z.l.estado!=="firmada"&&z.l.estado!=="inscripta").length+')</button>':"")+'</div></div>').join("")+'</div>';
  const dec=p.querySelector(".rev-decide"); (dec||p.firstElementChild).insertAdjacentHTML("afterend",h);
  p.querySelectorAll("[data-pasar]").forEach(bt=>bt.onclick=()=>{ if(revFrena()) return; const pt=propiosParaTodos(b,t,l)[+bt.dataset.pasar]; if(pt) pasarATodos(b,t,l,pt); });
+ p.querySelectorAll("[data-unificar]").forEach(bt=>bt.onclick=()=>{ if(revFrena()) return; const pt=propiosParaTodos(b,t,l)[+bt.dataset.unificar]; if(!pt) return;
+  const ref={tipo:"mza",mza:String(l.mza||"").trim(),campo:corrCampo(l)}, crudo=String(valorRef(b,ref)||""), nuevoCrudo=pasarEdicion(pt.dice,pt.nuevo,crudo);
+  if(nuevoCrudo==null){ avisar("No pude ubicar el cambio en el corresponde de la manzana: corregilo en el cuadro del corresponde y unificá desde ahí.",true); return; }
+  unificarCorresponde(b,t,l,nuevoCrudo); });
+}
+/* Unificar el corresponde de la manzana (Baltasar, 20/11/2026: «tengo 12 lotes de la Manzana 4, les tengo que corregir a
+   todos el corresponde, y unificarlo, y 8 están revisados»). Un clic: la manzana queda con este corresponde, los lotes
+   que tenían uno suyo (en violeta) o iban con el otro lo pierden, y las revisadas lo reciben y siguen revisadas, con su
+   Word nuevo en «Listas para imprimir». Las firmadas no se tocan; las de la otra escribana, desde su computadora. */
+function lotesDeManzana(b,l){ const mz=String(l.mza||"").trim(), out=[]; for(const t of b.tandas||[]) for(const x of t.lotes||[]) if(String(x.mza||"").trim()===mz) out.push({t,l:x}); return out; }
+function unificarCorresponde(b,t,l,nuevoCrudo){
+ const mz=String(l.mza||"").trim(), campo=corrCampo(l), todos=lotesDeManzana(b,l).filter(z=>z.l.estado!=="firmada"&&z.l.estado!=="inscripta");
+ const propios=todos.filter(z=>(z.l.textoPropio||[]).some(x=>x&&x.k==="CORRESPONDE")||corrCampo(z.l)!==campo).length;
+ const rev=todos.filter(z=>congeladaRev(z.l)), mias=rev.filter(z=>cargoDe(z.l)===ROL()), otras=rev.length-mias.length;
+ preguntar("<b>Unificar el corresponde de la Manzana "+esc(mz)+"</b><br>Los "+todos.length+" lotes sin firmar quedan con éste."
+  +(propios?"<br>"+propios+(propios===1?" tenía uno propio o iba con el otro: lo pierde.":" tenían uno propio o iban con el otro: lo pierden."):"")
+  +(mias.length?"<br>"+mias.length+(mias.length===1?" revisada lo recibe y sigue revisada":" revisadas lo reciben y siguen revisadas")+", con su Word nuevo en «Listas para imprimir».":"")
+  +(otras?"<br>"+otras+" revisada"+(otras===1?"":"s")+" de la otra escribana: se les lleva desde su computadora.":""),"Unificar",()=>{
+  const ref={tipo:"mza",mza:mz,campo}, antes=String(valorRef(b,ref)||"");
+  ponerRef(b,ref,nuevoCrudo);
+  for(const z of todos){ const sale=(z.l.textoPropio||[]).filter(x=>x&&x.k==="CORRESPONDE"); if(sale.length){ z.l.textoPropio=z.l.textoPropio.filter(x=>!(x&&x.k==="CORRESPONDE")); marcarFuera(z.l,sale); }
+   if(campo==="corresponde2") z.l.corr2=true; else delete z.l.corr2; }
+  registrarCorr(l,{alcance:"mza",k:"CORRESPONDE",etiqueta:"el corresponde, unificado en la Manzana "+mz,antes,despues:nuevoCrudo,ref});
+  if(mias.length) llevarARevisadas(b,mias); else { guardar(true); pedirSync(); }
+  pintarHojaRev(true); pintarPanelRev();
+  avisar("Unificado: los "+todos.length+" lotes de la Manzana "+mz+" tienen este corresponde"+(mias.length?" (las "+mias.length+" revisadas siguen revisadas)":"")+"."); });
 }
 function pasarATodos(b,t,l,pt){
  if(!pt.nuevo.trim()){ avisar("Vacío borraría ese texto de todas las minutas: si es eso, hacelo en la minuta base entera.",true); return; }
@@ -7735,10 +7785,11 @@ function cajaCorregir(b,t,l,run){
  if(congeladaRev(l)) return {html:'<div class="card rev-box"><h3>Está revisada</h3><p class="hint" style="margin:0">Quedó lista: lo que se corrija para todos ya no la cambia.'+(puedeRevisar()&&cargoDe(l)===ROL()?' Para corregirla, tocá «Volver a corregirla».':'')+'</p></div>'};
  if(!run) return {html:'<div class="card rev-box"><h3>Corregir</h3><p class="hint" style="margin:0">Tocá en la minuta lo que está mal.</p></div>'};
  /* el número y la fecha, que pone quien imprime, también se cargan acá (18/11/2026): el número es del lote; la fecha, de la tanda */
- const k=run.k, d=k?CAT_K[k]:null, al0=alcanceRun(run), al=al0==="imprime"?(k==="NRO_ESCRITURA"?"lote":"tanda"):al0;
+ const esAdj=x=>x==="ADJUDICATARIOS"||x==="NOMBRES";
+ const k=run.k||(esAdj(run.kp)?run.kp:undefined), d=k?CAT_K[k]:null, al0=alcanceRun(k&&!run.k?Object.assign({},run,{k}):run), al=al0==="imprime"?(k==="NRO_ESCRITURA"?"lote":"tanda"):al0;
  const cab=(tit,sub)=>'<div class="card rev-box" id="rCorr"><h3>Corregir · '+esc(tit)+'</h3><p class="hint" style="margin:0 0 8px">'+sub+'</p>';
  /* un dato que esta escritura tiene cambiado (13/11/2026) */
- if(run.kp&&run.bi!=null) return cajaPropioDato(b,t,l,run.kp,run.bi,run.bt||"",true);
+ if(run.kp&&run.bi!=null&&!esAdj(run.kp)) return cajaPropioDato(b,t,l,run.kp,run.bi,run.bt||"",true);
  /* el texto de la base: como en el lote, se cambia sólo en esta escritura (queda en violeta) o en la base,
     que es en todas (13/11/2026). Antes desde acá sólo se iba a la base. */
  const rb=!k&&run.bi!=null?b.base.runs[run.bi]:null, puedePropio=!!(rb&&!rb.k&&!rb.pend)&&l.estado!=="firmada"&&l.estado!=="inscripta";
@@ -7786,6 +7837,7 @@ function cajaCorregir(b,t,l,run){
        :'<div><label>Cónyuge <i>'+(p.civil==="divorciado"?"ex cónyuge":p.civil==="viudo"?"fallecido":"si corresponde")+'</i></label><input class="inp" data-pa="conyuge" value="'+esc(p.conyuge)+'"></div>')+'</div>'
       +'<label>Acredita con</label><textarea class="inp crece" data-pa="acred" rows="2">'+esc(p.acred)+'</textarea>'; })()
     +'</div>').join("")
+   +(esAdj(run.kp)?'<p class="hint" style="color:var(--warn)">En esta escritura el comparendo quedó escrito a mano (en violeta), y lo que cambies acá no se ve. <button type="button" class="link" id="rVolverDatos">Volver a los datos</button></p>':"")
    +'<p class="hint">Toca sólo este lote. <button type="button" class="link" id="rDatos">Abrir los datos del lote</button></p></div>',
    atar:()=>{
     $$("#rCorr [data-pa]").forEach(el=>{ const i=+el.closest(".adjmini").dataset.i, c=el.dataset.pa, ref={tipo:"adj",l:l.id,i,campo:c}; let antes=null;
@@ -7797,6 +7849,7 @@ function cajaCorregir(b,t,l,run){
       guardar(); pintarHojaRev(); pintarListaCorr(); if(c==="civil") pintarPanelRev(); }); });
     document.querySelectorAll("#rCorr textarea.crece").forEach(ajustarCrece);
     $("#rDatos").onclick=()=>ir("lote",{b:b.id,l:l.id});
+    const vd=$("#rVolverDatos"); if(vd) vd.onclick=()=>{ quitarPropioDato(l,run.kp,run.bi); guardar(true); pintarHojaRev(true); pintarPanelRev(); avisar("El comparendo vuelve a salir de los datos: corregí ahí el nombre y sale bien en todos lados."); };
    }};
  }
  /* lo que informa un certificado: sólo en este lote, como un texto propio (18/11/2026) */
@@ -7991,6 +8044,9 @@ function pintarPanelRev(){
   +'<div class="rev-fin"><button type="button" class="link" id="rWord">Descargar el Word</button><button type="button" class="link" id="rTerminar">Terminar la revisión</button></div>'
   +historiaHtml(l);
  if(cc.atar) cc.atar();
+ { const ap=$("#rPanel #rAplicar"), alt=$("#rPanel #rAlt"); if(ap&&alt&&VISTA.rk==="CORRESPONDE"&&puedeRevisar()){
+   ap.insertAdjacentHTML("afterend",'<button type="button" id="rUnificar">Unificar en toda la Manzana '+esc(String(l.mza||""))+'</button>');
+   $("#rUnificar").onclick=()=>{ const v=alt.value; if(!v.trim()){ avisar("Vacío no se unifica.",true); return; } alt.dataset.orig=v; unificarCorresponde(b,t,l,v); }; } }
  propiosTodosHtml(b,t,l,p);
  document.querySelectorAll("#rPanel #rCorr button,#rPanel #rCorrP button").forEach(bt=>{ const f=bt.onclick; if(typeof f!=="function") return;
   bt.onclick=function(ev){ const z=loteDeVista(); VISTA.propio=!!(z&&vioAlDia(z.b,z.t,z.l)); try{ return f.call(this,ev); } finally{ VISTA.propio=false; } }; });
