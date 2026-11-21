@@ -5028,7 +5028,7 @@ function bloqueTanda(b,t){
   +(camposQuePide(b.base,"tanda").includes("unidades")||String(t.unidades||"").trim()?'<span>Unidades <input class="mini" inputmode="numeric" style="width:56px" data-b="'+b.id+'" data-t="'+t.id+'" data-campo="unidades" value="'+esc(t.unidades||"")+'" placeholder="39" aria-label="Unidades que autoriza la resolución"></span>':"")
   +'<span>Firma el <input class="mini fecha" data-mask="fecha" data-b="'+b.id+'" data-t="'+t.id+'" data-campo="fechaFirma" value="'+esc(t.fechaFirma)+'" placeholder="dd/mm/aaaa">'+(partes(t.fechaFirma)?" · "+diasTxt(t.fechaFirma):"")+'</span>'
   +(t.lotes.length>1?'<span title="Las copias de la tanda van agregadas a ésta: las demás dicen «corren agregadas a la Escritura número …» con su número">Escritura principal <select class="mini principal" data-b="'+b.id+'" data-t="'+t.id+'" aria-label="Escritura principal de la tanda"><option value="">— ninguna —</option>'+ordenLotes(t.lotes).map(l=>'<option value="'+l.id+'"'+(t.principal===l.id?" selected":"")+'>'+esc(loteCorto(l)+" · "+nombreLote(l))+'</option>').join("")+'</select></span>':"")
-  +'<span class="der">'+(t.lotes.some(l=>l.estado!=="firmada"&&l.estado!=="inscripta"&&String(l.descripcion||"").trim())?'<button type="button" class="ch" data-acc="letrasTanda" data-b="'+b.id+'" data-t="'+t.id+'" title="«Pasar los números a letras» en las descripciones de todos los lotes sin firmar de esta tanda, de una vez">Descripciones a letras</button>':"")+(sinCaratula(t.lotes.map(l=>({b,t,l}))).length>1?'<button type="button" class="ch" data-acc="caratulas" data-b="'+b.id+'" data-t="'+t.id+'" title="Las de los lotes de esta tanda que todavía no la tienen, una por hoja">Imprimir '+sinCaratula(t.lotes.map(l=>({b,t,l}))).length+' carátulas</button>':"")+(new Set(t.lotes.map(l=>normN(l.responsable||""))).size>1?'<button type="button" class="ch" data-acc="gruposTodos" data-modo="abrir">Abrir todos</button><button type="button" class="ch" data-acc="gruposTodos" data-modo="plegar">Plegar todos</button>':"")+'<button type="button" class="ch" data-acc="lotes" data-b="'+b.id+'" data-t="'+t.id+'">+ Lotes</button>'
+  +'<span class="der">'+(puedeRevisar()&&t.lotes.some(l=>l.estado==="revisada"&&cargoDe(l)===ROL())?'<button type="button" class="ch" data-acc="volverControl" data-b="'+b.id+'" data-t="'+t.id+'" title="Las controladas de tu mitad vuelven a control, para mirarlas otra vez: elegís cuáles">Volver a control…</button>':"")+(t.lotes.some(l=>l.estado!=="firmada"&&l.estado!=="inscripta"&&String(l.descripcion||"").trim())?'<button type="button" class="ch" data-acc="letrasTanda" data-b="'+b.id+'" data-t="'+t.id+'" title="«Pasar los números a letras» en las descripciones de todos los lotes sin firmar de esta tanda, de una vez">Descripciones a letras</button>':"")+(sinCaratula(t.lotes.map(l=>({b,t,l}))).length>1?'<button type="button" class="ch" data-acc="caratulas" data-b="'+b.id+'" data-t="'+t.id+'" title="Las de los lotes de esta tanda que todavía no la tienen, una por hoja">Imprimir '+sinCaratula(t.lotes.map(l=>({b,t,l}))).length+' carátulas</button>':"")+(new Set(t.lotes.map(l=>normN(l.responsable||""))).size>1?'<button type="button" class="ch" data-acc="gruposTodos" data-modo="abrir">Abrir todos</button><button type="button" class="ch" data-acc="gruposTodos" data-modo="plegar">Plegar todos</button>':"")+'<button type="button" class="ch" data-acc="lotes" data-b="'+b.id+'" data-t="'+t.id+'">+ Lotes</button>'
   +(t.lotes.length&&!ADMIN()?"":'<button type="button" class="ch borrar" data-acc="borrarTanda" data-b="'+b.id+'" data-t="'+t.id+'">Borrar</button>')+'</span></div>';
  if(!t.lotes.length) return h+'<p class="vacio">Sin lotes. «+ Lotes»: se pega la lista de la resolución, no se carga uno por uno.</p></div>';
  const rep=lotesPorExpediente();
@@ -5057,6 +5057,27 @@ function resumenGrupo(xs){
 /* «Pasar los números a letras» en toda la tanda (Baltasar, 19/11/2026: «hacé el botón de la tanda», para las
    descripciones ya cargadas antes del formato nuevo). Lo mismo que el botón de cada lote: lo de antes queda guardado
    y en cada lote se vuelve con «Volver a como estaba». Las firmadas no se tocan; las revisadas avisan el cambio. */
+/* Varias controladas vuelven a control de una vez, para que la escribana las mire otra vez (21/11/2026). Agrupadas por con
+   quién se revisaron, que es como se dice en la oficina («las que revisaron con …»). Es lo mismo que «Volver a
+   corregirla» de cada una: salen de «Listas para imprimir» hasta que se controlen de nuevo. Las impresas y firmadas no. */
+function volverAControl(b,t){
+ if(!puedeRevisar()){ avisoCargo(); return; }
+ const xs=ordenLotes(t.lotes).filter(l=>l.estado==="revisada"&&cargoDe(l)===ROL());
+ if(!xs.length){ avisar("No hay controladas de tu mitad en esta tanda."); return; }
+ const conQ=l=>String((l.revisada&&l.revisada.con)||l.responsable||"").trim()||"sin nombre";
+ const gs=new Map(); xs.forEach(l=>{ const k=normN(conQ(l)); if(!gs.has(k)) gs.set(k,{n:conQ(l),ls:[]}); gs.get(k).ls.push(l); });
+ const html='<div class="vc-lista" style="max-height:52vh;overflow:auto;margin-top:8px">'+[...gs.values()].map((g,i)=>'<div style="margin:8px 0 4px"><label class="tilde" style="font-weight:700"><input type="checkbox" data-vg="'+i+'"> Las que se revisaron con '+esc(g.n)+' ('+g.ls.length+')</label>'
+  +g.ls.map(l=>'<label class="tilde" style="margin-left:22px;font-weight:400"><input type="checkbox" data-vl="'+l.id+'" data-vgi="'+i+'"> '+esc(loteCorto(l))+' · '+esc(nombreLote(l))+(l.revisada&&l.revisada.fecha?' <span class="hint">(el '+esc(l.revisada.fecha)+')</span>':"")+'</label>').join("")+'</div>').join("")+'</div>';
+ preguntar("<b>Volver a control</b> · "+esc(b.nombre)+"<br>Las que elijas vuelven a «En control»: aparecen para mirarlas de nuevo y salen de «Listas para imprimir» hasta que las controles otra vez. Lo cargado no se pierde.","Volver a control",()=>{
+  const ids=new Set([...document.querySelectorAll('#dialogo [data-vl]:checked')].map(x=>x.dataset.vl)); if(!ids.size) return false;
+  let n=0; xs.forEach(l=>{ if(!ids.has(l.id)) return; l.estado="enRevision"; if(l.revisada) delete l.revisada.cong; n++; });
+  guardar(true); pedirSync(); pintarTablero(); try{ vigilarListas(); }catch(e){}
+  avisar(n+(n===1?" volvió":" volvieron")+" a control: tienen «Revisar» en la lista, y «Controlada» pasa a la siguiente."); },html);
+ const si=$("#dlgSi"), act=()=>{ const k=document.querySelectorAll('#dialogo [data-vl]:checked').length; si.disabled=!k; si.textContent=k?"Volver a control ("+k+")":"Volver a control"; };
+ document.querySelectorAll('#dialogo [data-vg]').forEach(g=>g.onchange=()=>{ document.querySelectorAll('#dialogo [data-vgi="'+g.dataset.vg+'"]').forEach(x=>x.checked=g.checked); act(); });
+ document.querySelectorAll('#dialogo [data-vl]').forEach(x=>x.onchange=()=>{ const i=x.dataset.vgi, todos=[...document.querySelectorAll('#dialogo [data-vgi="'+i+'"]')]; const g=document.querySelector('#dialogo [data-vg="'+i+'"]'); if(g) g.checked=todos.every(y=>y.checked); act(); });
+ act();
+}
 function letrasTanda(b,t){
  const vivos=t.lotes.filter(l=>l.estado!=="firmada"&&l.estado!=="inscripta"&&String(l.descripcion||"").trim());
  const cambian=vivos.map(l=>({l,r:convertirDescripcion(l.descripcion)})).filter(x=>x.r.texto!==x.l.descripcion);
@@ -5083,6 +5104,7 @@ function filasPorPersona(b,t,lotes,fila){
 function accionTablero(acc,bid,tid,lid,el){
  if(acc==="nada") return;
  if(acc==="letrasTanda"){ const b=bDe(bid), t=b&&b.tandas.find(x=>x.id===tid); if(t) letrasTanda(b,t); return; }
+ if(acc==="volverControl"){ const b=bDe(bid), t=b&&b.tandas.find(x=>x.id===tid); if(t) volverAControl(b,t); return; }
  if(acc==="mitad"){ const k=el.dataset.mk, card=el.closest(".mitad"), pl=!card.classList.contains("plegada"), m=mitadLeer(); m[k]=pl; lsPoner("sigec_sociales_mitad",JSON.stringify(m));
   card.classList.toggle("plegada",pl); el.setAttribute("aria-expanded",pl?"false":"true"); return; }
  if(acc==="grupo"){ const gk=el.dataset.gk, abre=el.getAttribute("aria-expanded")!=="true", m=plegadosLeer(); m[gk]=!abre; lsPoner(PLEG_K,JSON.stringify(m));
