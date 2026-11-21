@@ -340,7 +340,8 @@ function nomenDe(l){
 /* Los adjudicatarios, como en la minuta: nombre y APELLIDO; «A y B», «A; B y C» (Baltasar, 13/11/2026:
    «poné también el nombre de los adjudicatarios»). */
 function adjDe(l){
-  if(SOLO_VER) return "";   // en el celular, nunca un nombre (17/11/2026)
+  /* hasta el 21/11/2026 el celular no mostraba nombres; Baltasar: «mostralo». Los datos llegan cifrados y
+     sólo los abre quien tiene la clave del equipo. */
   const ns=(l.adj||[]).map(a=>[String(a.nombre||"").trim(),String(a.apellido||"").trim().toLocaleUpperCase("es-AR")].filter(Boolean).join(" ")).filter(Boolean);
   if(ns.length<2) return ns[0]||"";
   return ns.slice(0,-1).join(ns.length>2?"; ":", ")+" y "+ns[ns.length-1];
@@ -362,8 +363,8 @@ function armar(db){
         const e=estadoDe(l);
         const L={id:l.id,B,T,l:String(l.lote||"").trim()||"?",m:String(l.mza||"").trim()||"?",e,
           firma:(l.firmada&&l.firmada.fecha)||(e!=="p"?T.fecha:"")||"",
-          nomen:nomenDe(l),nomenTxt:String(l.nomen||"").trim(),cuenta:l.cuenta||"",adj:adjDe(l),nAdj:SOLO_VER?0:(l.adj||[]).filter(a=>(a.nombre||a.apellido)).length,
-          adjUno:SOLO_VER?[]:(l.adj||[]).map(a=>[String(a.nombre||"").trim(),String(a.apellido||"").trim().toLocaleUpperCase("es-AR")].filter(Boolean).join(" ")).filter(Boolean),
+          nomen:nomenDe(l),nomenTxt:String(l.nomen||"").trim(),cuenta:l.cuenta||"",adj:adjDe(l),nAdj:(l.adj||[]).filter(a=>(a.nombre||a.apellido)).length,
+          adjUno:(l.adj||[]).map(a=>[String(a.nombre||"").trim(),String(a.apellido||"").trim().toLocaleUpperCase("es-AR")].filter(Boolean).join(" ")).filter(Boolean),
           cantAdj:Math.max(1,(l.adj||[]).filter(a=>a&&(a.nombre||a.apellido||a.dni)).length||(l.adj||[]).length)};
         T.lotes.push(L); LOTES.push(L);
       }
@@ -899,7 +900,7 @@ function iconoBarrio(B){
 }
 /* El globo de un punto dice primero de quién es ese punto (Baltasar, 21/11/2026: «cuando aprieten los puntos
    tiene que decir el nombre del adjudicatario»); si el lote tiene más, los nombra abajo. Con i sin dar (el
-   contorno del lote), van todos juntos. En el celular, nunca un nombre. */
+   contorno del lote), van todos juntos. Desde el 21/11 también en el celular. */
 function globo(Lt,i){
   const uno=i!=null&&Lt.adjUno&&Lt.adjUno[i], otros=uno?Lt.adjUno.filter((_,k)=>k!==i):[];
   return `<div class="pop">${uno?`<h3>${esc(uno)}</h3><p class="loc" style="margin:-4px 0 8px">${esc(Lt.B.n)}</p>`:`<h3>${esc(Lt.B.n)}</h3>`}<dl>
@@ -1018,8 +1019,8 @@ function iniciarMapa(){
 function pintarLista(){
   const filas=LOTES.filter(L=>VIS[L.e]);
   if(!filas.length){ $("#lista").innerHTML=`<p class="vacio" style="padding:16px">${LOTES.length?"Ningún lote con esos estados.":"Todavía no hay lotes."}</p>`; return; }
-  $("#lista").innerHTML=`<table><thead><tr><th>Barrio o localidad</th><th>Mza.</th><th>Lote</th>${SOLO_VER?"":"<th>Adjudicatario</th>"}<th>Estado</th><th>Firma</th><th>Nomenclatura</th><th>Punto</th></tr></thead><tbody>${
-    filas.map(L=>{const q=ptoDe(L);return `<tr class="ir" data-lote="${esc(L.id)}"><td>${esc(L.B.n)}</td><td>${esc(L.m)}</td><td>${esc(L.l)}</td>${SOLO_VER?"":`<td>${esc(L.adj)||"—"}</td>`}<td><span class="e">${forma(L.e,13)} ${EST[L.e].et}</span></td><td>${esc(L.firma)||"—"}</td><td>${L.nomen?`<code>${esc(L.nomen)}</code>`:`<span class="err">${L.nomenTxt?"a medias":"falta"}</span>`}</td><td>${q?(q.o==="catastro"?"Catastro":"a mano"):`<span class="err">sin ubicar</span>`}</td></tr>`;}).join("")
+  $("#lista").innerHTML=`<table><thead><tr><th>Barrio o localidad</th><th>Mza.</th><th>Lote</th><th>Adjudicatario</th><th>Estado</th><th>Firma</th><th>Nomenclatura</th><th>Punto</th></tr></thead><tbody>${
+    filas.map(L=>{const q=ptoDe(L);return `<tr class="ir" data-lote="${esc(L.id)}"><td>${esc(L.B.n)}</td><td>${esc(L.m)}</td><td>${esc(L.l)}</td><td>${esc(L.adj)||"—"}</td><td><span class="e">${forma(L.e,13)} ${EST[L.e].et}</span></td><td>${esc(L.firma)||"—"}</td><td>${L.nomen?`<code>${esc(L.nomen)}</code>`:`<span class="err">${L.nomenTxt?"a medias":"falta"}</span>`}</td><td>${q?(q.o==="catastro"?"Catastro":"a mano"):`<span class="err">sin ubicar</span>`}</td></tr>`;}).join("")
   }</tbody></table>`;
 }
 function ver(v){
