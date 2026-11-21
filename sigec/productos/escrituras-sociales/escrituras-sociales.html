@@ -1213,12 +1213,30 @@ function expandCardinales(t){
   /* «NE», «NO», «SE», «SO» sin puntos son también palabras («QUE SE DESIGNA», «NO»): sin puntos van
      a cardinal sólo después de «al», «costado», «rumbo», «dirección», «frente», «lado»… (17/11/2026) */
   const rumbo=ab.length===2?"(?<=(?<![A-Za-zÁÉÍÓÚÜÑáéíóúüñ])(?:al|AL|Al|costado|COSTADO|rumbo|RUMBO|direcci[oó]n|DIRECCI[OÓ]N|frente|FRENTE|lado|LADO|hacia|HACIA|sentido|SENTIDO|esquinero|ESQUINERO|v[ée]rtice|V[ÉE]RTICE))":"";
-  k=k.replace(new RegExp(rumbo+"(^|[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ])"+re+"(\\.)?(?![A-Za-zÁÉÍÓÚÜÑáéíóúüñ°º\\/\"”»']|\\.[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]|-[A-Za-z\\d])","g"),(m0,pre,pt,off,todo)=>{
+  k=k.replace(new RegExp(rumbo+"(^|[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ])"+re+"(\\.)?(?![A-Za-zÁÉÍÓÚÜÑáéíóúüñ°º\\d\\/\"”»']|\\.[A-Za-zÁÉÍÓÚÜÑáéíóúüñ]|-[A-Za-z\\d])","g"),(m0,pre,pt,off,todo)=>{
    if(/[-\/"“'«]/.test(pre)||NO_CARDINAL.test(todo.slice(Math.max(0,off-14),off+pre.length))) return m0;
    return pre+full;
   });
  });
  return k.replace(/§(\d+)§/g,(_,i)=>parens[+i]);
+}
+/* Las descripciones que ya quedaron con «Este4», «Norte2» (21/11/2026): un cardinal pegado a un número nunca es un
+   cardinal, era el vértice. Se arregla solo al abrir, en los lotes sin firmar; lo congelado de una revisada no se toca:
+   se le lleva con «Llevarles los cambios», que muestra «Decía Este4 · Ahora E4». */
+const VERT_MAL=/(^|[^\p{L}\p{N}])(Noreste|Noroeste|Sudeste|Suroeste|Norte|Sur|Este|Oeste)(?=\d)/giu;
+const ABREV_CARD={noreste:"NE",noroeste:"NO",sudeste:"SE",suroeste:"SO",norte:"N",sur:"S",este:"E",oeste:"O"};
+const repararVert=d=>String(d).replace(VERT_MAL,(m,pre,w)=>pre+ABREV_CARD[w.toLowerCase()]);
+function repararVertices(){ let n=0;
+ for(const b of DB.barrios||[]) for(const t of b.tandas||[]) for(const l of t.lotes||[]){
+  if(l.estado==="firmada"||l.estado==="inscripta") continue;
+  const d=String(l.descripcion||""), nuevo=repararVert(d); if(nuevo===d) continue;
+  if(l.descripcionLetras===d) l.descripcionLetras=nuevo;
+  l.descripcion=nuevo; n++;
+  /* si con eso vuelve a ser lo que aprobó la escribana, vuelve a «Listas para imprimir» */
+  try{ if(l.estado==="revisada"&&l.revisada&&!cambioTrasRevision(b,t,l)&&!l.listaR) l.revisada.copiaPend=true; }catch(e){}
+ }
+ if(n){ guardar(true); pedirSync(); avisar("Arreglé "+n+(n===1?" descripción":" descripciones")+": los vértices («E4», «N2») habían quedado como «Este4», «Norte2». Ya están bien."); }
+ return n;
 }
 /* el punto de «mts.» que además cierra la oración («… 12 mts. SUPERFICIE …») no se pierde */
 const puntoFinal=(m0,off,todo)=>todo!==may(todo)&&/\.$/.test(m0)&&/^\s+[A-ZÁÉÍÓÚÑ]/.test(todo.slice(off+m0.length))?".":"";
@@ -6738,7 +6756,7 @@ function congelarRevisadas(){
   congelarRevision(b,t,l); l.revisada.cong.motor=motor; n++; }
  if(n) guardar(true); return n;
 }
-setTimeout(()=>{ try{ congelarRevisadas(); }catch(e){} },2500);
+setTimeout(()=>{ try{ repararVertices(); }catch(e){} try{ congelarRevisadas(); }catch(e){} },2500);
 /* una revisada a la que, después de aprobada, le cambió algo para todos que no le llegó */
 function conMotor(n,f){ const a=MOTOR_FORZADO; MOTOR_FORZADO=n; try{ return f(); } finally{ MOTOR_FORZADO=a; } }
 /* el motor anterior con que esto da igual a lo aprobado (0 si ninguno) */
