@@ -362,7 +362,9 @@ function armar(db){
         const e=estadoDe(l);
         const L={id:l.id,B,T,l:String(l.lote||"").trim()||"?",m:String(l.mza||"").trim()||"?",e,
           firma:(l.firmada&&l.firmada.fecha)||(e!=="p"?T.fecha:"")||"",
-          nomen:nomenDe(l),nomenTxt:String(l.nomen||"").trim(),cuenta:l.cuenta||"",adj:adjDe(l),nAdj:SOLO_VER?0:(l.adj||[]).filter(a=>(a.nombre||a.apellido)).length};
+          nomen:nomenDe(l),nomenTxt:String(l.nomen||"").trim(),cuenta:l.cuenta||"",adj:adjDe(l),nAdj:SOLO_VER?0:(l.adj||[]).filter(a=>(a.nombre||a.apellido)).length,
+          adjUno:SOLO_VER?[]:(l.adj||[]).map(a=>[String(a.nombre||"").trim(),String(a.apellido||"").trim().toLocaleUpperCase("es-AR")].filter(Boolean).join(" ")).filter(Boolean),
+          cantAdj:Math.max(1,(l.adj||[]).filter(a=>a&&(a.nombre||a.apellido||a.dni)).length||(l.adj||[]).length)};
         T.lotes.push(L); LOTES.push(L);
       }
       B.tandas.push(T);
@@ -384,10 +386,12 @@ function leer(){
 let PTS={lotes:{},fallas:{},barrios:{},catastro:{}};
 /* Versión 2 de los puntos (18/11/2026): los que trajo Catastro antes del diagnóstico del 17/11 se tiran y se
    vuelven a pedir —esas versiones buscaban mal y cortaban a mitad—. Los marcados a mano se quedan. */
-const VER_PTS=2;
+const VER_PTS=3;   // 3: el centro recalculado desde el contorno (21/11/2026)
 function cargarPts(){ if(EJEMPLO){ PTS=EJ.pts(); return; }
   try{ const g=JSON.parse(lsLeer(LLAVE_PTS)||"null"); if(g&&g.lotes) PTS=Object.assign({lotes:{},fallas:{},barrios:{},catastro:{}},g); }catch(e){}
-  if((PTS.v||0)<VER_PTS){ for(const k of Object.keys(PTS.lotes)) if(PTS.lotes[k].o==="catastro") delete PTS.lotes[k]; PTS.fallas={}; PTS.catastro={}; PTS.v=VER_PTS; guardarPts(); }
+  if((PTS.v||0)<2){ for(const k of Object.keys(PTS.lotes)) if(PTS.lotes[k].o==="catastro") delete PTS.lotes[k]; PTS.fallas={}; PTS.catastro={}; }
+  if((PTS.v||0)<3){ for(const q of Object.values(PTS.lotes)) if(q.o==="catastro"&&q.poly&&q.poly.length>2){ const c=centroide(q.poly.map(([la,lo])=>[lo,la])); q.p=[+c[0].toFixed(7),+c[1].toFixed(7)]; } }
+  if((PTS.v||0)<VER_PTS){ PTS.v=VER_PTS; guardarPts(); }
 }
 let avisadoPts=false;
 function guardarPts(){ if(EJEMPLO) return; if(!lsPoner(LLAVE_PTS,JSON.stringify(PTS))&&!avisadoPts&&!WEB){ avisadoPts=true; ayuda('<span class="err">No se pudo guardar en esta computadora.</span> Los puntos marcados se pierden al cerrar.',"mal"); } programarSubida(); }
@@ -474,11 +478,15 @@ async function pedir(params,ms){
 }
 const buscarPor=filtro=>pedir({service:"WFS",version:"2.0.0",request:"GetFeature",typeNames:CAPA,count:1,srsName:"EPSG:4326",
   propertyName:[CAMPO_NOMEN,CAMPO_GEOM,"departamento","localidad","desig_oficial"].join(","),outputFormat:"application/json",CQL_FILTER:filtro},30000);
+/* El centro de la parcela. Se calcula desde su primer vértice, no con las coordenadas enteras: con números
+   como -63,27 y -34,33 la resta pierde precisión y el centro de un lote de 10 × 30 m caía 20 a 30 metros
+   corrido, afuera del lote (21/11/2026, «los puntos me siguen apareciendo en cualquier lado»). */
 function centroide(anillo){ // [[lng,lat],…] → [lat,lng], por área
+  const [x0,y0]=anillo[0], r=anillo.map(([x,y])=>[x-x0,y-y0]);
   let a=0,x=0,y=0;
-  for(let i=0,j=anillo.length-1;i<anillo.length;j=i++){ const [x0,y0]=anillo[j],[x1,y1]=anillo[i],f=x0*y1-x1*y0; a+=f; x+=(x0+x1)*f; y+=(y0+y1)*f; }
-  if(Math.abs(a)<1e-14){ const n=anillo.length; return [anillo.reduce((s,p)=>s+p[1],0)/n,anillo.reduce((s,p)=>s+p[0],0)/n]; }
-  return [y/(3*a),x/(3*a)];
+  for(let i=0,j=r.length-1;i<r.length;j=i++){ const [xa,ya]=r[j],[xb,yb]=r[i],f=xa*yb-xb*ya; a+=f; x+=(xa+xb)*f; y+=(ya+yb)*f; }
+  if(Math.abs(a)<1e-18){ const n=anillo.length; return [anillo.reduce((s,p)=>s+p[1],0)/n,anillo.reduce((s,p)=>s+p[0],0)/n]; }
+  return [y/(3*a)+y0,x/(3*a)+x0];
 }
 function anilloDe(geom){
   if(!geom) return null;
@@ -899,6 +907,51 @@ function globo(Lt){
     ${dudas(Lt).map(d=>`<p class="aviso nar" style="margin:0 0 8px">${esc(d)}</p>`).join("")}
     ${SOLO_VER?"":`<div class="acc"><button class="bt" data-ub="l:${esc(Lt.id)}">Mover el punto</button>${ptoDe(Lt)?`<button class="bt" data-borrar="${esc(Lt.id)}">Sacar el punto</button>`:""}</div>`}</div>`;
 }
+/* ════════════ Un punto por adjudicatario, adentro del lote ════════════
+   Baltasar (21/11/2026): «lo lógico sería que los puntos sean los adjudicatarios, que estén siempre en el medio
+   del lote, y que si son dos adjudicatarios, que haya dos puntos en el lote». El punto ya no es el centro
+   geométrico (en un lote en L o en esquina puede caer afuera): es un punto que está seguro adentro, lejos de los
+   bordes. Con dos o más, se reparten a lo largo del lote, todos adentro. */
+const enPoli=(pt,poly)=>{ let d=false; for(let i=0,j=poly.length-1;i<poly.length;j=i++){ const [yi,xi]=poly[i],[yj,xj]=poly[j];
+  if(((yi>pt[0])!==(yj>pt[0]))&&(pt[1]<(xj-xi)*(pt[0]-yi)/(yj-yi)+xi)) d=!d; } return d; };
+function aMetros(poly){ const la=poly[0][0], kx=111320*Math.cos(la*Math.PI/180), ky=110570, x0=poly[0][1], y0=poly[0][0];
+  return {kx,ky,x0,y0,xy:poly.map(([y,x])=>[(x-x0)*kx,(y-y0)*ky]),ll:([x,y])=>[y/ky+y0,x/kx+x0]}; }
+function distBorde(p,xy){ let m=Infinity; for(let i=0,j=xy.length-1;i<xy.length;j=i++){ const [ax,ay]=xy[j],[bx,by]=xy[i],dx=bx-ax,dy=by-ay,L2=dx*dx+dy*dy;
+  const t=L2?Math.max(0,Math.min(1,((p[0]-ax)*dx+(p[1]-ay)*dy)/L2)):0, ex=ax+t*dx-p[0], ey=ay+t*dy-p[1]; m=Math.min(m,Math.hypot(ex,ey)); } return m; }
+const inPoliXY=(p,xy)=>{ let d=false; for(let i=0,j=xy.length-1;i<xy.length;j=i++){ const [xi,yi]=xy[i],[xj,yj]=xy[j];
+  if(((yi>p[1])!==(yj>p[1]))&&(p[0]<(xj-xi)*(p[1]-yi)/(yj-yi)+xi)) d=!d; } return d; };
+const CACHE_PUNTOS=new Map();
+function puntosDelLote(q,n){
+  const clave=JSON.stringify([q.p,q.poly&&q.poly.length,n]); if(CACHE_PUNTOS.has(clave)) return CACHE_PUNTOS.get(clave);
+  let out;
+  if(q.poly&&q.poly.length>2){
+    const M=aMetros(q.poly), xy=M.xy;
+    const xs=xy.map(p=>p[0]), ys=xy.map(p=>p[1]), x1=Math.min(...xs), x2=Math.max(...xs), y1=Math.min(...ys), y2=Math.max(...ys);
+    /* el punto más metido adentro, en una grilla de 24 × 24 sobre el recuadro del lote */
+    const cands=[]; let dm=-1, mejor=null;
+    for(let i=0;i<=24;i++) for(let j=0;j<=24;j++){ const p=[x1+(x2-x1)*i/24,y1+(y2-y1)*j/24]; if(!inPoliXY(p,xy)) continue; const d=distBorde(p,xy); cands.push([p,d]); if(d>dm) dm=d; }
+    /* entre los más metidos adentro (en un rectángulo son toda la línea del medio), el más cerca del centro */
+    if(cands.length){ const cc=M.xy.reduce((a,p)=>[a[0]+p[0]/M.xy.length,a[1]+p[1]/M.xy.length],[0,0]);
+      mejor=cands.filter(([,d])=>d>=dm*0.9).reduce((a,b)=>Math.hypot(a[0][0]-cc[0],a[0][1]-cc[1])<=Math.hypot(b[0][0]-cc[0],b[0][1]-cc[1])?a:b)[0]; }
+    if(!mejor){ out=Array(n).fill(q.p); }
+    else if(n===1) out=[M.ll(mejor)];
+    else {
+      /* a lo largo del eje más largo del lote, pasando por ese punto */
+      let sxx=0,syy=0,sxy=0; const cx=xs.reduce((a,b)=>a+b,0)/xs.length, cy=ys.reduce((a,b)=>a+b,0)/ys.length;
+      xy.forEach(([x,y])=>{ sxx+=(x-cx)**2; syy+=(y-cy)**2; sxy+=(x-cx)*(y-cy); });
+      const ang=0.5*Math.atan2(2*sxy,sxx-syy), ux=Math.cos(ang), uy=Math.sin(ang);
+      let paso=Math.min(Math.max(dm*1.2,1.5),6);
+      for(let k=0;k<6;k++){ const ps=Array.from({length:n},(_,i)=>[mejor[0]+ux*paso*(i-(n-1)/2),mejor[1]+uy*paso*(i-(n-1)/2)]);
+        if(ps.every(p=>inPoliXY(p,xy))){ out=ps.map(M.ll); break; } paso*=0.6; }
+      if(!out) out=Array(n).fill(M.ll(mejor));
+    }
+  } else {
+    /* marcado a mano, sin contorno: alrededor del punto, a dos metros y medio */
+    const kx=111320*Math.cos(q.p[0]*Math.PI/180);
+    out=Array.from({length:n},(_,i)=>[q.p[0],q.p[1]+2.5*(i-(n-1)/2)/kx]);
+  }
+  CACHE_PUNTOS.set(clave,out); return out;
+}
 function dibujar(){
   if(!MAP) return;
   if(MAP._popup&&MAP.hasLayer(MAP._popup)) return;   // se cerraría el globo
@@ -913,10 +966,14 @@ function dibujar(){
   LOTES.forEach(Lt=>{
     const q=ptoDe(Lt); if(!q||!VIS[Lt.e]||!vista.contains(q.p)) return;
     if(q.poly) L.polygon(q.poly,{className:"par par-"+Lt.e+(ELEG===Lt?" elegido":"")}).bindPopup(()=>globo(Lt)).on("click",()=>{ELEG=Lt;}).addTo(cLotes);
-    const duda=dudas(Lt).length;
-    const mk=L.marker(q.p,{icon:L.divIcon({className:duda?"duda":"",iconSize:[t,t],iconAnchor:[t/2,t/2],html:forma(Lt.e,t)}),title:"Lote "+Lt.l+", Manzana "+Lt.m+": "+EST[Lt.e].et}).bindPopup(()=>globo(Lt)).on("click",()=>{ELEG=Lt;}).addTo(cLotes);
-    MARC[Lt.id]=mk;
-    if(z>=Z_NUM) etiqueta([q.p[0]-0.00007,q.p[1]],"Mz "+esc(Lt.m)+" · L "+esc(Lt.l)).addTo(cEt);
+    const duda=dudas(Lt).length, n=Lt.cantAdj||1, ps=puntosDelLote(q,n), tt=n>1?Math.round(t*0.8):t;
+    ps.forEach((pp,i)=>{
+      const quien=Lt.adjUno&&Lt.adjUno[i]?Lt.adjUno[i]:(n>1?"Adjudicatario "+(i+1)+" de "+n:"");
+      const mk=L.marker(pp,{icon:L.divIcon({className:duda?"duda":"",iconSize:[tt,tt],iconAnchor:[tt/2,tt/2],html:forma(Lt.e,tt)}),
+        title:(quien?quien+" · ":"")+"Lote "+Lt.l+", Manzana "+Lt.m+": "+EST[Lt.e].et}).bindPopup(()=>globo(Lt)).on("click",()=>{ELEG=Lt;}).addTo(cLotes);
+      if(!i) MARC[Lt.id]=mk;
+    });
+    if(z>=Z_NUM){ const lo=ps.reduce((a,b)=>a[0]<b[0]?a:b); etiqueta([lo[0]-0.00007,lo[1]],"Mz "+esc(Lt.m)+" · L "+esc(Lt.l)).addTo(cEt); }
   });
 }
 function elegirBarrio(B,volar){
@@ -1110,6 +1167,6 @@ function arrancar(){
 })();
 </script>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 19/11/2026</p>
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 21/11/2026</p>
 </body>
 </html>
