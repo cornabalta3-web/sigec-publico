@@ -897,10 +897,14 @@ function iconoBarrio(B){
   return L.divIcon({className:"",iconSize:[168,80],iconAnchor:[84,76],
     html:`<div class="pin"><div class="mb"><b>${esc(B.n)}</b>${barra(c)}<small>${c.t} lotes · ${c.n} inscr. · ${c.f} firm. · ${c.p} prep.</small></div><span class="tallo"></span><span class="pt"></span></div>`});
 }
-function globo(Lt){
-  return `<div class="pop"><h3>${esc(Lt.B.n)}</h3><dl>
+/* El globo de un punto dice primero de quién es ese punto (Baltasar, 21/11/2026: «cuando aprieten los puntos
+   tiene que decir el nombre del adjudicatario»); si el lote tiene más, los nombra abajo. Con i sin dar (el
+   contorno del lote), van todos juntos. En el celular, nunca un nombre. */
+function globo(Lt,i){
+  const uno=i!=null&&Lt.adjUno&&Lt.adjUno[i], otros=uno?Lt.adjUno.filter((_,k)=>k!==i):[];
+  return `<div class="pop">${uno?`<h3>${esc(uno)}</h3><p class="loc" style="margin:-4px 0 8px">${esc(Lt.B.n)}</p>`:`<h3>${esc(Lt.B.n)}</h3>`}<dl>
     <dt>Manzana</dt><dd>${esc(Lt.m)}</dd><dt>Lote</dt><dd>${esc(Lt.l)}</dd>
-    ${Lt.adj?`<dt>${Lt.nAdj>1?"Adjudicatarios":"Adjudicatario"}</dt><dd>${esc(Lt.adj)}</dd>`:""}
+    ${uno?(otros.length?`<dt>Junto con</dt><dd>${esc(otros.length>1?otros.slice(0,-1).join(otros.length>2?"; ":", ")+" y "+otros[otros.length-1]:otros[0])}</dd>`:""):(Lt.adj?`<dt>${Lt.nAdj>1?"Adjudicatarios":"Adjudicatario"}</dt><dd>${esc(Lt.adj)}</dd>`:"")}
     <dt>Estado</dt><dd>${forma(Lt.e,14)} ${EST[Lt.e].et}</dd>
     <dt>Firma</dt><dd>${esc(Lt.firma)||"sin firmar"}</dd>
     ${(()=>{const q=ptoDe(Lt);return q&&q.cat&&(q.cat.desig||q.cat.loc)?`<dt>Catastro</dt><dd>${esc([q.cat.desig,lugar(q.cat.loc)].filter(Boolean).join(" · "))}</dd>`:(q&&q.o==="mano"?`<dt>Punto</dt><dd>marcado a mano</dd>`:"");})()}</dl>
@@ -970,7 +974,7 @@ function dibujar(){
     ps.forEach((pp,i)=>{
       const quien=Lt.adjUno&&Lt.adjUno[i]?Lt.adjUno[i]:(n>1?"Adjudicatario "+(i+1)+" de "+n:"");
       const mk=L.marker(pp,{icon:L.divIcon({className:duda?"duda":"",iconSize:[tt,tt],iconAnchor:[tt/2,tt/2],html:forma(Lt.e,tt)}),
-        title:(quien?quien+" · ":"")+"Lote "+Lt.l+", Manzana "+Lt.m+": "+EST[Lt.e].et}).bindPopup(()=>globo(Lt)).on("click",()=>{ELEG=Lt;}).addTo(cLotes);
+        title:(quien?quien+" · ":"")+"Lote "+Lt.l+", Manzana "+Lt.m+": "+EST[Lt.e].et}).bindPopup(()=>globo(Lt,i)).on("click",()=>{ELEG=Lt;}).addTo(cLotes);
       if(!i) MARC[Lt.id]=mk;
     });
     if(z>=Z_NUM){ const lo=ps.reduce((a,b)=>a[0]<b[0]?a:b); etiqueta([lo[0]-0.00007,lo[1]],"Mz "+esc(Lt.m)+" · L "+esc(Lt.l)).addTo(cEt); }
