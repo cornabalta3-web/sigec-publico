@@ -112,6 +112,16 @@ button:disabled:hover{border-color:var(--line)}
 .alerta.calma{border-left-color:var(--ok);background:var(--ok-bg);color:var(--ok)}
 .alerta.tibia{border-left-color:var(--warn);background:var(--warn-bg);color:var(--warn)}
 .alerta.aviso-revisar{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.dif-lista{list-style:none;margin:8px 0 0;padding:0;color:var(--tx,#172033);overflow-wrap:anywhere}
+.dif-lista>li{padding:7px 0;border-top:1px solid var(--line,#E4E7EC);font-size:13px;line-height:1.5}
+.dif-lista>li:first-child{border-top:0}
+.dif-lista b{display:block;margin-bottom:2px}
+.dif-r{display:flex;gap:8px;align-items:baseline}
+.dif-t{flex:1 1 auto;min-width:0}
+.dif-et{flex:0 0 46px;font-size:11.5px;font-weight:700;color:var(--muted,#5B6478)}
+.dif-a{background:var(--bad-bg);color:var(--bad);text-decoration:line-through;border-radius:3px;padding:0 2px}
+.dif-n{background:var(--ok-bg);color:var(--ok);font-weight:700;border-radius:3px;padding:0 2px}
+.dif-a.vacio,.dif-n.vacio{text-decoration:none;font-weight:400;font-style:italic}
 .alerta.cel{border-left-color:var(--cel);background:var(--cel-bg);color:var(--cel)}
 .avisobox{background:var(--warn-bg);color:var(--warn);border-radius:9px;padding:10px 13px;margin:12px 0 4px;font-size:12.5px;line-height:1.45}
 #aviso{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:80;max-width:min(560px,92vw);
@@ -7116,10 +7126,54 @@ function cambiosDespuesDeAprobar(b,t,l){
  ver(l,"el lote"); ver(t,"la tanda"); ver(b,"el barrio");
  return out.sort((x,y)=>x.t-y.t);
 }
+/* Cada cambio entre lo aprobado y lo de ahora, como texto (20/11/2026): dónde está en la escritura, qué decía y qué dice,
+   con las palabras cambiadas marcadas y unas palabras de cada lado para ubicarlo. ahora: los tramos de hoy, para saber
+   en qué dato cae cada cambio. */
+const TK_DIF=/[\p{L}\p{N}]+|\s+|[^\p{L}\p{N}\s]/gu;
+const ENCAB_DIF=[["COMPARECEN:","el comparendo"],["INTERVENCIÓN:","la intervención"],["DICEN:","lo que dicen"],["LE CORRESPONDE","el corresponde"],["CERTIFICADO NOTARIAL","el certificado notarial"],["CERTIFICADO CATASTRAL","el certificado catastral"],["ACEPTA","la aceptación"],["AFECTACIÓN AL RÉGIMEN DE VIVIENDA","la afectación a vivienda"]];
+function cambiosDeTexto(antes,ahora){
+ const a=String(antes||""), runs=Array.isArray(ahora)?ahora:null, d=runs?textoDe(runs):String(ahora||"");
+ const A=a.match(TK_DIF)||[], B=d.match(TK_DIF)||[];
+ const ops=A.length+B.length<20000?difPalabras(A,B,1500):null;
+ if(!ops){ const c=difCorta(a,d); return c?[{donde:"",antes:"",ahora:"",txt:c}]:[]; }
+ /* posiciones de cada palabra de hoy en el texto, para ubicar el dato */
+ const posB=[]; let k=0; B.forEach(x=>{ posB.push(k); k+=x.length; });
+ const hunks=[]; let cur=null, iA=0, iB=0;
+ ops.forEach(o=>{ if(o.op==="="){ if(cur){ cur.cola.push(B[o.b]); if(cur.cola.join("").replace(/\s+/g," ").trim().split(" ").filter(Boolean).length>3){ hunks.push(cur); cur=null; } } iA=o.a+1; iB=o.b+1; return; }
+  if(cur&&cur.cola.length){ cur.menos.push(...cur.cola); cur.mas.push(...cur.cola); cur.cola=[]; }
+  if(!cur) cur={ib:o.op==="+"?o.b:iB,ia:o.op==="-"?o.a:iA,menos:[],mas:[],cola:[]};
+  if(o.op==="-") cur.menos.push(A[o.a]); else cur.mas.push(B[o.b]); });
+ if(cur) hunks.push(cur);
+ const ctx=(toks,desde,hasta)=>toks.slice(Math.max(0,desde),Math.max(0,hasta)).join("");
+ hunks.forEach(h=>{ h.finB=h.ib+h.mas.length; });
+ /* unas palabras de cada lado, enteras: «…por compra que efectuara…» */
+ const corto=(x,lado)=>{ let w=x.replace(/\s+/g," "); if(lado<0){ if(w.length>40) w=w.slice(-40).replace(/^\S*\s/,""); w=w.replace(/^[^\p{L}\p{N}]+/u,""); return (w?"…":"")+w; }
+  if(w.length>40) w=w.slice(0,40).replace(/\s\S*$/,""); w=w.replace(/[^\p{L}\p{N}]+$/u,""); return w+(w?"…":""); };
+ return hunks.map((h,j)=>{
+  /* lo que sólo se sacó se ubica por lo que tenía antes, no por lo que sigue (20/11/2026) */
+  const pos=h.mas.length||!h.ib?(posB[Math.min(h.ib,posB.length-1)]||0):Math.max(0,(posB[h.ib]!=null?posB[h.ib]:d.length)-1); let donde="";
+  if(runs){ let c=0; for(const r of runs){ const n=String(r.t||"").length; if(pos<c+n||c+n>=d.length){ const kk=r.k||r.kp; if(kk&&CAT_K[kk]) donde=CAT_K[kk].r.split(" — ")[0]; break; } c+=n; } }
+  if(!donde){ let mejor=-1; ENCAB_DIF.forEach(([e,n])=>{ const j=d.lastIndexOf(e,pos); if(j>mejor){ mejor=j; donde="en "+n; } }); if(!donde) donde="En el encabezado"; donde=donde.replace(/^en /,"En "); }
+  /* el contexto, sólo del tramo igual en las dos versiones: no llega al cambio de al lado */
+  const prevFin=j>0?hunks[j-1].finB:0, sigIni=j<hunks.length-1?hunks[j+1].ib:B.length;
+  const antesC=corto(ctx(B,Math.max(h.ib-12,prevFin),h.ib),-1), despC=corto(ctx(B,h.finB,Math.min(h.finB+12,sigIni)),1);
+  return {donde,antes:h.menos.join(""),ahora:h.mas.join(""),pre:antesC,post:despC};
+ });
+}
+function cambiosHtml(hs,max){
+ max=max||8; if(!hs.length) return "";
+ const largo=x=>{ const w=x.replace(/\s+/g," ").trim(); if(w.length<=180) return w; return w.slice(0,80).replace(/\s\S*$/,"")+" … "+w.slice(-80).replace(/^\S*\s/,""); };
+ const dif=(pre,x,post,cl)=>{ const lead=x.match(/^\s*/)[0], trail=x.trim()?x.match(/\s*$/)[0]:(/\s$/.test(pre)?" ":"");
+  return '<span class="dif-t">«'+esc(pre)+lead+(x.trim()?'<span class="'+cl+'">'+esc(largo(x))+'</span>':'<span class="'+cl+' vacio">(nada)</span>')+trail+esc(post)+'»</span>'; };
+ return '<ul class="dif-lista">'+hs.slice(0,max).map(h=>h.txt?'<li>'+esc(h.txt)+'</li>':'<li><b>'+esc(h.donde)+'</b><div class="dif-r"><span class="dif-et">Decía</span>'+dif(h.pre,h.antes,h.post,"dif-a")+'</div><div class="dif-r"><span class="dif-et">Ahora</span>'+dif(h.pre,h.ahora,h.post,"dif-n")+'</div></li>').join("")
+  +(hs.length>max?'<li class="hint">… y '+(hs.length-max)+' cambio'+(hs.length-max===1?"":"s")+' más</li>':"")+'</ul>';
+}
 function listaCambiosHtml(b,t,l){
- const xs=cambiosDespuesDeAprobar(b,t,l), fmt=cambioTrasRevision(b,t,l)&&soloFormato(b,t,l);
- if(!xs.length&&!fmt) return "";
- return '<ul class="lista" style="margin:6px 0 0">'+(fmt?'<li>Cambió <b style="display:inline">sólo la negrita o el subrayado</b>: el texto es el mismo.</li>':"")+xs.map(x=>'<li><span style="font-weight:700">'+esc(x.q)+'</span> '+esc(x.frase)+' <span class="hint">('+esc(x.donde)+', '+esc(cuandoTxt(x.t))+')</span></li>').join("")+'</ul>';
+ const xs=cambiosDespuesDeAprobar(b,t,l), cm=cambioTrasRevision(b,t,l), fmt=cm&&soloFormato(b,t,l);
+ if(!xs.length&&!fmt&&!cm) return "";
+ let hs=[]; if(cm&&!fmt&&l.revisada&&l.revisada.texto) try{ hs=cambiosDeTexto(l.revisada.texto,runsComparar(b,t,l,congeladaRev(l))); }catch(e){ hs=[]; }
+ const quien=xs.length?'<p class="hint" style="margin:6px 0 0">Lo cambió '+[...new Map(xs.map(x=>[x.q+"|"+x.donde,x])).values()].map(x=>'<b style="display:inline">'+esc(x.q)+'</b> ('+esc(x.donde)+', '+esc(cuandoTxt(x.t))+')').join(" · ")+'.</p>':"";
+ return (fmt?'<p style="margin:6px 0 0">Cambió <b style="display:inline">sólo la negrita o el subrayado</b>: el texto es el mismo.</p>':"")+cambiosHtml(hs)+quien;
 }
 /* Antes de imprimir o copiar: si la minuta no es la que aprobó la escribana, se dice. Y desde el
    10/11/2026 (art. 309 CCC: sin lugar y fecha la escritura es nula): una minuta con datos que
@@ -8232,9 +8286,12 @@ function revCongeladaHtml(b,t,l,p){
  const at=[]; let otras=0;
  for(const tt of b.tandas||[]) for(const x of tt.lotes||[]){ if(!atrasada(b,tt,x)) continue; if(cargoDe(x)===ROL()) at.push({t:tt,l:x}); else otras++; }
  if(!at.length&&!otras) return;
- const fila=z=>{ const rc=runsComparar(b,z.t,z.l,true), d=difCorta(z.l.revisada.texto,textoDe(rc)); return '<li><b>'+esc(loteCorto(z.l))+'</b> · '+esc(nombreLote(z.l))+(d?'<br><span class="hint">'+esc(d)+'</span>':"")+'</li>'; };
+ /* las que tienen el mismo cambio van juntas: el cambio se muestra una vez (20/11/2026) */
+ const grupos=new Map(); at.forEach(z=>{ let hs=[]; try{ hs=cambiosDeTexto(z.l.revisada.texto,runsComparar(b,z.t,z.l,true)); }catch(e){}
+  const k=JSON.stringify(hs.map(h=>[h.donde,h.antes,h.ahora,h.txt||""])); if(!grupos.has(k)) grupos.set(k,{hs,zs:[]}); grupos.get(k).zs.push(z); });
+ const fila=g=>'<li><b>'+g.zs.slice(0,6).map(z=>esc(loteCorto(z.l))).join(", ")+(g.zs.length>6?" y "+(g.zs.length-6)+" más":"")+'</b>'+(g.zs.length===1?' · '+esc(nombreLote(g.zs[0].l)):"")+cambiosHtml(g.hs,3)+'</li>';
  const h='<div class="card rev-box rev-atras"><h3>Revisadas que quedaron como se aprobaron</h3><p class="hint" style="margin:0 0 6px">Después cambió algo para todos y a éstas no les llegó'+(otras?' ('+otras+' más son de la otra escribana: se llevan desde su computadora)':'')+'.</p>'
-  +(at.length?'<ul style="margin:0 0 8px;padding-left:18px">'+at.map(fila).join("")+'</ul><div class="pbtn"><button type="button" class="p" id="rLlevar">Llevarles los cambios ('+at.length+')</button></div><p class="hint" style="margin:6px 0 0">Siguen revisadas, y su Word se reemplaza en «Listas para imprimir».</p>':"")+'</div>';
+  +(at.length?'<ul style="margin:0 0 8px;padding-left:18px">'+[...grupos.values()].map(fila).join("")+'</ul><div class="pbtn"><button type="button" class="p" id="rLlevar">Llevarles los cambios ('+at.length+')</button></div><p class="hint" style="margin:6px 0 0">Siguen revisadas, y su Word se reemplaza en «Listas para imprimir».</p>':"")+'</div>';
  (dec||p.firstElementChild).insertAdjacentHTML("afterend",h);
  const bl=$("#rLlevar"); if(bl) bl.onclick=()=>{ if(revFrena()) return; llevarARevisadas(b,at); avisar("Listo: "+at.length+(at.length===1?" revisada tiene":" revisadas tienen")+" los cambios, y su Word nuevo va a «Listas para imprimir»."); pintarHojaRev(true); pintarPanelRev(); };
 }
@@ -8674,6 +8731,6 @@ window.SOCIALES={DB,armarRuns,ctxDe,fundir,plantillaModelo,detectar,marcar,texto
 })();
 </script>
 <!-- La fecha de versión la pone sola el pre-commit (.githooks/pre-commit) al commitear este archivo. -->
-<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 20/11/2026</p>
+<p class="sigec-version" style="margin:28px 16px 18px;text-align:center;font-size:11px;letter-spacing:.02em;color:#7C8794">Versión del 21/11/2026</p>
 </body>
 </html>
