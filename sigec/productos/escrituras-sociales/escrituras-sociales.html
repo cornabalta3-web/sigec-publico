@@ -6262,7 +6262,7 @@ function pintarComoVa(b,t,l,rehacer){
  h=avisos.map(a=>'<div class="alerta"><b>'+esc(TITULO_AVISO[a.tipo])+'</b>'+esc(a.t)+'</div>').join("")+(congelada?"":avisosInfHtml(b,l)+propiosHtml(b,l))+h;
  h+=botonesEstado(b,t,l)+historiaHtml(l);
  caja.innerHTML=h;
- document.querySelectorAll("#v-lote [data-ir-falta]").forEach(bt=>bt.onclick=()=>{ const f=delLote[+bt.dataset.irFalta]; if(f) irAlDato(b,t,l,f.k); });
+ document.querySelectorAll("#v-lote [data-ir-falta]").forEach(bt=>bt.onclick=()=>{ const f=delLote[+bt.dataset.irFalta]; if(f) irAlDato(b,t,l,f.k,f.que); });
  atarEstado(b,t,l);
 }
 /* La escritura en vivo (Baltasar, 05/11/2026: «ir modificando la escritura a medida que le llenás
@@ -6293,11 +6293,22 @@ function ponerVistaVivo(v){
    un dato del lote o de la manzana lleva a su campo, que se marca y queda para escribir; lo del
    barrio, la tanda o la base lo dice y lleva adonde se cambia. Desde un lote no se cambia el
    texto de la base: es la regla de los dos ciclos (06/10/2026). */
-function irAlDato(b,t,l,k){
+/* de qué adjudicatario y de qué campo habla una falta del comparendo («la fecha de nacimiento de Juan PÉREZ») */
+function campoDeFalta(l,que){
+ const q=String(que||""), ps=Array.isArray(l.adj)?l.adj:[];
+ let i=ps.findIndex(p=>{ const n=nombreDe(p); return n&&q.includes(n); }); if(i<0) i=ps.length===1?0:-1;
+ const c=/nacimiento/i.test(q)?"nacimiento":/documento/i.test(q)?"dni":/CUIT|CUIL|C\.U\.I/i.test(q)?"cuit":/acredita/i.test(q)?"acred":/cónyuge/i.test(q)?"conyuge":/conviviente/i.test(q)?"conviviente":/estado civil/i.test(q)?"civil":/el sexo de/i.test(q)?"sexo":/nombre de pila/i.test(q)?"nombre":/el nombre del adjudicatario/i.test(q)?"nombre":"";
+ return {i,c};
+}
+function irAlDato(b,t,l,k,que){
  const d=k&&CAT_K[k], a=d?d.a:"";
  let sel="";
  if(k==="FECHA_ACTO") sel='[data-campo="fechaActo"]';
- else if(a==="conc"||k==="ADJUDICATARIOS"||k==="NOMBRES") sel="#adjs [data-p]";
+ else if(a==="conc"||k==="ADJUDICATARIOS"||k==="NOMBRES"){
+  /* al campo de esa persona; si no se sabe cuál, a su recuadro, sin poner el cursor en el Nombre */
+  const fc=campoDeFalta(l,que), caja=fc.i>=0?'#adjs .adj[data-i="'+fc.i+'"]':"#adjs";
+  sel=fc.c==="sexo"?caja+" .sexo button":fc.c?caja+' [data-p="'+fc.c+'"]':"";
+  if(!sel||!$("#v-lote "+sel)){ const cj=$("#v-lote "+caja); if(cj){ cj.scrollIntoView({block:"center",behavior:"smooth"}); cj.classList.remove("foco-campo"); void cj.offsetWidth; cj.classList.add("foco-campo"); return; } } }
  else if(k==="INF_CAT"||k==="INF_NOT") sel="#mas_"+(k==="INF_CAT"?"cat":"not");
  else if(a==="lote"&&d.campo) sel=NOMEN_C.includes(d.campo)?'[data-campo="nomen"]':'[data-campo="'+d.campo+'"]';
  else if(a==="mza") sel='[data-mz="corresponde"]';
@@ -7208,6 +7219,13 @@ function cambiosHtml(hs,max){
  return '<ul class="dif-lista">'+hs.slice(0,max).map(h=>h.txt?'<li>'+esc(h.txt)+'</li>':'<li><b>'+esc(h.donde)+'</b><div class="dif-r"><span class="dif-et">Decía</span>'+dif(h.pre,h.antes,h.post,"dif-a")+'</div><div class="dif-r"><span class="dif-et">Ahora</span>'+dif(h.pre,h.ahora,h.post,"dif-n")+'</div></li>').join("")
   +(hs.length>max?'<li class="hint">… y '+(hs.length-max)+' cambio'+(hs.length-max===1?"":"s")+' más</li>':"")+'</ul>';
 }
+/* la que volvió a control (o la que el auxiliar volvió a pasar) y ya se había controlado: qué cambió desde entonces */
+function desdeControlHtml(b,t,l){
+ let hs=[]; try{ hs=cambiosDeTexto(l.revisada.texto,runsComparar(b,t,l)); }catch(e){ hs=[]; }
+ const cuando=esc(l.revisada.fecha||"")+(l.revisada.hora?" a las "+esc(l.revisada.hora):"");
+ if(!hs.length) return '<div class="alerta calma"><b>No cambió nada desde que se controló el '+cuando+'</b>El texto es el mismo que se aprobó.</div>';
+ return '<div class="alerta tibia"><b>Ya se había controlado el '+cuando+'. Desde entonces cambió '+(hs.length===1?"esto":"esto ("+hs.length+")")+':</b>'+cambiosHtml(hs,12)+'</div>';
+}
 function listaCambiosHtml(b,t,l){
  const xs=cambiosDespuesDeAprobar(b,t,l), cm=cambioTrasRevision(b,t,l), fmt=cm&&soloFormato(b,t,l);
  if(!xs.length&&!fmt&&!cm) return "";
@@ -7567,9 +7585,10 @@ function pintarRevision(){
  const leida=leidaDe(b,rol);
  /* opción 1 (18/11/2026): sin la franja; «Revisión con …» se dice una vez, en el camino, y el buscador pasa a la columna */
  $("#v-revision").innerHTML='<h2 class="pt">'+esc(nombreLote(l))+'</h2><p class="ps">'+esc(b.nombre)+' · '+esc(loteCorto(l))+' · Expte. '+esc(l.expediente||"sin número")+(l.enRevision?' · la pasó a controlar '+esc(l.enRevision.quien)+' el '+esc(l.enRevision.fecha):"")+(ultimoCambio(l)?' · último cambio: '+ultimoCambio(l):"")+'</p>'
-  +'<div id="rAfuera"></div>'+(l.impresa&&l.estado!=="firmada"&&l.estado!=="inscripta"&&(cm||impresaDistinta(b,t,l))?'<div class="info-rev">Ya se imprimió el '+esc(l.impresa.fecha)+': aprobada así, hay que reimprimirla.</div>':"")
+  +'<div id="rAfuera"></div>'+(()=>{ /* el notarial que vence antes de la firma, también en la revisión (relevamiento del 21/11/2026) */ const nt=notarialTarde(t,l); return nt?'<div class="alerta"><b>Ojo con el notarial</b>'+esc(nt.charAt(0).toUpperCase()+nt.slice(1))+'.</div>':""; })()+(l.impresa&&l.estado!=="firmada"&&l.estado!=="inscripta"&&(cm||impresaDistinta(b,t,l))?'<div class="info-rev">Ya se imprimió el '+esc(l.impresa.fecha)+': aprobada así, hay que reimprimirla.</div>':"")
   +(fmt?'<div class="alerta tibia"><b>Cambió el formato después de tu revisión del '+esc(l.revisada.fecha)+'</b>La negrita o el subrayado: el texto es el mismo. Está entera, para que lo mires.'+listaCambiosHtml(b,t,l)+'</div>'
    :cm?'<div class="alerta tibia"><b>Cambió después de tu revisión del '+esc(l.revisada.fecha)+'</b>'+(VISTA.entera?"Está entera: lo que cambió está marcado en naranja. ":"Ves sólo el tramo que cambió, marcado en naranja. ")+'<button type="button" class="link" id="rEntera">'+(VISTA.entera?"Ver sólo lo que cambió":"Ver la minuta entera")+'</button>'+listaCambiosHtml(b,t,l)+'</div>'
+   :l.estado==="enRevision"&&l.revisada&&l.revisada.texto?desdeControlHtml(b,t,l)
    :l.estado==="revisada"&&!revisionCuenta(l)?'<div class="alerta tibia"><b>La revisión que tiene no salió de esta computadora</b>'+(revDeOtra(l)?'La hizo la '+esc(CARGO_TXT[l.revisada.cargo]||l.revisada.cargo)+'; ahora el lote es de tu mitad. ':'')+'Leela como si fuera la primera vez.</div>'
    :primera?'<div class="info-rev">La primera de '+esc(b.nombre)+' con esta base: leela entera.</div>'
    :'<div class="info-rev">'+(VISTA.entera?"La minuta entera.":"Sólo lo que cambia: la base la leíste"+(leida&&leida.lote&&leida.lote!==l.id?" en el "+esc(loteCortoDe(b,leida.lote)):"")+(leida&&leida.fecha?" el "+esc(leida.fecha):"")+".")+' <button type="button" class="link" id="rEntera">'+(VISTA.entera?"Ver sólo lo que cambia":"Ver la minuta entera")+'</button></div>')
@@ -7796,6 +7815,16 @@ function unificarCorresponde(b,t,l,nuevoCrudo){
   pintarHojaRev(true); pintarPanelRev();
   avisar("Unificado: los "+todos.length+" lotes de la Manzana "+mz+" tienen este corresponde"+(mias.length?" (las "+mias.length+" revisadas siguen revisadas)":"")+"."); });
 }
+/* después de cambiar algo para todos: las controladas de tu mitad a las que no les llegó, con qué cambia, y la pregunta */
+function ofrecerALasControladas(b,aviso){
+ if(!puedeRevisar()) return false;
+ const at=[]; for(const tt of b.tandas||[]) for(const x of tt.lotes||[]) if(cargoDe(x)===ROL()&&atrasada(b,tt,x)) at.push({t:tt,l:x});
+ if(!at.length) return false;
+ let hs=[]; try{ hs=cambiosDeTexto(at[0].l.revisada.texto,runsComparar(b,at[0].t,at[0].l,true)); }catch(e){}
+ setTimeout(()=>{ preguntar((aviso?esc(aviso)+"<br><br>":"")+"<b>"+(at.length===1?"Hay 1 controlada que no lo recibió":"Hay "+at.length+" controladas que no lo recibieron")+"</b> ("+esc(at.slice(0,8).map(z=>loteCorto(z.l)).join(", "))+(at.length>8?"…":"")+"): están listas, y una controlada no cambia sola.<br>¿Se lo llevás también? Siguen controladas, y su Word se rehace en «Listas para imprimir».","Llevárselo también",()=>{
+   llevarARevisadas(b,at); pintarHojaRev(true); pintarPanelRev(); avisar("Listo: "+at.length+(at.length===1?" controlada lo tiene":" controladas lo tienen")+"."); },cambiosHtml(hs,3)); },60);
+ return true;
+}
 function pasarATodos(b,t,l,pt){
  if(!pt.nuevo.trim()){ avisar("Vacío borraría ese texto de todas las minutas: si es eso, hacelo en la minuta base entera.",true); return; }
  if(!pt.k){ const rb=b.base.runs[pt.bi]; if(!rb||rb.k||rb.t!==pt.antes){ avisar("La base cambió mientras tanto: volvé a poner el cursor en el texto.",true); return; }
@@ -7807,6 +7836,7 @@ function pasarATodos(b,t,l,pt){
   quitarPropioDato(l,pt.k,pt.bi); ponerRef(b,ref,nuevoCrudo); registrarCorr(l,{alcance:d.a,k:pt.k,etiqueta:d.r.toLowerCase(),antes:crudo,despues:nuevoCrudo,ref}); }
  guardar(true); pedirSync(); pintarHojaRev(true); pintarPanelRev();
  const n=pt.imp.sinRevisar, r=pt.imp.revisados.length;
+ if(ofrecerALasControladas(b,"Pasado a todos: cambia en "+(n===1?"el lote sin revisar.":"los "+n+" lotes sin revisar."))) return;
  avisar("Pasado a todos: cambia en "+(n===1?"el lote sin revisar":"los "+n+" lotes sin revisar")+(r?". "+r+(r===1?" revisada no cambia (está lista): se le puede llevar desde la tarjeta de la columna.":" revisadas no cambian (están listas): se les puede llevar desde la tarjeta de la columna."):"."));
 }
 function pintarCursorWord(){
@@ -8130,7 +8160,7 @@ function cajaCorregir(b,t,l,run){
     const cp=document.getElementById("rCorrP"); cp.className=""; cp.style.marginTop="12px"; cp.querySelectorAll("h3,.hint").forEach(x=>x.remove()); const okb=document.getElementById("rPropioDOk"); if(okb) okb.className="p"; c.atar(); const ta=document.getElementById("rPropioD"); if(ta) ta.focus(); };
    $("#rAplicar").onclick=()=>{ const nv=$("#rAlt").value, antes=valorRef(b,ref); if(nv===antes){ avisar("No cambió nada."); return; }
     ponerRef(b,ref,nv); registrarCorr(l,{alcance:al==="barrio"?"barrio":al,k,etiqueta:d.r.toLowerCase(),antes,despues:nv,ref}); guardar(true); pintarHojaRev(); pintarPanelRev();
-    avisar("Cambiado "+donde+". "+impactoTxt(imp,donde)); };
+    if(!ofrecerALasControladas(b,"Cambiado "+donde+".")) avisar("Cambiado "+donde+". "+impactoTxt(imp,donde)); };
   }};
 }
 /* «Sólo en esta escritura» para un dato del barrio, de la tanda, de la manzana o una concordancia, en la
