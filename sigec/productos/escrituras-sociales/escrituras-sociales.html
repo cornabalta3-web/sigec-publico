@@ -1720,7 +1720,13 @@ const CITA_FRASE=/(corren?\s+agregad[ao]s?|agrego)\s+a\s+la\s+presente(?:\s+escr
 function citaEnLasDemas(out,ctx){
  const pr=principalCtx(ctx); if(!pr||pr.es||ctx.sinCita) return out;
  const iInt=out.findIndex(x=>!x.k&&!x.kp&&!x.hueco&&/INTERVENCIÓN:/.test(x.t)); if(iInt<0) return out;
- let fin=out.findIndex((x,i)=>i>=iInt&&!x.k&&!x.kp&&!x.hueco&&/DICEN:/.test(x.t.slice(i===iInt?x.t.indexOf("INTERVENCIÓN:"):0)));
+ /* Hasta «DICE:» o «DICEN:» (24/11/2026, en Melo firma una sola por la municipalidad: «DICE:», y como sólo se buscaba
+    «DICEN:» la cita llegaba hasta el final, y el notarial decía «que corren agregadas a la Escritura número Ciento
+    treinta»). Por las dudas, nunca después del corresponde ni de los certificados, que son de cada lote. */
+ const FIN_INT=/DICEN?\s*:|LE CORRESPONDE|CERTIFICADO\s+(?:NOTARIAL|CATASTRAL)|CON EL CERTIFICADO/;
+ let fin=-1; for(let i=iInt;i<out.length;i++){ const x=out[i]; if(x.hueco) continue;
+  const s0=i===iInt?x.t.slice(x.t.indexOf("INTERVENCIÓN:")+13):String(x.t||""), sig=String((out[i+1]&&out[i+1].t)||"").slice(0,4), m=FIN_INT.exec(s0+sig);
+  if(m&&m.index<s0.length){ fin=i; break; } }
  /* si los adjudicatarios vinieran después de la intervención, sus copias no entran (el comparendo propio viene con kp) */
  const iAdj=out.findIndex((x,i)=>i>iInt&&(x.k||x.kp)==="ADJUDICATARIOS"); if(iAdj>=0&&(fin<0||iAdj<fin)) fin=iAdj;
  if(fin<0) fin=out.length;
@@ -1734,7 +1740,7 @@ function citaEnLasDemas(out,ctx){
  return out.map((x,i)=>{
   if(i<iInt||i>fin||x.hueco||x.pend) return x;
   if(x.k||x.kp){ if(DEL_LOTE.has(x.k||x.kp)) particular=true; return x; }
-  const desde=i===iInt?x.t.indexOf("INTERVENCIÓN:"):0, d=i===fin?x.t.slice(desde).search(/DICEN:/):-1, hasta=d>=0?desde+d:x.t.length;
+  const desde=i===iInt?x.t.indexOf("INTERVENCIÓN:"):0, d=i===fin?x.t.slice(desde).search(/DICEN?\s*:|DICEN?\s*$|LE CORRESPONDE|CERTIFICADO\s+(?:NOTARIAL|CATASTRAL)|CON EL CERTIFICADO/):-1, hasta=d>=0?desde+d:x.t.length;
   let ant=""; for(let j=i-1;j>=0&&!out[j].k&&!out[j].kp&&!out[j].hueco&&ant.length<120;j--) ant=out[j].t+ant;
   let hubo=false, ult=desde;
   const t=x.t.replace(CITA_FRASE,(m,verbo,pos)=>{ if(pos<desde||pos>=hasta) return m;
@@ -1748,7 +1754,8 @@ function citaEnLasDemas(out,ctx){
  });
 }
 /* qué cita de la principal lleva la minuta de este lote: si cambia, el Word de «Listas para imprimir» se rehace */
-const citaPrincipalDe=(t,l)=>{ const pr=principalCtx({t,l}); return pr&&!pr.es?pr.l.id+"|"+pr.nro+"|"+String(pr.l.fechaActo||(t&&t.fechaFirma)||""):""; };
+/* «|c2»: el Word de «Listas para imprimir» se rehace en todas las que citan (24/11/2026: el notarial salía citando la principal) */
+const citaPrincipalDe=(t,l)=>{ const pr=principalCtx({t,l}); return pr&&!pr.es?pr.l.id+"|"+pr.nro+"|"+String(pr.l.fechaActo||(t&&t.fechaFirma)||"")+"|c2":""; };
 function domicilioRuns(ctx,entrada){
  const r=[], l=ctx.l;
  /* «con domicilio en el Lote …» (Baltasar, 18/11/2026: «que diga con domicilio en el lote y no en lote») */
@@ -5515,8 +5522,8 @@ function pintarBaseSola(){
  $("#bDeshacer").onclick=()=>deshacer(b);
  $("#bRehacer").onclick=()=>rehacer(b);
  $("#bSigueLotes").onclick=$("#bSigueArriba").onclick=()=>{ ir("tablero"); if(!b.tandas.length){ b.tandas.push({id:"t"+Date.now().toString(36),resolucion:"",fechaFirma:"",lotes:[]}); guardar(); pintarTablero(); } const t=b.tandas.find(x=>!x.lotes.length)||b.tandas[0]; if(!t.lotes.length) panelLotes(b,t); else avisar("Los lotes están en la tanda "+(t.resolucion||"")+": abrí cada uno para cargar sus datos."); };
- $("#bNeg").onmousedown=e=>{ e.preventDefault(); document.execCommand("bold"); leerEscritura(b); };
- $("#bSub").onmousedown=e=>{ e.preventDefault(); document.execCommand("underline"); leerEscritura(b); };
+ $("#bNeg").onmousedown=e=>{ e.preventDefault(); formatoEnBase(b,"bold"); };
+ $("#bSub").onmousedown=e=>{ e.preventDefault(); formatoEnBase(b,"underline"); };
  $("#bDetectar").onclick=()=>proponer(b);
  $("#bModeloGuardar").onclick=()=>guardarModelo(b);
  $("#bDetectar2").onclick=()=>proponer(b);
@@ -5558,6 +5565,23 @@ function pintarEscritura(b){
   if(r.b) h="<b>"+h+"</b>";
   return h;
  }).join("");
+}
+/* Negrita y subrayado en la base, también sobre un editable (Baltasar, 24/11/2026: «no me cambia»): Chrome no le pone
+   formato a un recuadro que no se escribe (contenteditable=false), así que el editable seleccionado se envuelve a mano.
+   Si todos los editables elegidos ya lo tienen, se les saca. */
+function formatoEnBase(b,cmd){
+ const e=$("#esc"), sl=getSelection(); if(!e) return;
+ const neg=cmd==="bold", es=el=>neg?(el.tagName==="B"||el.tagName==="STRONG"||/^(bold|[6-9]00)$/.test(el.style.fontWeight||"")):(el.tagName==="U"||/underline/.test(el.style.textDecoration||""));
+ const tiene=m=>{ for(let p=m.parentElement;p&&p!==e;p=p.parentElement) if(es(p)) return true; return false; };
+ const r=sl&&sl.rangeCount?sl.getRangeAt(0):null;
+ const ids=r?[...e.querySelectorAll(".mk")].filter(m=>r.intersectsNode(m)).map(m=>m.dataset.id):[];
+ const ms=()=>ids.map(id=>e.querySelector('.mk[data-id="'+id+'"]')).filter(Boolean);
+ const poner=ids.length&&!ms().every(tiene);
+ document.execCommand(cmd);
+ ms().forEach(m=>{ const ya=tiene(m);
+  if(poner&&!ya){ const w=document.createElement(neg?"b":"u"); m.parentNode.insertBefore(w,m); w.appendChild(m); }
+  else if(!poner&&ya){ const p=m.parentElement; if(p&&p!==e&&es(p)&&p.childNodes.length===1){ p.parentNode.insertBefore(m,p); p.remove(); } } });
+ leerEscritura(b);
 }
 /* del DOM a los tramos: lo que la persona escribió, con el formato que le puso */
 function leerEscritura(b){
@@ -6387,7 +6411,14 @@ function quitarPropioDato(l,k,bi){ const sale=[]; l.textoPropio=(l.textoPropio||
 /* Lo cambiado en el dato (de antes a nuevo) llevado al texto que sale en esta escritura (dice), que puede no ser
    igual al dato: el corresponde sale con la matrícula del lote. Se busca el tramo cambiado con lo que lo rodea; si no
    está una sola vez en dice, null. */
+/* El corresponde sale con las erratas corregidas (corregirErratas: «Nº» → «N°»), y lo cambiado se buscaba en el texto
+   cargado, que todavía las tiene (24/11/2026, Melo: «N°dos cientos» → «Número dos cientos» no se pudo pasar a todos,
+   porque en el cargado decía «Nº»). Si no lo encuentra, se busca en el cargado con las erratas corregidas, que sale igual. */
 function pasarEdicion(antes,nuevo,dice){
+ const r=pasarEdicion0(antes,nuevo,dice); if(r!=null) return r;
+ const d2=corregirErratas(dice); return d2!==dice?pasarEdicion0(antes,nuevo,d2):null;
+}
+function pasarEdicion0(antes,nuevo,dice){
  if(antes.trim()===dice.trim()) return nuevo;
  let p=0; while(p<antes.length&&p<nuevo.length&&antes[p]===nuevo[p]) p++;
  let q=0; while(q<antes.length-p&&q<nuevo.length-p&&antes[antes.length-1-q]===nuevo[nuevo.length-1-q]) q++;
@@ -8468,7 +8499,7 @@ function revCongeladaHtml(b,t,l,p){
  /* las que tienen el mismo cambio van juntas: el cambio se muestra una vez (20/11/2026) */
  const grupos=new Map(); at.forEach(z=>{ let hs=[]; try{ hs=cambiosDeTexto(z.l.revisada.texto,runsComparar(b,z.t,z.l,true)); }catch(e){}
   const k=JSON.stringify(hs.map(h=>[h.donde,h.antes,h.ahora,h.txt||""])); if(!grupos.has(k)) grupos.set(k,{hs,zs:[]}); grupos.get(k).zs.push(z); });
- const fila=g=>'<li><b>'+g.zs.slice(0,6).map(z=>esc(loteCorto(z.l))).join(", ")+(g.zs.length>6?" y "+(g.zs.length-6)+" más":"")+'</b>'+(g.zs.length===1?' · '+esc(nombreLote(g.zs[0].l)):"")+cambiosHtml(g.hs,20)+'</li>';
+ const fila=g=>'<li><b>'+g.zs.slice(0,6).map(z=>esc(loteCorto(z.l))).join(", ")+(g.zs.length>6?" y "+(g.zs.length-6)+" más":"")+'</b>'+(g.zs.length===1?' · '+esc(nombreLote(g.zs[0].l)):"")+(g.hs.length?cambiosHtml(g.hs,20):'<p class="hint" style="margin:2px 0 0">Cambió sólo la negrita o el subrayado: el texto es el mismo.</p>')+'</li>';
  const h='<div class="card rev-box rev-atras"><h3>Controladas que quedaron como se aprobaron</h3><p class="hint" style="margin:0 0 6px">Después de controlarlas cambió algo —para todos o en sus datos— y no les llegó, porque una controlada no cambia sola. Si les llevás los cambios, les llega <b>todo</b> lo que está acá'+(otras?' ('+otras+' más son de la otra escribana: se llevan desde su computadora)':'')+'.</p>'
   +(at.length?'<ul style="margin:0 0 8px;padding-left:18px">'+[...grupos.values()].map(fila).join("")+'</ul><div class="pbtn"><button type="button" class="p" id="rLlevar">Llevarles los cambios ('+at.length+')</button></div><p class="hint" style="margin:6px 0 0">Siguen revisadas, y su Word se reemplaza en «Listas para imprimir».</p>':"")
   +(pierden.length?'<p class="n" style="margin:8px 0 0;color:var(--warn)"><b>'+esc(pierden.map(z=>loteCorto(z.l)).join(", "))+'</b>: no se '+(pierden.length===1?"le lleva":"les lleva")+', porque '+(pierden.length===1?"perdería un cambio":"perderían cambios")+' «sólo en esta escritura» que la base ya no tiene en ese lugar. Para ésa'+(pierden.length===1?"":"s")+', «Volver a corregirla».</p>':"")+'</div>';
