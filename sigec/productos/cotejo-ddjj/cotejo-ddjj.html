@@ -2950,11 +2950,12 @@ const CITA=/^>\s?/;
 const textoSolo=t=>conAst(t.split(/(\n{2,})/).map((b,i)=>i%2?b:b.replace(CITA,"").replace(NEG,"$1")).join(""));
 // la nota con el membrete, como se pega: párrafos y renglones del texto
 /* Como en la nota de la escribana (Baltasar, 25/11/2026: «faltan las sangrías y falta el Córdoba, 25 de noviembre, a la
-   derecha»): el primer renglón, la fecha, a la derecha; y cada párrafo del cuerpo con sangría. Cuerpo es un párrafo de
+   derecha»): el primer renglón, la fecha, a la derecha; y cada párrafo del cuerpo con sangría y justificado («hay que justificar
+   el texto»). Cuerpo es un párrafo de
    un solo renglón que no es la fecha, ni un título todo en negrita, ni la cita. */
 const esTitulo=b=>/^\*\*[^*]+\*\*$/.test(b.trim());
 function cartaHtml(t){ const par=t.split(/\n{2,}/).map((b,i)=>{ const cita=CITA.test(b), x=b.replace(CITA,""), fecha=i===0&&!b.includes("\n"), cuerpo=!fecha&&!cita&&!b.includes("\n")&&!esTitulo(b);
-  return `<p style="margin:0 0 10pt${fecha?";text-align:right":""}${cuerpo?";text-indent:1.25cm":""}${cita?";font-size:8pt;font-style:italic;line-height:1.3;text-align:justify":""}">${conAst(esc(x).replace(NEG,"<b>$1</b>")).replace(/\n/g,"<br>")}</p>`; }).join("");
+  return `<p style="margin:0 0 10pt${fecha?";text-align:right":""}${cuerpo?";text-indent:1.25cm;text-align:justify":""}${cita?";font-size:8pt;font-style:italic;line-height:1.3;text-align:justify":""}">${conAst(esc(x).replace(NEG,"<b>$1</b>")).replace(/\n/g,"<br>")}</p>`; }).join("");
  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:11pt;line-height:1.45;color:#000;background:#fff"><p style="margin:0 0 16pt"><img src="${MEMBRETE}" alt="Escribanía de Gobierno · Provincia de Córdoba" width="600" style="width:600px;max-width:100%;height:auto"></p>${par}</div>`; }
 /* Las notificaciones anotadas (el diseño F; Baltasar, 04/11/2026: «que registre a quién se notificó y cuándo», «yo
    diría que quede automático, pero siempre la opción de notificar de vuelta»). Copiar la notificación la anota, con el
