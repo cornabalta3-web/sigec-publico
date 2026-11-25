@@ -526,6 +526,39 @@ details.q-der .q-t{left:auto;right:0}
  button,a,input,select,textarea,summary{transition:background-color .15s,border-color .15s,box-shadow .15s,color .15s,opacity .15s}
  @keyframes sigecEntra{from{opacity:0}}
 }
+/* Notificar por tandas */
+.tan{display:flex;flex-direction:column;gap:14px}
+.tan-cab{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px}
+.tan-tabs{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tan-tabs button[data-tani]{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--sup);color:var(--muted);border-radius:999px;padding:7px 14px;cursor:pointer}
+.tan-tabs button[data-tani][aria-pressed="true"]{background:var(--acento);border-color:var(--acento);color:#fff}
+.tan-arm{display:flex;flex-wrap:wrap;align-items:center;gap:10px 14px;background:var(--sup2);border-radius:12px;padding:12px 14px}
+.tan-arm input{width:80px;font:inherit;font-weight:700;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--sup);color:var(--fg)}
+.tan-nota{border-left:4px solid var(--acento);background:var(--acento-s);border-radius:8px;padding:10px 14px;font-size:13.5px}
+.tan-res{display:flex;flex-wrap:wrap;align-items:center;gap:14px 28px}
+.tan-num{display:flex;flex-wrap:wrap;gap:22px}
+.tan-num span{display:block;color:var(--muted);font-size:12.5px;font-weight:600}
+.tan-num b{font-size:24px;font-weight:800;font-variant-numeric:tabular-nums}
+.tan-barra{height:10px;background:var(--pista);border-radius:5px;overflow:hidden;display:flex;margin:10px 0 6px}
+.tan-barra i{display:block;height:10px}
+.tan-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start}
+.tan-grid>*{min-width:0}
+@media (max-width:860px){.tan-grid{grid-template-columns:minmax(0,1fr)}}
+.tan-t{width:100%;border-collapse:collapse;font-size:13.5px}
+.tan-t th{text-align:left;color:var(--muted);font-size:12.5px;font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+.tan-t td{padding:7px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+.tan-t td:first-child{color:var(--muted);font-variant-numeric:tabular-nums}
+.tan-t tr.sel td{background:var(--acento-s)}
+.tan-t tr.ya td{opacity:.7}
+.tan-t button.tan-p{font:inherit;font-weight:600;color:var(--fg);background:none;border:0;padding:0;cursor:pointer;text-align:left}
+.tan-t button.tan-p:hover{text-decoration:underline}
+.tan-t small{display:block;color:var(--muted);font-size:12px}
+.tan-prev summary{cursor:pointer;padding:8px 0}
+.tan-sig{border:2px solid var(--acento);border-radius:14px;padding:14px 16px;display:flex;flex-direction:column;gap:12px;background:var(--sup);position:sticky;top:12px}
+.tan-sig h3{margin:0;font-size:18px}
+.tan-sig .carta{max-height:300px}
+.tan-sig .btn{justify-content:center}
+@media (max-width:860px){.tan-sig{position:static}}
 </style>
 </head>
 <body>
@@ -547,6 +580,7 @@ details.q-der .q-t{left:auto;right:0}
  <nav class="pestanas" id="pestanas" aria-label="Partes del cotejo">
   <button type="button" data-tab="inicio" aria-pressed="false">Inicio</button>
   <button type="button" data-tab="buscar" aria-pressed="false">Buscar</button>
+  <button type="button" data-tab="notificar" aria-pressed="false">Notificar<span class="badge t-mal oculto" id="pestNotif"></span></button>
   <button type="button" data-tab="carga" aria-pressed="false"><span class="largo">Cargar la semana</span><span class="corto">Carga</span><span class="badge oculto" id="pestN"></span></button>
  </nav>
 
@@ -592,6 +626,10 @@ details.q-der .q-t{left:auto;right:0}
   <p class="notif-ok oculto" id="notifFila" role="status"></p>
   <div class="grilla-per" id="personas"></div>
  </section>
+ </div>
+
+ <div data-panel="notificar" hidden>
+ <section class="card tan" id="secTandas" aria-labelledby="tanT"></section>
  </div>
 
  <div data-panel="carga" hidden>
@@ -1074,7 +1112,7 @@ const dobles=(personas,dim)=>personas.filter(p=>p.cod[1]==="1"&&valoresDe(p,dim)
    leyó, esta no pisa nada y pide recargar.
    ============================================================================ */
 const DB_NOMBRE="sigec-cotejo-ddjj";
-const metaVacia=()=>({app:"cotejo-ddjj",version:2,rev:0,semanas:[],vinculos:[],cargos:[],revisadas:[],entesOrg:[],poderes:[],notificados:[],notificacion:"",mapeos:{},hojas:{},filtros:{}});
+const metaVacia=()=>({app:"cotejo-ddjj",version:2,rev:0,semanas:[],vinculos:[],cargos:[],revisadas:[],entesOrg:[],poderes:[],notificados:[],tandas:[],notificacion:"",mapeos:{},hojas:{},filtros:{}});
 let db=null, sinGuardar=false, errorGuardar="", conflicto=false, REV=0;
 let META=metaVacia();
 const LISTAS=new Map();
@@ -1528,10 +1566,12 @@ const hayDatos=()=>!!(ACT&&ACT.R&&ACT.R.personas.length);
    está elegida no se recuerda al recargar. */
 let TAB=null;
 function ponerTab(t){ TAB=t; document.querySelectorAll("[data-panel]").forEach(e=>{ e.hidden=e.dataset.panel!==t; }); const ad=$("#alDia"); if(ad) ad.hidden=t==="carga";
- document.querySelectorAll("#pestanas [data-tab]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.tab===t))); }
+ document.querySelectorAll("#pestanas [data-tab]").forEach(b=>b.setAttribute("aria-pressed",String(b.dataset.tab===t))); if(t==="notificar") pintarTandas(); }
 function pintarPestanas(){ if(!hayDatos()) TAB="carga"; else if(!TAB) TAB="inicio"; ponerTab(TAB);
  const r=ACT.R, n=r&&editable()?r.propuestas.length+r.personas.filter(p=>p.revCargo||p.inconsist||p.dudaPoder).length:0, b=$("#pestN");
- b.textContent=n?nf(n):""; b.classList.toggle("oculto",!n); b.title=n?"Lo que falta decidir: coincidencias de nombre e inconsistencias":""; }
+ b.textContent=n?nf(n):""; b.classList.toggle("oculto",!n); b.title=n?"Lo que falta decidir: coincidencias de nombre e inconsistencias":"";
+ const T=hayDatos()&&enUltima()?tandasDeAhora():null, sn=T?T.g.flat().filter(x=>estadoTanda(x,T).k==="sin").length:0, bn=$("#pestNotif");
+ bn.textContent=sn?nf(sn):""; bn.classList.toggle("oculto",!sn); bn.title=sn?"Sin notificar en las tandas":""; }
 const enUltima=()=>!!ACT&&ACT.i===M().semanas.length-1;
 /* Sólo para ver (Baltasar, 28/10/2026: «que consulta sólo pueda ver»): quien entra al compartido con una cuenta de Ley
    Pierri de perfil Consulta ve todo —filtros, perfiles, el Excel, una copia de respaldo—, pero no carga listas, no
@@ -2748,7 +2788,7 @@ function datosConsulta(){ const R=ACT.R, s=ACT.s, cmp=ACT.cmpG; const ls=f=>idsD
  const ea=p=>(p.alc||["E"]).some(a=>a==="E"||a==="A"), r={personas:R.personas.filter(ea),L:R.L}, prevP=ACT.prevR?ACT.prevR.personas.filter(ea):null;
  return {app:"cotejo-ddjj-consulta",version:1,publicada:new Date().toISOString(),semana:s.s,
   fuentes:{p:ls("p").map(l=>({archivo:l.archivo,clave:l.clave||"",cargada:l.cargada,hasta:hastaIndice([l])})),a:[...ls("a").filter(l=>!l.ente),...ls("a").filter(l=>l.ente&&poderLista(l)==="A")].map(l=>({archivo:l.archivo,cargada:l.cargada,fechaDatos:l.fechaDatos||"",ente:l.ente?l.clave:""})),u:ls("u").map(l=>({archivo:l.archivo,cargada:l.cargada}))},
-  res:resumir(r.personas,R.propuestas.filter(x=>ea(x.centro)||x.opciones.some(ea))),resAnt:prevP?resumir(prevP,[]):null,notificacion:M().notificacion||"",
+  res:resumir(r.personas,R.propuestas.filter(x=>ea(x.centro)||x.opciones.some(ea))),resAnt:prevP?resumir(prevP,[]):null,notificacion:plantillaNotif(),notifV:NOTIF_V,
   salieron:cmp?cmp.salieron.filter(ea).map(q=>({nom:q.nom,dni:q.dni,cuil:q.cuil||"",cod:q.otroCargo?"1"+q.cod.slice(1):q.cod,jurs:q.jurs,cargos:q.cargos})):[],
   personas:r.personas.map(p=>({nt:(rs=>rs.length?{n:rs.length,u:rs[rs.length-1].t}:null)(notifDe(p)),nom:p.nom,dni:p.dni,cuil:p.cuil||"",cod:p.cod,jurs:p.jurs,cargos:p.cargos,escals:p.escals,revistas:p.revistas,pres:p.pres,nPres:p.nPres,otroCargo:p.otroCargo,revCargo:p.revCargo||"",inconsist:p.inconsist||"",orgDDJJ:p.orgDDJJ||"",descartadas:(p.descartadas||[]).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo})),ceses:(p.ceses||[]).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo})),puestos:p.puestos||[],debeCese:p.debeCese?{n:p.debeCese.n,fecha:p.debeCese.fecha,cargo:p.debeCese.cargo}:null,hist:historialDe(p),ddjjs:r.L.p?ddjjsDe(p).filter(e=>!e.ajena&&!/otra persona con el mismo nombre/.test(e.estado)).map(e=>({n:e.n,fecha:e.fecha,cargo:e.cargo,poder:e.poder,cuenta:e.cuenta,estado:e.estado})):[],falta:p.falta,fuera:p.fuera,otros:p.otrosNombres,otrosDni:p.otrosDni,pend:p.pend,ultimo:p.ultimo,cambio:((cmp&&cmp.cambios.get(p))||{}).txt||"",
    alc:p.alc,podFuente:p.podFuente||"",dudaPoder:p.dudaPoder||"",ubic:p.ubic?{de:p.ubic.de,orgs:p.ubic.orgs,vals:p.ubic.vals,nomina:!!p.ubic.nomina,por:p.ubic.por||"",literal:!!p.ubic.literal,ultima:p.ubic.ultima!==false,al:p.ubic.al||"",e:p.ubic.e?{n:p.ubic.e.n||"",fecha:p.ubic.e.fecha||"",cargo:p.ubic.e.cargo||"",noCuenta:p.ubic.e.noCuenta||""}:null}:null,sinOrg:p.sinOrg?{sin:p.sinOrg.sin,e:p.sinOrg.e?{n:p.sinOrg.e.n||"",fecha:p.sinOrg.e.fecha||"",cargo:p.sinOrg.e.cargo||""}:null,dos:p.sinOrg.dos||null}:null}))}; }
@@ -2778,13 +2818,18 @@ const MEMBRETE="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABLAAAACdCAMAAACTgn
 /* El texto de la notificación, el de la Escribanía (Baltasar, 25/11/2026: «cargalo en el cotejo»), con la firma de la
    escritura en el pedido y el artículo 6 al final, en letra chica (el párrafo que empieza con «>»). El primer párrafo
    lo arma {motivo} según el caso; para quien no presentó dice lo mismo que el texto de la escribana. */
+/* El texto propio, guardado con «Cambiar el texto», vale sólo si se guardó con este texto de base (NOTIF_V). Uno
+   guardado antes del 25/11/2026 era sobre el borrador viejo y no se usa (Baltasar: «¿por qué está la notificación
+   vieja? Cambialo en todos»): sale el de la Escribanía, en todas las computadoras y en la consulta. */
+const NOTIF_V=2;
+const plantillaNotif=()=>M().notifV===NOTIF_V&&M().notificacion||"";
 const NOTIF_BORRADOR=`Córdoba, {fecha}.
 
-{sr}
-**{nombre}**
+**{sr}
+{nombre}
 DNI {dni}
 {puesto}
-S________________/________________D
+S________________/________________D**
 
 **NOTIFICACIÓN – INTIMACIÓN A PRESENTAR DECLARACIÓN JURADA PATRIMONIAL**
 
@@ -2904,7 +2949,12 @@ const conAst=s=>s.split(AST).join("*");
 const CITA=/^>\s?/;
 const textoSolo=t=>conAst(t.split(/(\n{2,})/).map((b,i)=>i%2?b:b.replace(CITA,"").replace(NEG,"$1")).join(""));
 // la nota con el membrete, como se pega: párrafos y renglones del texto
-function cartaHtml(t){ const par=t.split(/\n{2,}/).map(b=>{ const cita=CITA.test(b), x=b.replace(CITA,""); return `<p style="margin:0 0 10pt${cita?";font-size:8pt;font-style:italic;line-height:1.3;text-align:justify":""}">${conAst(esc(x).replace(NEG,"<b>$1</b>")).replace(/\n/g,"<br>")}</p>`; }).join("");
+/* Como en la nota de la escribana (Baltasar, 25/11/2026: «faltan las sangrías y falta el Córdoba, 25 de noviembre, a la
+   derecha»): el primer renglón, la fecha, a la derecha; y cada párrafo del cuerpo con sangría. Cuerpo es un párrafo de
+   un solo renglón que no es la fecha, ni un título todo en negrita, ni la cita. */
+const esTitulo=b=>/^\*\*[^*]+\*\*$/.test(b.trim());
+function cartaHtml(t){ const par=t.split(/\n{2,}/).map((b,i)=>{ const cita=CITA.test(b), x=b.replace(CITA,""), fecha=i===0&&!b.includes("\n"), cuerpo=!fecha&&!cita&&!b.includes("\n")&&!esTitulo(b);
+  return `<p style="margin:0 0 10pt${fecha?";text-align:right":""}${cuerpo?";text-indent:1.25cm":""}${cita?";font-size:8pt;font-style:italic;line-height:1.3;text-align:justify":""}">${conAst(esc(x).replace(NEG,"<b>$1</b>")).replace(/\n/g,"<br>")}</p>`; }).join("");
  return `<div style="font-family:Arial,Helvetica,sans-serif;font-size:11pt;line-height:1.45;color:#000;background:#fff"><p style="margin:0 0 16pt"><img src="${MEMBRETE}" alt="Escribanía de Gobierno · Provincia de Córdoba" width="600" style="width:600px;max-width:100%;height:auto"></p>${par}</div>`; }
 /* Las notificaciones anotadas (el diseño F; Baltasar, 04/11/2026: «que registre a quién se notificó y cuándo», «yo
    diría que quede automático, pero siempre la opción de notificar de vuelta»). Copiar la notificación la anota, con el
@@ -2938,7 +2988,7 @@ const MIAS=new Set(); // las anotadas desde esta ventana: «No la mandé» borra
 async function anotarNotif(p){ if(!editable()) return false; const q=quienRevisa(), v={k:nuevoId(),p:claveNotif(p),t:new Date().toISOString(),quien:q||""};
  NOTIFS().push(v); if(!(await guardarMeta())){ const a=NOTIFS(), i=a.indexOf(v); if(i>=0) a.splice(i,1); return null; } MIAS.add(v.k); return true; }
 // copiar desde la lista: lo mismo que desde el perfil, con el trato que sale del nombre (o el elegido en el perfil)
-async function copiarNotifDe(p){ const t=textoNotif(p,M().notificacion||""), ok=await copiarRico(cartaHtml(t),textoSolo(t)); const an=ok&&await anotarNotif(p); return {ok,an}; }
+async function copiarNotifDe(p){ const t=textoNotif(p,plantillaNotif()), ok=await copiarRico(cartaHtml(t),textoSolo(t)); const an=ok&&await anotarNotif(p); return {ok,an}; }
 const yaAnotada=(p,an)=>an?` Quedó anotado: notificad${esF(p)?"a":"o"} hoy, ${fechaDe(new Date())}.`:an===null?" Pero no quedó anotada: no se pudo guardar (el aviso de arriba dice por qué).":SOLO_VER()?" Con el perfil de Consulta no queda anotada.":"";
 function htmlNotificar(p,plantilla,editable){ NOTIF_P={p,plantilla,editable};
  if(p.revCargo||!motivoNotif(p)) return `<p style="margin:0">${p.cod[1]!=="1"?"No está en la nómina de activos: no hay nada que notificarle.":p.revCargo?(editable?"Falta decidir si la declaración que presentó es por el cargo de hoy («Inconsistencia», arriba): hasta entonces no se arma la notificación.":"En el cotejo falta decidir si la declaración que presentó es por el cargo de hoy: hasta entonces no se arma la notificación."):"Presentó la declaración por el cargo de hoy: no hay nada que notificarle."}</p>`;
@@ -2953,9 +3003,10 @@ function htmlNotificar(p,plantilla,editable){ NOTIF_P={p,plantilla,editable};
 // lo anotado de una persona, en su perfil: la última, cada vez, y borrar la última si se copió sin mandarla
 function htmlRegNotif(p,editable){ const rs=notifDe(p); if(!rs.length) return `<p class="ayuda" style="margin:0">Todavía no se ${esF(p)?"la":"lo"} notificó.${editable&&enUltima()?" Al copiar la notificación queda anotado el día.":""}</p>`;
  const u=rs[rs.length-1];
- return `<div class="notif-reg"><b>${esc(notifTxt(p))}</b>${u.quien?`<span> · la última, ${esc(u.quien)}</span>`:""}${rs.length>1?`<details><summary>Cada vez</summary><ul>${rs.slice().reverse().map(v=>`<li>${esc(fechaHora(v.t))}${v.quien?" · "+esc(v.quien):""}</li>`).join("")}</ul></details>`:""}${editable&&enUltima()&&rs.some(v=>MIAS.has(v.k))?` <button class="btn lnk sm" type="button" data-acc="borrarNotif">No la mandé: borrar la que copié recién</button>`:""}</div>`; }
-async function borrarNotif(){ if(!NOTIF_P||!editable()) return; const rs=notifDe(NOTIF_P.p).filter(v=>MIAS.has(v.k)), u=rs[rs.length-1]; if(!u) return; const a=NOTIFS(), i=a.indexOf(u); if(i<0) return;
- a.splice(i,1); if(!(await guardarMeta())){ a.splice(i,0,u); const o=$("#notifOk"); if(o) o.textContent="No se pudo borrar: no se pudo guardar (el aviso de arriba dice por qué)."; return; } MIAS.delete(u.k); pintarNotif(); pintarPersonas(); pintarInicio(); pintarOrgCab(); const o=$("#notifOk"); if(o) o.textContent=`Se borró la anotación del ${fechaHora(u.t)}.`; const b=$('[data-acc="copiarNotif"]'); if(b) b.focus(); }
+ return `<div class="notif-reg"><b>${esc(notifTxt(p))}</b>${u.quien?`<span> · la última, ${esc(u.quien)}</span>`:""}${rs.length>1?`<details><summary>Cada vez</summary><ul>${rs.slice().reverse().map(v=>`<li>${esc(fechaHora(v.t))}${v.quien?" · "+esc(v.quien):""}</li>`).join("")}</ul></details>`:""}${editable&&puedeDeshacer(u)?` <button class="btn lnk sm" type="button" data-acc="borrarNotif">Al final no se notificó</button>`:""}</div>`; }
+async function borrarNotif(){ if(!NOTIF_P||!editable()) return; const u=await deshacerNotif(NOTIF_P.p); if(u===false) return;
+ if(u===null){ const o=$("#notifOk"); if(o) o.textContent="No se pudo borrar: no se pudo guardar (el aviso de arriba dice por qué)."; return; }
+ pintarNotif(); pintarPersonas(); pintarInicio(); pintarOrgCab(); pintarPestanas(); const o=$("#notifOk"); if(o) o.textContent=`Se borró la anotación del ${fechaHora(u.t)}: queda sin notificar.`; const b=$('[data-acc="copiarNotif"]'); if(b) b.focus(); }
 function pintarNotif(){ const s=$("#pfNotif"); if(s&&NOTIF_P) s.innerHTML="<h3>Notificar</h3>"+htmlNotificar(NOTIF_P.p,NOTIF_P.plantilla,NOTIF_P.editable); }
 /* Copiar con formato: el membrete y el texto (text/html) y, para donde no se acepten imágenes,
    el texto solo (text/plain). La copia clásica anda adentro de la ventana del perfil y del menú. */
@@ -2964,8 +3015,119 @@ async function copiarRico(html,texto){ let ok=false; const h=e=>{ e.clipboardDat
  try{ await navigator.clipboard.write([new ClipboardItem({"text/html":new Blob([html],{type:"text/html"}),"text/plain":new Blob([texto],{type:"text/plain"})})]); return true; }catch(e){ return alPortapapeles(texto); } }
 async function copiarNotif(){ const t=$("#notifTxt"), c=$("#notifCarta"); if(!t) return; const ok=await copiarRico(c?c.innerHTML:"",t.textContent);
  const p=NOTIF_P&&NOTIF_P.p, an=ok&&p&&await anotarNotif(p);
- if(an){ pintarNotif(); pintarPersonas(); pintarInicio(); pintarOrgCab(); const b=$('[data-acc="copiarNotif"]'); if(b) b.focus(); }
+ if(an){ pintarNotif(); pintarPersonas(); pintarInicio(); pintarOrgCab(); pintarPestanas(); const b=$('[data-acc="copiarNotif"]'); if(b) b.focus(); }
  const o=$("#notifOk"); if(o) o.textContent=ok?"Copiada, con el membrete: pegala en la notificación de CiDi (si no acepta la imagen, queda el texto)."+(p?yaAnotada(p,an):""):"El navegador no dejó copiar: seleccioná el texto y copialo."; }
+/* «Al final no se notificó» (Baltasar, 25/11/2026: «que al copiar la notificación se entienda notificado, y que esté
+   el botón de al final no se notificó»): copiar la anota, y la última se puede borrar si la anotó quien está ahora,
+   hoy, o si se copió desde esta ventana. Así no se borra lo que anotó otra persona. */
+const quienAhora=()=>DEMO?"Ejemplo":NUBE?quienNube():quienGuardado();
+const puedeDeshacer=u=>!!u&&editable()&&(MIAS.has(u.k)||!!u.quien&&u.quien===quienAhora()&&fechaDe(u.t)===fechaDe(new Date()));
+async function deshacerNotif(p){ const rs=notifDe(p), u=rs[rs.length-1]; if(!puedeDeshacer(u)) return false; const a=NOTIFS(), i=a.indexOf(u); if(i<0) return false;
+ a.splice(i,1); if(!(await guardarMeta())){ a.splice(i,0,u); return null; } MIAS.delete(u.k); return u; }
+/* Notificar por tandas (Baltasar, 25/11/2026: «filtrar por tandas… de menos cumplimiento a mayor, quien adeuda de hace
+   más tiempo, y eso dividirlo en 3 tandas de 50»; los mockups L1 y L2). Entran todas las que deben algo —no presentó,
+   la de cese, falta firmar, era de otro cargo—, de quien debe hace más tiempo a quien debe hace menos, cortadas en
+   tandas parejas. Armadas, no cambian: quien presenta queda en la suya con «Ya no debe», y nadie de la siguiente
+   ocupa su lugar. Se guardan con lo demás (META.tandas: un registro, el de las tandas de ahora) y viajan a las otras
+   computadoras. Una persona se reconoce como en las notificaciones: por el DNI, o por el nombre.
+   El orden: primero la última DDJJ más vieja (o ninguna); entre iguales, más semanas seguidas en la nómina debiendo;
+   después, quien debe dos; y el organismo y el nombre. Al cotejo le falta la fecha de alta de PeopleNet: sin ella,
+   entre los que nunca presentaron casi todos empatan, y quien entró hace poco queda al lado de quien debe hace años. */
+const TANDAS=()=>{ const m=M(); if(!Array.isArray(m.tandas)) m.tandas=[]; return m.tandas; };
+const tandasDeAhora=()=>TANDAS().filter(v=>decValida("tandas",v)&&v.g.length).sort((x,y)=>x.t<y.t?-1:x.t>y.t?1:0).pop()||null;
+let TAN={i:0,f:"",sel:"",tam:50,armar:false,ok:""};
+function queDebe(p){ if(p.debeCese) return p.cod[0]==="1"?"Debe la de cese":p.falta?"La de cese y falta firmar":"La de cese y la del cargo";
+ return p.falta?"Falta firmar":p.otroCargo?"Era de otro cargo":"No presentó"; }
+const chipDebe=p=>`<span class="chip ${queDebe(p)==="No presentó"?"t-mal":"t-warn"}">${esc(queDebe(p))}</span>`;
+function ultimaDDJJ(p){ let f="", o=0; for(const x of [...(p.escrsP||[]).map(e=>e.fecha),p.falta&&p.falta.fecha,p.otroCargo&&p.otroCargo.fecha,p.debeCese&&p.debeCese.fecha,p.fuera&&p.fuera.fecha]){ const v=ordenFecha(x); if(v>o){ o=v; f=x; } } return {f,o}; }
+// las semanas seguidas, de la de hoy para atrás, en que estuvo en la nómina debiendo (hasta doce)
+function semanasDebiendo(p){ const H=historialDe(p); let n=0; for(const h of H){ const q=h.q; if(q&&h.l.a&&h.l.p&&q.cod[1]==="1"&&(q.cod[0]!=="1"||q.otro)) n++; else break; } return {n,todas:!!n&&n===H.length}; }
+let DEU={R:null,L:[]};
+function deudores(){ const R=ACT&&ACT.R; if(!R) return []; if(DEU.R===R) return DEU.L;
+ const L=R.personas.filter(p=>debeNotif(p)&&!p.revCargo).map(p=>({p,u:ultimaDDJJ(p),s:semanasDebiendo(p),dos:debeDos(p),org:p.jurs[0]||""}))
+  .sort((a,b)=>a.u.o-b.u.o||b.s.n-a.s.n||(b.dos-a.dos)||a.org.localeCompare(b.org,"es")||a.p.nom.localeCompare(b.p.nom,"es"));
+ DEU={R,L}; return L; }
+const debeDos=p=>!!p.debeCese&&p.cod[0]!=="1";
+// tandas parejas: 152 de a 50 son 51, 51 y 50
+function cortar(L,tam){ const n=L.length; if(!n) return []; const k=Math.max(1,Math.round(n/Math.max(1,tam))), base=Math.floor(n/k), extra=n%k, out=[]; let i=0;
+ for(let j=0;j<k;j++){ const c=base+(j<extra?1:0); out.push(L.slice(i,i+c)); i+=c; } return out; }
+let TAN_IDX={R:null,m:new Map()};
+function personaDeClave(c){ const R=ACT&&ACT.R; if(!R) return null; if(TAN_IDX.R!==R){ const m=new Map();
+  for(const p of R.personas) for(const k of clavesNotif(p)){ const o=m.get(k); if(!o||o.cod[1]!=="1"&&p.cod[1]==="1") m.set(k,p); } TAN_IDX={R,m}; }
+ return TAN_IDX.m.get(c)||null; }
+// cómo está cada una de la tanda: notificada quiere decir después de armar las tandas
+function estadoTanda(x,T){ const p=personaDeClave(x.c);
+ if(!p||p.cod[1]!=="1"||p.sinNom) return {k:"ya",txt:"Ya no está en la nómina",cls:"t-neutro",p};
+ if(p.revCargo) return {k:"duda",txt:"Falta decidir su DDJJ",cls:"t-warn",p};
+ if(!debeNotif(p)) return {k:"ya",txt:"Ya no debe",cls:"t-ok",p};
+ const rs=notifDe(p), u=rs[rs.length-1];
+ if(u&&u.t>=T.t) return {k:"not",txt:`Notificad${esF(p)?"a":"o"} el ${fechaDe(u.t)}`,cls:"t-info",p,u};
+ return {k:"sin",txt:"Sin notificar",cls:"t-mal",p,antes:u||null}; }
+const cuentaTxt=G=>G.length?`→ <b>${G.length===1?"1 tanda":nf(G.length)+" tandas"}</b> <span class="ayuda" style="margin:0">de ${yL(G.map(g=>nf(g.length)))}</span>`:"";
+const botonArmar=(G,T)=>T?"Armarlas de nuevo":G.length===1?"Armar la tanda":`Armar las ${nf(G.length)} tandas`;
+function bloquesPrev(G){ let desde=0;
+ return G.map((g,j)=>{ const d=desde; desde+=g.length;
+  return `<details class="tan-prev"${j===0?" open":""}><summary><b>Tanda ${j+1}</b> · ${nf(g.length)} ${g.length===1?"persona":"personas"} · ${g.length===1?`la ${nf(d+1)}`:`de la ${nf(d+1)} a la ${nf(d+g.length)}`}</summary><div class="scroll-x"><table class="tan-t"><thead><tr><th>Orden</th><th>Persona</th><th>Organismo</th><th>Última DDJJ</th><th>Semanas debiendo</th><th>Qué debe</th></tr></thead><tbody>${g.map((x,i)=>`<tr><td>${nf(d+i+1)}</td><td><b>${esc(x.p.nom)}</b></td><td>${esc(x.p.jurs.join(" · "))}</td><td>${x.u.f?esc(x.u.f):"Ninguna"}</td><td>${nf(x.s.n)}${x.s.todas?" o más":""}</td><td>${chipDebe(x.p)}</td></tr>`).join("")}</tbody></table></div></details>`; }).join(""); }
+const NOTA_ORDEN=`<div class="tan-nota"><b>Cómo se ordena.</b> Primero quien tiene la última DDJJ más vieja, o ninguna en los años cargados del protocolo; entre iguales, quien lleva más semanas seguidas en la nómina sin presentar (se cuentan hasta doce); después, quien debe dos; y el organismo y el nombre. <b>Falta la fecha de alta de PeopleNet:</b> sin ella, entre los que nunca presentaron, alguien que entró el mes pasado queda al lado de quien debe hace años.</div>`;
+function htmlArmar(T){ const L=deudores(), n=L.length, puede=editable(), G=cortar(L,TAN.tam), cuenta=new Map();
+ for(const x of L){ const q=queDebe(x.p); cuenta.set(q,(cuenta.get(q)||0)+1); }
+ return `<div class="tan-cab"><h2 id="tanT" style="margin:0">${n?`${nf(n)} ${n===1?"persona debe":"personas deben"} su DDJJ`:"Nadie debe su DDJJ"}</h2>${T?`<button class="btn lnk sm" type="button" data-acc="tanVolver">Volver a las tandas de ahora</button>`:""}</div>
+ ${n?`<p class="ayuda" style="margin:0">Todas las que deben algo, de quien debe hace más tiempo a quien debe hace menos.${T?" Las tandas de ahora se reemplazan por estas; lo notificado queda anotado igual.":""}</p>
+ <div class="row">${[...cuenta].map(([q,c])=>`<span class="chip ${q==="No presentó"?"t-mal":"t-warn"}">${esc(q)} · ${nf(c)}</span>`).join("")}</div>
+ <div class="tan-arm"><label for="tanTam" style="font-weight:600">Tandas de</label><input id="tanTam" type="number" min="1" max="1000" inputmode="numeric" value="${TAN.tam}"><span id="tanCuenta">${cuentaTxt(G)}</span>${puede?`<button class="btn pri" type="button" data-acc="armarTandas" id="tanBArmar" style="margin-left:auto">${botonArmar(G,T)}</button>`:`<span class="ayuda" style="margin:0 0 0 auto">${SOLO_VER()?"Con el perfil de Consulta no se arman tandas.":""}</span>`}</div>
+ ${NOTA_ORDEN}
+ <h3 style="margin:4px 0 0">Cómo quedarían <span class="ayuda" style="font-weight:400">· todavía no se armó nada</span></h3><div id="tanPrev">${bloquesPrev(G)}</div>`:`<p class="ayuda" style="margin:0">Con las listas de esta semana, todos los que están en la nómina presentaron su DDJJ.</p>`}
+ ${TAN.ok?`<p class="ayuda" role="status" style="margin:0">${esc(TAN.ok)}</p>`:""}`; }
+function tanTamano(v){ const n=parseInt(v,10); if(!(n>=1)) return; TAN.tam=Math.min(1000,n); const G=cortar(deudores(),TAN.tam);
+ const c=$("#tanCuenta"); if(c) c.innerHTML=cuentaTxt(G); const b=$("#tanBArmar"); if(b) b.textContent=botonArmar(G,tandasDeAhora()); const pv=$("#tanPrev"); if(pv) pv.innerHTML=bloquesPrev(G); }
+async function armarTandas(){ if(!editable()) return; const L=deudores(); if(!L.length) return; const T=tandasDeAhora();
+ if(T&&!window.confirm("Las tandas de ahora se reemplazan por estas, armadas con quienes deben hoy. Lo notificado queda anotado igual. ¿Seguir?")) return;
+ const quien=quienRevisa(); if(quien===null) return;
+ const v={k:nuevoId(),t:new Date().toISOString(),quien,tam:TAN.tam,g:cortar(L,TAN.tam).map(g=>g.map(x=>({c:claveNotif(x.p),n:x.p.nom})))};
+ const a=TANDAS(), antes=a.slice(); a.length=0; a.push(v);
+ if(!(await guardarMeta())){ a.length=0; a.push(...antes); TAN.ok="No se pudieron guardar las tandas: el aviso de arriba dice por qué."; pintarTandas(); return; }
+ TAN=Object.assign(TAN,{i:0,f:"",sel:"",armar:false,ok:""}); pintarPestanas(); const h=$("#tanT"); if(h){ h.setAttribute("tabindex","-1"); h.focus(); } }
+// la que está a la derecha: la elegida, o la primera sin notificar
+function tanElegida(E){ return E.find(e=>e.x.c===TAN.sel)||E.find(e=>e.k==="sin")||null; }
+function htmlSig(S,E){ if(!S) return `<div class="tan-sig" id="tanSig"><h3>No queda nadie sin notificar en esta tanda</h3><p class="ayuda" style="margin:0">Las que siguen debiendo se pueden notificar de nuevo desde la lista.</p></div>`;
+ const p=S.p, pos=E.indexOf(S)+1, pu=!!p&&puedeNotif(p), nom=p?p.nom:S.x.n;
+ const nav=`<div class="row" style="justify-content:space-between;flex-wrap:nowrap"><button class="btn lnk sm" type="button" data-tannav="-1" aria-label="La anterior de la tanda">‹ Anterior</button><span class="ayuda" style="margin:0">${nf(pos)} de ${nf(E.length)}</span><button class="btn lnk sm" type="button" data-tannav="1" aria-label="La siguiente de la tanda">Siguiente ›</button></div>`;
+ const cab=`<div><h3>${esc(nom)}</h3><span class="ayuda" style="margin:0">${esc([p&&p.dni?"DNI "+fmtDni(p.dni):"",p?p.jurs.join(" · "):""].filter(Boolean).join(" · "))}</span> <span class="chip ${S.cls}">${esc(S.txt)}</span></div>`;
+ let cuerpo;
+ if(!pu) cuerpo=`<p style="margin:0">${S.k==="duda"?"Falta decidir si la DDJJ que presentó es por el cargo de hoy (en su perfil): hasta entonces no se arma la notificación.":S.k==="ya"?`${S.txt}: no hay nada que notificarle.`:"Desde acá no se puede notificar."}</p>`;
+ else { const t=textoNotif(p,plantillaNotif()), ed=editable(), hecha=S.k==="not";
+  cuerpo=`<div class="carta" aria-label="La notificación">${cartaHtml(t)}</div>
+  ${hecha?`<div class="row"><button class="btn pri" type="button" data-acc="tanSiguiente">La siguiente sin notificar</button><button class="btn" type="button" data-tancopiar="${esc(S.x.c)}">Copiarla de nuevo</button>${ed&&puedeDeshacer(S.u)?`<button class="btn lnk sm" type="button" data-acc="tanDeshacer">Al final no se notificó</button>`:""}</div>`
+   :`<button class="btn pri" type="button" data-tancopiar="${esc(S.x.c)}">Copiar la notificación</button><p class="ayuda" style="margin:0">${ed?"Al copiarla queda anotada como notificada, con el día y quién la copió. Si al final no se manda, se borra con un botón.":SOLO_VER()?"Con el perfil de Consulta se copia, pero no queda anotada.":""}${S.antes?` Ya se ${esF(p)?"la":"lo"} había notificado el ${fechaDe(S.antes.t)}, antes de armar las tandas.`:""}</p>`}`; }
+ return `<div class="tan-sig" id="tanSig">${nav}${cab}${cuerpo}<p class="ayuda" id="tanOk" role="status" style="margin:0">${esc(TAN.ok)}</p></div>`; }
+function htmlTanda(T){ const i=Math.min(TAN.i,T.g.length-1), puede=editable(), E=T.g[i].map(x=>Object.assign({x},estadoTanda(x,T)));
+ const c={sin:0,not:0,ya:0}; E.forEach(e=>{ c[e.k==="duda"?"sin":e.k]++; });
+ const pc=v=>E.length?(100*v/E.length).toFixed(1)+"%":"0";
+ const F=[["","Todas",E.length],["sin","Sin notificar",c.sin],["not","Notificadas",c.not],["ya","Ya no deben",c.ya]];
+ const ver=E.filter(e=>!TAN.f||(TAN.f==="sin"?e.k==="sin"||e.k==="duda":e.k===TAN.f)), S=tanElegida(E);
+ return `<div class="tan-tabs" role="group" aria-label="Las tandas">${T.g.map((g,j)=>`<button type="button" data-tani="${j}" aria-pressed="${j===i}">Tanda ${j+1} · ${nf(g.length)}</button>`).join("")}<span class="ayuda" style="margin:0 0 0 auto">Armadas el ${fechaDe(T.t)}${T.quien?" por "+esc(T.quien):""}</span>${puede?`<button class="btn lnk sm" type="button" data-acc="tanArmar">Volver a armarlas</button>`:""}</div>
+ <div class="tan-res"><div style="flex:1 1 300px"><h2 id="tanT" style="margin:0">Tanda ${i+1}</h2><div class="tan-barra" role="img" aria-label="${nf(c.not)} notificadas, ${nf(c.ya)} ya no deben y ${nf(c.sin)} sin notificar"><i style="width:${pc(c.not)};background:var(--acento)"></i><i style="width:${pc(c.ya)};background:var(--ok)"></i></div><span class="ayuda" style="margin:0">${nf(c.not)} notificadas · ${nf(c.ya)} ya no deben · ${nf(c.sin)} sin notificar</span></div>
+ <div class="tan-num"><div><span>Sin notificar</span><b>${nf(c.sin)}</b></div><div><span>Notificadas, siguen debiendo</span><b>${nf(c.not)}</b></div><div><span>Ya no deben</span><b style="color:var(--ok)">${nf(c.ya)}</b></div></div></div>
+ <div class="tan-grid"><div><div class="row" style="margin-bottom:8px" role="group" aria-label="Cuáles ver">${F.map(([k,n,v])=>`<button type="button" class="chip ${TAN.f===k?"t-info":"t-neutro"}" data-tanf="${k}" aria-pressed="${TAN.f===k}">${n} · ${nf(v)}</button>`).join("")}</div>
+ <div class="scroll-x"><table class="tan-t"><thead><tr><th>Orden</th><th>Persona</th><th>Qué debe</th><th>Estado</th></tr></thead><tbody>${ver.map(e=>`<tr class="${e===S?"sel":""}${e.k==="ya"?" ya":""}"><td>${nf(E.indexOf(e)+1)}</td><td><button type="button" class="tan-p" data-tansel="${esc(e.x.c)}" aria-current="${e===S}">${esc(e.p?e.p.nom:e.x.n)}</button></td><td>${e.p&&debeNotif(e.p)?esc(queDebe(e.p)):"—"}</td><td><span class="chip ${e.cls}">${esc(e.txt)}</span>${e.antes?`<small>antes, el ${fechaDe(e.antes.t)}</small>`:""}</td></tr>`).join("")||`<tr><td colspan="4" class="ayuda">No hay nadie así en esta tanda.</td></tr>`}</tbody></table></div></div>
+ ${htmlSig(S,E)}</div>`; }
+function pintarTandas(){ const el=$("#secTandas"); if(!el) return; if(!hayDatos()){ el.innerHTML=""; return; }
+ if(!enUltima()){ el.innerHTML=`<h2 id="tanT" style="margin:0">Notificar por tandas</h2><p class="ayuda" style="margin:0">Las tandas se arman y se notifican en la semana de hoy: volvé a la última semana.</p>`; return; }
+ if(!ACT.r.L.a||!ACT.r.L.p){ el.innerHTML=`<h2 id="tanT" style="margin:0">Notificar por tandas</h2><p class="ayuda" style="margin:0">Para saber quién debe hacen falta la nómina de activos y el índice del protocolo de esta semana.</p>`; return; }
+ const T=tandasDeAhora(); el.innerHTML=T&&!TAN.armar?htmlTanda(T):htmlArmar(T); }
+function focoSig(){ const s=$("#tanSig"); if(!s) return; s.scrollIntoView({block:"nearest"}); const b=s.querySelector(".btn.pri"); if(b) b.focus({preventScroll:true}); }
+function tanEstados(){ const T=tandasDeAhora(); if(!T) return null; const i=Math.min(TAN.i,T.g.length-1); return {T,E:T.g[i].map(x=>Object.assign({x},estadoTanda(x,T)))}; }
+// d: -1 la anterior, 1 la siguiente (todas); 0, la siguiente sin notificar
+function tanMover(d){ const z=tanEstados(); if(!z) return; const E=z.E, S=tanElegida(E), i=S?E.indexOf(S):-1; let n=null;
+ if(d) n=E[(i+d+E.length)%E.length]; else { for(let k=1;k<=E.length;k++){ const e=E[(i+k)%E.length]; if(e.k==="sin"){ n=e; break; } } }
+ TAN.sel=n?n.x.c:(S?S.x.c:""); TAN.ok=""; pintarTandas(); if(!n&&!d){ TAN.sel=""; pintarTandas(); } focoSig(); }
+async function tanCopiar(c){ const p=personaDeClave(c); if(!p||!puedeNotif(p)) return; const {ok,an}=await copiarNotifDe(p);
+ TAN.sel=c; TAN.ok=ok?"Copiada, con el membrete: pegala en la notificación de CiDi."+yaAnotada(p,an):"El navegador no dejó copiar: abrí su perfil y copiala desde ahí.";
+ if(an){ pintarPersonas(); pintarInicio(); pintarOrgCab(); pintarPestanas(); } else pintarTandas(); focoSig(); }
+async function tanDeshacer(){ const p=personaDeClave(TAN.sel); if(!p) return; const u=await deshacerNotif(p); if(u===false) return;
+ TAN.ok=u===null?"No se pudo borrar: no se pudo guardar (el aviso de arriba dice por qué).":`Se borró la anotación del ${fechaHora(u.t)}: queda sin notificar.`;
+ if(u){ pintarPersonas(); pintarInicio(); pintarOrgCab(); pintarPestanas(); } else pintarTandas(); focoSig(); }
+
 /* El historial de la persona, semana por semana (de la más nueva a la más vieja): qué decía cada
    lista y qué cambió contra la semana anterior, también el cargo. */
 const QUE_H={p:["presentó","ya no figura entre los que presentaron"],a:["entró en la nómina","ya no figura en la nómina"],u:["se publicó la declaración","ya no figura publicada"]};
@@ -3031,16 +3193,16 @@ function pintarPerfil(){ const p=ACT.R&&ACT.R.personas.find(x=>x.rep===PERFIL); 
  const podN=(p.alc||[]).find(x=>(x==="J"||x==="L")&&ACT.R.conNom[x])||"E", fd=L.a?fechaNominaDe(ACT.s,podN):"", c=ACT.cmp&&ACT.cmp.cambios.get(p);
  const rev=p.inconsist||p.revCargo||p.dudaPoder?`<div class="banda warn banda-dec" style="margin:0"><b>${p.dudaPoder&&!p.inconsist&&!p.revCargo?"Duda de poder":"Inconsistencia"}</b>${htmlDecidir(p,puede)}</div>`:"";
  const FU=fuentesDatos(ACT.s);
- $("#dlgCont").innerHTML=htmlPerfil(Object.assign({},p,{otros:p.otrosNombres}),{org:p.cod[1]==="1"?"":textoOrg(p,FU),fu:{a:p.sinNom?"sin nómina de ese poder":podN!=="E"?"nómina del "+PN[podN].t:FU.a?`PeopleNet${FU.a.fd?", "+FU.a.fd:""}${FU.a.entes.length?", y "+(FU.a.entes.length>1?"las listas de ":"la lista de ")+yLista(FU.a.entes):""}`:"",p:FU.p&&FU.p.anios?`${/ y /.test(FU.p.anios)?"índices":"índice"} ${FU.p.anios}${FU.p.hasta?", hasta la escritura del "+FU.p.hasta:""}${FU.p.falta?"; "+FU.p.falta:""}`:"",hastaP:FU.p?FU.p.hasta||"":"",u:p.sinWeb?"es la del Poder Ejecutivo":FU.u?"cargado el "+FU.u.cargada:""},conA:!p.sinNom&&!!L.a,conP:!!L.p,conU:!p.sinWeb&&!!L.u,fd,ref:L.a?refNominaDe(ACT.s,podN):"",ddjjs:L.p?ddjjsDe(p):[],partes:idsDe(ACT.s,"p").map(id=>(LS().get(id)||{}).clave).filter(Boolean).join(" y "),botones:puede,rev,sep:(p.porNombre||p.manual)?`${p.manual?"Confirmado a mano":"Unido por el nombre"} con lo que figura en otra lista.${puede?` <button class="btn lnk sm" type="button" data-separar="${esc(p.rep)}">Separar</button>`:""}`:"",cambio:c?c.txt:"",hist:historialDe(p),notif:p.sinNom?(NOTIF_P=null,`<p style="margin:0">Sin la nómina del ${esc(p.alc[0]==="J"?"Poder Judicial":"Poder Legislativo")} no se puede saber si debe algo: no se arma la notificación.</p>`):!enUltima()||!L.a||!L.p?(NOTIF_P=null,`<p style="margin:0">${!enUltima()?"Es una semana anterior: la notificación se arma desde la última semana.":`Falta ${!L.a?"la nómina":"el índice del protocolo"}: sin esa lista no se puede armar la notificación.`}</p>`):htmlNotificar(p,M().notificacion||"",!SOLO_VER()),semana:isoAFecha(ACT.s.s),tit:"dlgTit",cerrar:"cerrarDlg"}); }
+ $("#dlgCont").innerHTML=htmlPerfil(Object.assign({},p,{otros:p.otrosNombres}),{org:p.cod[1]==="1"?"":textoOrg(p,FU),fu:{a:p.sinNom?"sin nómina de ese poder":podN!=="E"?"nómina del "+PN[podN].t:FU.a?`PeopleNet${FU.a.fd?", "+FU.a.fd:""}${FU.a.entes.length?", y "+(FU.a.entes.length>1?"las listas de ":"la lista de ")+yLista(FU.a.entes):""}`:"",p:FU.p&&FU.p.anios?`${/ y /.test(FU.p.anios)?"índices":"índice"} ${FU.p.anios}${FU.p.hasta?", hasta la escritura del "+FU.p.hasta:""}${FU.p.falta?"; "+FU.p.falta:""}`:"",hastaP:FU.p?FU.p.hasta||"":"",u:p.sinWeb?"es la del Poder Ejecutivo":FU.u?"cargado el "+FU.u.cargada:""},conA:!p.sinNom&&!!L.a,conP:!!L.p,conU:!p.sinWeb&&!!L.u,fd,ref:L.a?refNominaDe(ACT.s,podN):"",ddjjs:L.p?ddjjsDe(p):[],partes:idsDe(ACT.s,"p").map(id=>(LS().get(id)||{}).clave).filter(Boolean).join(" y "),botones:puede,rev,sep:(p.porNombre||p.manual)?`${p.manual?"Confirmado a mano":"Unido por el nombre"} con lo que figura en otra lista.${puede?` <button class="btn lnk sm" type="button" data-separar="${esc(p.rep)}">Separar</button>`:""}`:"",cambio:c?c.txt:"",hist:historialDe(p),notif:p.sinNom?(NOTIF_P=null,`<p style="margin:0">Sin la nómina del ${esc(p.alc[0]==="J"?"Poder Judicial":"Poder Legislativo")} no se puede saber si debe algo: no se arma la notificación.</p>`):!enUltima()||!L.a||!L.p?(NOTIF_P=null,`<p style="margin:0">${!enUltima()?"Es una semana anterior: la notificación se arma desde la última semana.":`Falta ${!L.a?"la nómina":"el índice del protocolo"}: sin esa lista no se puede armar la notificación.`}</p>`):htmlNotificar(p,plantillaNotif(),!SOLO_VER()),semana:isoAFecha(ACT.s.s),tit:"dlgTit",cerrar:"cerrarDlg"}); }
 /* Cambiar el texto de la notificación: se guarda con lo demás y viaja a la consulta al publicar. */
 function editarNotif(){ const sec=$("#pfNotif"); if(!sec) return;
  sec.innerHTML=`<h3>El texto de la notificación</h3><p class="ayuda" style="margin:0">Lo de entre llaves se completa solo con los datos de la persona: {sr} (Sr. o Sra.), {nombre}, {dni}, {cuil}, {puesto} (cada cargo con su organismo, uno por renglón), {cargo}, {organismo}, {motivo} (por qué se la notifica), {fecha}, {lo} (lo o la), {o} (notificad{o}) y {ddjj} (la Declaración Jurada Patrimonial correspondiente, o las dos en la doble falta). Lo de entre corchetes queda para completar a mano. Un párrafo que empieza con «>» sale en letra chica y cursiva, como la cita del artículo.</p>
   <div class="row"><button class="btn sm" type="button" data-acc="negritaNotif" aria-describedby="notifNegAy"><b>Negrita</b></button><span class="ayuda" id="notifNegAy" style="margin:0">Seleccioná las palabras y tocá «Negrita» (o Ctrl+B): quedan entre dos asteriscos, **así**, y salen en negrita al copiar. Otra vez, y se saca.</span></div>
-  <textarea class="notif-ed" id="notifEd" aria-label="El texto de la notificación">${esc(M().notificacion||NOTIF_BORRADOR)}</textarea>
+  <textarea class="notif-ed" id="notifEd" aria-label="El texto de la notificación">${esc(plantillaNotif()||NOTIF_BORRADOR)}</textarea>
   <span class="ayuda" id="notifEdOk" role="status" style="margin:0"></span>
   <p class="ayuda" style="margin:0">Así queda${NOTIF_P&&NOTIF_P.p?`, con los datos de ${esc(nombreNatural(NOTIF_P.p.nom))}`:""}:</p>
   <div class="carta carta-prev" id="notifPrev"></div>
-  <div class="row"><button class="btn pri" type="button" data-acc="guardarNotif">Guardar el texto</button><button class="btn" type="button" data-acc="cancelarNotif">Cancelar</button>${M().notificacion?`<button class="btn lnk sm" type="button" data-acc="borradorNotif">Volver al texto de la Escribanía</button>`:""}</div>`;
+  <div class="row"><button class="btn pri" type="button" data-acc="guardarNotif">Guardar el texto</button><button class="btn" type="button" data-acc="cancelarNotif">Cancelar</button>${plantillaNotif()?`<button class="btn lnk sm" type="button" data-acc="borradorNotif">Volver al texto de la Escribanía</button>`:""}</div>`;
  const t=$("#notifEd"); let tm=0; previaNotif();
  t.addEventListener("input",()=>{ clearTimeout(tm); tm=setTimeout(previaNotif,150); const o=$("#notifEdOk"); if(o) o.textContent=""; });
  t.addEventListener("keydown",e=>{ if((e.ctrlKey||e.metaKey)&&!e.altKey&&!e.shiftKey&&e.key.toLowerCase()==="b"){ e.preventDefault(); negritaNotif(); } });
@@ -3078,7 +3240,7 @@ function negritaNotif(){ const t=$("#notifEd"), o=$("#notifEdOk"); if(!t) return
  if(s!==par){ t.setSelectionRange(ps,pe); let hecho=false; try{ hecho=document.execCommand("insertText",false,s); }catch(e){}
   if(!hecho||t.value!==v.slice(0,ps)+s+v.slice(pe)) t.value=v.slice(0,ps)+s+v.slice(pe); }
  t.setSelectionRange(ps+ini[la],ps+fin[lb]); if(o) o.textContent=""; previaNotif(); }
-async function guardarNotif(v){ if(SOLO_VER()) return; M().notificacion=v; await guardarMeta(); pintarPerfil(); }
+async function guardarNotif(v){ if(SOLO_VER()) return; M().notificacion=v; M().notifV=NOTIF_V; await guardarMeta(); pintarPerfil(); }
 /* La clave de la consulta. Los datos se publican cifrados con AES-GCM, con una llave que sale
    de la clave por PBKDF2: el archivo del R: no se puede leer sin ella. La clave no se guarda en
    ningún lado; se pide cada vez que se publica. */
@@ -3148,6 +3310,7 @@ function validarCopia(o){ const mal=t=>{ throw new Error(t); };
  for(const s of o.meta.semanas){ if(!esObj(s)||!/^\d{4}-\d{2}-\d{2}$/.test(s.s||"")) mal("La copia está dañada: hay una semana que no se puede leer.");
   for(const f of FID){ if(!Array.isArray(s[f])||s[f].some(id=>typeof id!=="string")) mal("La copia está dañada: hay una semana que no se puede leer."); if(s[f].some(id=>!ids.has(id))) mal("A la copia le faltan listas."); } }
  if(o.meta.notificacion!=null&&typeof o.meta.notificacion!=="string") mal("La copia está dañada: el texto de la notificación no se puede leer.");
+ if(o.meta.tandas!=null&&(!Array.isArray(o.meta.tandas)||o.meta.tandas.some(v=>!decValida("tandas",v)))) mal("La copia está dañada: hay una tanda de notificaciones que no se puede leer.");
  if(o.meta.notificados!=null&&(!Array.isArray(o.meta.notificados)||o.meta.notificados.some(v=>!decValida("notificados",v)))) mal("La copia está dañada: hay una notificación anotada que no se puede leer.");
  if(o.meta.cargos!=null&&(!Array.isArray(o.meta.cargos)||o.meta.cargos.some(v=>!esObj(v)||typeof v.k!=="string"||typeof v.si!=="boolean"||(v.cese!=null&&typeof v.cese!=="boolean")||(v.otra!=null&&typeof v.otra!=="boolean")))) mal("La copia está dañada: hay una DDJJ marcada de otro cargo que no se puede leer.");
  if(o.meta.entesOrg!=null&&(!Array.isArray(o.meta.entesOrg)||o.meta.entesOrg.some(v=>!esObj(v)||typeof v.j!=="string"||typeof v.nom!=="string"))) mal("La copia está dañada: hay un organismo marcado como ente que no se puede leer.");
@@ -3390,7 +3553,7 @@ const entradaPierri=async(c,crudo,por)=>Object.assign({u:c.u,n:c.n,rol:c.r,pierr
 const sinCuenta=s=>{ const c=Object.assign({},s); delete c.res; delete c.resK; return c; };
 const paraNube=m=>{ const o=Object.assign({},m); delete o.rev; delete o.vistos; o.semanas=(m.semanas||[]).map(sinCuenta); return JSON.parse(JSON.stringify(o)); };
 /* Cada decisión es un registro; dos registros con la misma clave son la misma decisión. */
-const CLAVE_DEC={vinculos:v=>[v.x,v.y].sort().join("\n"),cargos:v=>v.k,revisadas:v=>v.k,entesOrg:v=>v.j,poderes:v=>v.k,notificados:v=>v.k};
+const CLAVE_DEC={vinculos:v=>[v.x,v.y].sort().join("\n"),cargos:v=>v.k,revisadas:v=>v.k,entesOrg:v=>v.j,poderes:v=>v.k,notificados:v=>v.k,tandas:v=>v.k};
 const juntarValor=(b,l,r)=>{ if(esObj(l)&&esObj(r)&&(b===undefined||esObj(b))){ const o={}; for(const k of new Set([...Object.keys(l),...Object.keys(r)])){ const v=juntarValor((b||{})[k],l[k],r[k]); if(v!==undefined) o[k]=v; } return o; } return igual(b,l)?r:l; };
 /* Las listas de una parte de la semana: se saca lo que se sacó acá y se suma lo que se sumó acá, sobre lo de GitHub. */
 const mezIds=(b,l,r)=>{ b=b||[]; l=l||[]; r=r||[]; const sb=new Set(b), sl=new Set(l), sac=new Set(b.filter(x=>!sl.has(x))), out=r.filter(x=>!sac.has(x));
@@ -3418,7 +3581,7 @@ function juntar(b,l,r){ b=esObj(b)?paraNube(b):{}; r=esObj(r)?r:{}; const o={};
  return o; }
 const idsNube=m=>{ const ids=new Set(); (m.semanas||[]).forEach(s=>FID.forEach(f=>{ idsDe(s,f).forEach(id=>ids.add(id)); if(s.orig&&Array.isArray(s.orig[f])) s.orig[f].forEach(id=>ids.add(id)); })); return ids; };
 /* Lo que viene de GitHub se revisa como una copia: si algo no se puede leer, no entra (y no rompe la pantalla). */
-const decValida=(k,v)=>esObj(v)&&(k==="vinculos"?typeof v.x==="string"&&typeof v.y==="string"&&typeof v.si==="boolean":k==="entesOrg"?typeof v.j==="string"&&typeof v.nom==="string":typeof v.k==="string"&&(k!=="cargos"||typeof v.si==="boolean")&&(k!=="poderes"||/^[EJL]$/.test(v.poder||""))&&(k!=="notificados"||typeof v.p==="string"&&typeof v.t==="string"));
+const decValida=(k,v)=>esObj(v)&&(k==="vinculos"?typeof v.x==="string"&&typeof v.y==="string"&&typeof v.si==="boolean":k==="entesOrg"?typeof v.j==="string"&&typeof v.nom==="string":k==="tandas"?typeof v.k==="string"&&typeof v.t==="string"&&Array.isArray(v.g)&&v.g.every(g=>Array.isArray(g)&&g.every(x=>esObj(x)&&typeof x.c==="string"&&typeof x.n==="string")):typeof v.k==="string"&&(k!=="cargos"||typeof v.si==="boolean")&&(k!=="poderes"||/^[EJL]$/.test(v.poder||""))&&(k!=="notificados"||typeof v.p==="string"&&typeof v.t==="string"));
 const metaValida=m=>esObj(m)&&Array.isArray(m.semanas)&&m.semanas.every(s=>esObj(s)&&/^\d{4}-\d{2}-\d{2}$/.test(s.s||"")&&FID.every(f=>Array.isArray(s[f])&&s[f].every(id=>typeof id==="string")))
  &&Object.keys(CLAVE_DEC).every(k=>m[k]==null||Array.isArray(m[k])&&m[k].every(v=>decValida(k,v)))&&(m.notificacion==null||typeof m.notificacion==="string");
 /* El estado en GitHub: {vuelta, meta}. */
@@ -3595,7 +3758,7 @@ function formCrear(){ const ns=META.semanas.length;
 /* En la web, la copia elegida al crear es lo que se sube (en memoria: acá no se guarda). */
 async function tomarCopiaWeb(){ const i=$("#nCopia"), fl=i&&i.files&&i.files[0]; if(!WEB||!fl) return;
  const o=validarCopia(JSON.parse(decodificar(await fl.arrayBuffer())));
- META=Object.assign(metaVacia(),o.meta,{rev:0}); ["vinculos","cargos","revisadas","entesOrg","poderes","notificados"].forEach(k=>{ if(!Array.isArray(META[k])) META[k]=[]; }); ["mapeos","hojas","filtros"].forEach(k=>{ if(!esObj(META[k])) META[k]={}; });
+ META=Object.assign(metaVacia(),o.meta,{rev:0}); ["vinculos","cargos","revisadas","entesOrg","poderes","notificados","tandas"].forEach(k=>{ if(!Array.isArray(META[k])) META[k]=[]; }); ["mapeos","hojas","filtros"].forEach(k=>{ if(!esObj(META[k])) META[k]={}; });
  LISTAS.clear(); o.listas.forEach(l=>LISTAS.set(l.id,l)); VISTA=null; TAB=null; VER++; MEMO.clear(); }
 function pasoToken(){ if(WEB){ if(!NUBE) return pasoEntrarWeb(); return formNube("tokenW","Cambiar la llave de GitHub",`<p style="margin:0">La llave nueva queda en esta computadora, cifrada con tu usuario y tu clave.</p>${campoN("nTok","Llave de GitHub","password","off")}${campoN("nC","Tu clave","password","current-password")}`,"Guardar"); }
  formNube("token","Compartir con el equipo",`<p style="margin:0">El cotejo compartido vive en un repositorio privado de GitHub, <b>cotejo-ddjj-datos</b>. Para que esta computadora entre, se pega una sola vez su llave de GitHub (un «token»), que da quien administra el repositorio. Queda guardada en esta computadora.</p>
@@ -3980,8 +4143,13 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("button");
  if(d.informe!=null){ MINM=d.informe; pintarMandar(); irA("#secMandar"); return; }
  // tocar un nombre de la tabla es «las personas de ahí»: con un organismo solo, su Excel
  if(d.verfuera!=null){ FILTRO.min=d.verfuera; FILTRO.r=d.verfuera==="-"||d.verfuera==="?"?rVacia():{p:"",a:"0",u:""}; FILTRO.grp=null; FILTRO.sit=""; FILTRO.q=""; $("#buscar").value=""; mostrarPersonas(); irA("#secPersonas"); return; }
+ if(d.tani!=null){ TAN.i=+d.tani; TAN.sel=""; TAN.f=""; TAN.ok=""; pintarTandas(); const nb=$(`[data-tani="${CSS.escape(d.tani)}"]`); if(nb) nb.focus(); return; }
+ if(d.tanf!=null){ TAN.f=d.tanf; pintarTandas(); const nb=$(`[data-tanf="${CSS.escape(d.tanf)}"]`); if(nb) nb.focus(); return; }
+ if(d.tansel!=null){ TAN.sel=d.tansel; TAN.ok=""; pintarTandas(); focoSig(); return; }
+ if(d.tannav!=null){ tanMover(+d.tannav); return; }
+ if(d.tancopiar!=null){ tanCopiar(d.tancopiar); return; }
  if(d.notifp!=null){ const p=ACT.R&&ACT.R.personas.find(x=>x.rep===d.notifp); if(!p||!puedeNotif(p)) return; const {ok,an}=await copiarNotifDe(p), o=$("#notifFila");
-  if(an){ pintarPersonas(); pintarInicio(); pintarOrgCab(); }
+  if(an){ pintarPersonas(); pintarInicio(); pintarOrgCab(); pintarPestanas(); }
   if(o){ o.textContent=ok?`✓ Copiada la de ${nombreNatural(p.nom)} (${esF(p)?"Sra.":"Sr."})${an?" · anotada hoy":an===null?" · no se pudo anotar":SOLO_VER()?" · con el perfil de Consulta no se anota":""}`:"El navegador no dejó copiar: abrí su perfil y copiala desde ahí."; o.classList.remove("oculto"); }
   const nb=$(`[data-notifp="${CSS.escape(p.rep)}"]`); if(nb) nb.focus({preventScroll:true});
   // si la fila salió de la lista («Deben y no se los notificó»), el foco va al aviso
@@ -4001,6 +4169,11 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("button");
  else if(acc==="bajarMin") bajarMin();
  else if(acc==="copiarMin") copiarMin();
  else if(acc==="copiarNotif") copiarNotif();
+ else if(acc==="armarTandas") armarTandas();
+ else if(acc==="tanArmar"){ TAN.armar=true; TAN.ok=""; pintarTandas(); const x=$("#tanTam"); if(x) x.focus(); }
+ else if(acc==="tanVolver"){ TAN.armar=false; pintarTandas(); }
+ else if(acc==="tanSiguiente") tanMover(0);
+ else if(acc==="tanDeshacer") tanDeshacer();
  else if(acc==="borrarNotif") borrarNotif();
  else if(acc==="editarNotif") editarNotif();
  else if(acc==="negritaNotif") negritaNotif();
@@ -4039,6 +4212,7 @@ document.addEventListener("change",e=>{ const t=e.target;
  else if(t.id==="selPod"&&PODERES.some(x=>x.id===t.value)){ ALC=t.value; FILTRO.r=rVacia(); FILTRO.sit=""; FILTRO.min=""; FILTRO.grp=null; FILTRO.n=150; pintar().then(()=>$("#selPod").focus({preventScroll:true})); }
  else if(t.id==="ordenMin") pintarOrganismos();
  else if(t.id==="selMinM"){ MINM=t.value; pintarMandar(); } });
+document.addEventListener("input",e=>{ if(e.target.id==="tanTam") tanTamano(e.target.value); });
 $("#buscar").addEventListener("input",e=>{ FILTRO.q=e.target.value; FILTRO.n=150; pintarPersonas(); });
 $("#bGuardarCopia").addEventListener("click",guardarCopia);
 $("#bAbrirCopia").addEventListener("click",()=>$("#fCopia").click());
