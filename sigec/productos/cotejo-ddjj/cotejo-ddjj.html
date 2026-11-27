@@ -686,7 +686,7 @@ details.q-der .q-t{left:auto;right:0}
  </section>
  </div>
 
- <p class="pie"><span class="sigec-version">Versión del 25/11/2026</span></p>
+ <p class="pie"><span class="sigec-version">Versión del 26/11/2026</span></p>
 </div>
 
 <dialog id="dlg" aria-labelledby="dlgTit"><div class="dlg" id="dlgCont"></div></dialog>
@@ -3050,7 +3050,7 @@ const revisarTxt=p=>!p?"":p.revCargo?"Inconsistencia: falta decidir si la DDJJ q
 function queDebe(p){ if(p.revCargo) return "Falta decidir su DDJJ"; if(p.debeCese) return p.cod[0]==="1"?"Debe la de cese":p.falta?"La de cese y falta firmar":"La de cese y la del cargo";
  return p.falta?"Falta firmar":p.otroCargo?"Era de otro cargo":"No presentó"; }
 const chipDebe=p=>`<span class="chip ${queDebe(p)==="No presentó"?"t-mal":"t-warn"}">${esc(queDebe(p))}</span>`;
-function ultimaDDJJ(p){ let f="", o=0; for(const x of [...(p.escrsP||[]).map(e=>e.fecha),p.falta&&p.falta.fecha,p.otroCargo&&p.otroCargo.fecha,p.debeCese&&p.debeCese.fecha,p.fuera&&p.fuera.fecha]){ const v=ordenFecha(x); if(v>o){ o=v; f=x; } } return {f,o}; }
+function ultimaDDJJ(p){ let f="", o=0; for(const x of [...(p.escrsP||[]).map(e=>e.fecha),p.falta&&p.falta.fecha,p.otroCargo&&p.otroCargo.fecha,p.debeCese&&p.debeCese.fecha]){ const v=ordenFecha(x); if(v>o){ o=v; f=x; } } return {f,o}; }
 // las semanas seguidas, de la de hoy para atrás, en que estuvo en la nómina debiendo (hasta doce)
 function semanasDebiendo(p){ const H=historialDe(p); let n=0; for(const h of H){ const q=h.q; if(q&&h.l.a&&h.l.p&&q.cod[1]==="1"&&(q.cod[0]!=="1"||q.otro)) n++; else break; } return {n,todas:!!n&&n===H.length}; }
 let DEU={R:null,L:[]};
@@ -3087,7 +3087,7 @@ function htmlArmar(T){ const L=deudores(), n=L.length, puede=editable(), G=corta
  <div class="row">${[...cuenta].map(([q,c])=>`<span class="chip ${q==="No presentó"?"t-mal":"t-warn"}">${esc(q)} · ${nf(c)}</span>`).join("")}${(n=>n?`<span class="chip t-warn">⚠ Con algo por revisar · ${nf(n)}</span>`:"")(L.filter(x=>revisarTxt(x.p)).length)}</div>
  <div class="tan-arm"><label for="tanTam" style="font-weight:600">Tandas de</label><input id="tanTam" type="number" min="1" max="1000" inputmode="numeric" value="${TAN.tam}"><span id="tanCuenta">${cuentaTxt(G)}</span>${puede?`<button class="btn pri" type="button" data-acc="armarTandas" id="tanBArmar" style="margin-left:auto">${botonArmar(G,T)}</button>`:`<span class="ayuda" style="margin:0 0 0 auto">${SOLO_VER()?"Con el perfil de Consulta no se arman tandas.":""}</span>`}</div>
  ${NOTA_ORDEN}
- <h3 style="margin:4px 0 0">Cómo quedarían <span class="ayuda" style="font-weight:400">· todavía no se armó nada</span></h3><div id="tanPrev">${bloquesPrev(G)}</div>`:`<p class="ayuda" style="margin:0">Con las listas de esta semana, todos los que están en la nómina presentaron su DDJJ.</p>`}
+ <div class="row" style="margin-top:4px"><h3 style="margin:0">Cómo quedarían <span class="ayuda" style="font-weight:400">· todavía no se armó nada</span></h3><button class="btn sm" type="button" data-acc="tanExcel" style="margin-left:auto">Bajar el Excel</button></div><div id="tanPrev">${bloquesPrev(G)}</div>`:`<p class="ayuda" style="margin:0">Con las listas de esta semana, todos los que están en la nómina presentaron su DDJJ.</p>`}
  ${TAN.ok?`<p class="ayuda" role="status" style="margin:0">${esc(TAN.ok)}</p>`:""}`; }
 function tanTamano(v){ const n=parseInt(v,10); if(!(n>=1)) return; TAN.tam=Math.min(1000,n); const G=cortar(deudores(),TAN.tam);
  const c=$("#tanCuenta"); if(c) c.innerHTML=cuentaTxt(G); const b=$("#tanBArmar"); if(b) b.textContent=botonArmar(G,tandasDeAhora()); const pv=$("#tanPrev"); if(pv) pv.innerHTML=bloquesPrev(G); }
@@ -3117,12 +3117,29 @@ function htmlTanda(T){ const i=Math.min(TAN.i,T.g.length-1), puede=editable(), E
  const pc=v=>E.length?(100*v/E.length).toFixed(1)+"%":"0";
  const F=[["","Todas",E.length],["sin","Sin notificar",c.sin],...(c.duda?[["duda","Por revisar",c.duda]]:[]),["not","Notificadas",c.not],["ya","Ya no deben",c.ya]];
  const ver=E.filter(e=>!TAN.f||e.k===TAN.f), S=tanElegida(E);
- return `<div class="tan-tabs" role="group" aria-label="Las tandas">${T.g.map((g,j)=>`<button type="button" data-tani="${j}" aria-pressed="${j===i}">Tanda ${j+1} · ${nf(g.length)}</button>`).join("")}<span class="ayuda" style="margin:0 0 0 auto">Armadas el ${fechaDe(T.t)}${T.quien?" por "+esc(T.quien):""}</span>${puede?`<button class="btn lnk sm" type="button" data-acc="tanArmar">Volver a armarlas</button>`:""}</div>
- <div class="tan-res"><div style="flex:1 1 300px"><h2 id="tanT" style="margin:0">Tanda ${i+1}</h2><div class="tan-barra" role="img" aria-label="${nf(c.not)} notificadas, ${nf(c.ya)} ya no deben y ${nf(c.sin)} sin notificar"><i style="width:${pc(c.not)};background:var(--acento)"></i><i style="width:${pc(c.ya)};background:var(--ok)"></i></div><span class="ayuda" style="margin:0">${nf(c.not)} notificadas · ${nf(c.ya)} ya no deben · ${nf(c.sin)} sin notificar${c.duda?` · ${nf(c.duda)} por revisar`:""}</span></div>
+ return `<div class="tan-tabs" role="group" aria-label="Las tandas">${T.g.map((g,j)=>`<button type="button" data-tani="${j}" aria-pressed="${j===i}">Tanda ${j+1} · ${nf(g.length)}</button>`).join("")}<span class="ayuda" style="margin:0 0 0 auto">Armadas el ${fechaDe(T.t)}${T.quien?" por "+esc(T.quien):""}</span><button class="btn sm" type="button" data-acc="tanExcel">Bajar el Excel de las ${T.g.length===1?"tanda":nf(T.g.length)+" tandas"}</button>${puede?`<button class="btn lnk sm" type="button" data-acc="tanArmar">Volver a armarlas</button>`:""}</div>
+ <div class="tan-res"><div style="flex:1 1 300px"><div class="row"><h2 id="tanT" style="margin:0">Tanda ${i+1}</h2><button class="btn sm" type="button" data-tanexcel="${i}">Bajar el Excel de la tanda ${i+1}</button></div><div class="tan-barra" role="img" aria-label="${nf(c.not)} notificadas, ${nf(c.ya)} ya no deben y ${nf(c.sin)} sin notificar"><i style="width:${pc(c.not)};background:var(--acento)"></i><i style="width:${pc(c.ya)};background:var(--ok)"></i></div><span class="ayuda" style="margin:0">${nf(c.not)} notificadas · ${nf(c.ya)} ya no deben · ${nf(c.sin)} sin notificar${c.duda?` · ${nf(c.duda)} por revisar`:""}</span></div>
  <div class="tan-num"><div><span>Sin notificar</span><b>${nf(c.sin)}</b></div>${c.duda?`<div><span>Por revisar</span><b style="color:var(--warn)">${nf(c.duda)}</b></div>`:""}<div><span>Notificadas, siguen debiendo</span><b>${nf(c.not)}</b></div><div><span>Ya no deben</span><b style="color:var(--ok)">${nf(c.ya)}</b></div></div></div>
  <div class="tan-grid"><div><div class="row" style="margin-bottom:8px" role="group" aria-label="Cuáles ver">${F.map(([k,n,v])=>`<button type="button" class="chip ${TAN.f===k?"t-info":"t-neutro"}" data-tanf="${k}" aria-pressed="${TAN.f===k}">${n} · ${nf(v)}</button>`).join("")}</div>
  <div class="scroll-x"><table class="tan-t"><thead><tr><th>Orden</th><th>Persona</th><th>Qué debe</th><th>Estado</th></tr></thead><tbody>${ver.map(e=>{ const rv=e.k!=="ya"&&revisarTxt(e.p); return `<tr class="${e===S?"sel":""}${e.k==="ya"?" ya":""}${rv?" rev":""}"><td>${nf(E.indexOf(e)+1)}</td><td><button type="button" class="tan-p" data-tansel="${esc(e.x.c)}" aria-current="${e===S}">${esc(e.p?e.p.nom:e.x.n)}</button>${rv?`<small>⚠ ${esc(rv)}</small>`:""}</td><td>${e.p&&(debeNotif(e.p)||e.p.revCargo)?esc(queDebe(e.p)):"—"}</td><td><span class="chip ${e.cls}">${esc(e.txt)}</span>${e.antes?`<small>antes, el ${fechaDe(e.antes.t)}</small>`:""}</td></tr>`; }).join("")||`<tr><td colspan="4" class="ayuda">No hay nadie así en esta tanda.</td></tr>`}</tbody></table></div></div>
  ${htmlSig(S,E)}</div>`; }
+/* El Excel de Notificar (Baltasar, 26/11/2026: «que se pueda descargar el listado de Excel en notificar también y en
+   cada uno de ellos»): uno con todas las tandas, una hoja por tanda, y uno por tanda. Antes de armarlas, el de la
+   vista previa. Cada hoja, en el orden de la tanda: quién es, qué debe, la última DDJJ, cómo está y cuándo se lo
+   notificó. Arriba, la hoja «Datos»: de qué fecha son las listas y cuándo se armaron las tandas. */
+const C_TANDA=[["Orden",8,"num"],["CUIL",15],["DNI",12],["Apellido y nombre",34],["Organismo",40],["Cargo",34],["Qué debe",26],["Última DDJJ",13,"fecha"],["Semanas debiendo",11,"auto"],["Estado",30],["Última notificación",13,"fecha"],["La anotó",20],["Por revisar",50]];
+function filaTanda(x,i,T){ const e=T?estadoTanda(x,T):{p:personaDeClave(x.c),txt:"Todavía no se armó"}, p=e.p, u=p?ultimaDDJJ(p):{f:""}, s=p?semanasDebiendo(p):{n:"",todas:false}, rs=p?notifDe(p):[], n=rs[rs.length-1];
+ return [i+1,p?p.cuil||"":"",p?p.dni||"":"",p?p.nom:x.n,p?p.jurs.join(" · "):"",p?p.cargos.join(" · "):"",p&&(debeNotif(p)||p.revCargo)?queDebe(p):"",u.f||"Ninguna",s.todas?`${s.n} o más`:s.n,e.txt+(e.antes?` (se ${p&&esF(p)?"la":"lo"} notificó antes de armar las tandas)`:""),n?fechaDe(n.t):"",n?n.quien||"":"",p?revisarTxt(p):""]; }
+function hojasTandas(G,T,solo){ const datos=datosDeFecha(null).slice();
+ datos.push(["",""],["Notificar por tandas",T?`armadas el ${fechaHora(T.t)}${T.quien?" por "+T.quien:""}, de ${nf(T.tam||50)}`:"vista previa: todavía no se armaron"]);
+ G.forEach((g,j)=>{ if(solo==null||solo===j) datos.push([`Tanda ${j+1}`,`${nf(g.length)} ${g.length===1?"persona":"personas"}`]); });
+ datos.push(["Orden","de quien debe hace más tiempo a quien debe hace menos (la última DDJJ más vieja, o ninguna, primero; después más semanas seguidas en la nómina debiendo). Falta la fecha de alta de PeopleNet"]);
+ const h=[{n:"Datos",cols:[["Dato",34],["",90]],filas:datos}];
+ G.forEach((g,j)=>{ if(solo!=null&&solo!==j) return; let d=0; G.slice(0,j).forEach(x=>d+=x.length); h.push({n:`Tanda ${j+1}`,filtro:true,cols:C_TANDA,filas:g.map((x,i)=>filaTanda(x,d+i,T))}); });
+ return h; }
+function bajarTandas(solo){ if(!hayDatos()) return; const T=TAN.armar?null:tandasDeAhora(), G=T?T.g:cortar(deudores(),TAN.tam).map(g=>g.map(x=>({c:claveNotif(x.p),n:x.p.nom}))); if(!G.length) return;
+ const hojas=hojasTandas(G,T,solo); hojas.forEach(h=>h.n=nombreHoja(h.n)); const f=fechaDe(new Date()).replace(/\//g,"-");
+ bajar(libro(hojas),XLSX,`ddjj-notificar-${solo!=null?"tanda-"+(solo+1):T?"tandas":"vista-previa"}-${f}${DEMO?"-EJEMPLO":""}.xlsx`); }
 function pintarTandas(){ const el=$("#secTandas"); if(!el) return; if(!hayDatos()){ el.innerHTML=""; return; }
  if(!enUltima()){ el.innerHTML=`<h2 id="tanT" style="margin:0">Notificar por tandas</h2><p class="ayuda" style="margin:0">Las tandas se arman y se notifican en la semana de hoy: volvé a la última semana.</p>`; return; }
  if(!ACT.r.L.a||!ACT.r.L.p){ el.innerHTML=`<h2 id="tanT" style="margin:0">Notificar por tandas</h2><p class="ayuda" style="margin:0">Para saber quién debe hacen falta la nómina de activos y el índice del protocolo de esta semana.</p>`; return; }
@@ -4160,6 +4177,7 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("button");
  if(d.tansel!=null){ TAN.sel=d.tansel; TAN.ok=""; pintarTandas(); focoSig(); return; }
  if(d.tannav!=null){ tanMover(+d.tannav); return; }
  if(d.tancopiar!=null){ tanCopiar(d.tancopiar); return; }
+ if(d.tanexcel!=null){ bajarTandas(+d.tanexcel); return; }
  if(d.notifp!=null){ const p=ACT.R&&ACT.R.personas.find(x=>x.rep===d.notifp); if(!p||!puedeNotif(p)) return; const {ok,an}=await copiarNotifDe(p), o=$("#notifFila");
   if(an){ pintarPersonas(); pintarInicio(); pintarOrgCab(); pintarPestanas(); }
   if(o){ o.textContent=ok?`✓ Copiada la de ${nombreNatural(p.nom)} (${esF(p)?"Sra.":"Sr."})${an?" · anotada hoy":an===null?" · no se pudo anotar":SOLO_VER()?" · con el perfil de Consulta no se anota":""}`:"El navegador no dejó copiar: abrí su perfil y copiala desde ahí."; o.classList.remove("oculto"); }
@@ -4186,6 +4204,7 @@ document.addEventListener("click",async e=>{ const b=e.target.closest("button");
  else if(acc==="tanVolver"){ TAN.armar=false; pintarTandas(); }
  else if(acc==="tanSiguiente") tanMover(0);
  else if(acc==="tanDeshacer") tanDeshacer();
+ else if(acc==="tanExcel") bajarTandas(null);
  else if(acc==="borrarNotif") borrarNotif();
  else if(acc==="editarNotif") editarNotif();
  else if(acc==="negritaNotif") negritaNotif();
